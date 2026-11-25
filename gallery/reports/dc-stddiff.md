@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:22
+2026-11-25 13:07
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -77,6 +77,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -108,7 +109,7 @@ KEY <- ID
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
 #     breaks it. This job needs one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
@@ -181,7 +182,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -558,9 +559,9 @@ rather than balance, so it is not part of this job.
 
 | Group           | Item           | Value                           |
 |:----------------|:---------------|:--------------------------------|
-| Run             | Started        | 2026-11-20 17:22:02 EST         |
-|                 | Ended          | 2026-11-20 17:22:06 EST         |
-|                 | Duration       | 4 s                             |
+| Run             | Started        | 2026-11-25 13:07:30 EST         |
+|                 | Ended          | 2026-11-25 13:07:31 EST         |
+|                 | Duration       | 1 s                             |
 |                 | Status         | final                           |
 |                 | Rendered by    | gallery                         |
 |                 | Host           | gallery                         |
@@ -568,9 +569,9 @@ rather than balance, so it is not part of this job.
 |                 | Template       | dc.stddiff                      |
 |                 | Subject        | approach                        |
 |                 | Type           | balance                         |
-|                 | hvtiRtemplates | 1.6.2                           |
-| Dataset `built` | Version file   | built_20261120.parquet          |
-|                 | Version date   | 2026-11-20                      |
+|                 | hvtiRtemplates | 1.6.3                           |
+| Dataset `built` | Version file   | built_20261125.parquet          |
+|                 | Version date   | 2026-11-25                      |
 |                 | Source file    | built.rds                       |
 |                 | Rows kept      | 800 rows on 800 patients        |
 |                 | WHERE          | none                            |

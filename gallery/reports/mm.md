@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:29
+2026-11-25 13:11
 
 Fits a linear mixed model to a continuous response measured repeatedly
 on each patient, as PROC MIXED did with a REPEATED or RANDOM statement,
@@ -34,8 +34,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `echo` `echo_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `echo` `echo_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 Code
 
@@ -49,6 +49,7 @@ JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "echo"
 # Demo: a named analysis set, or NULL for every row WHERE keeps.
 ANALYSIS_SET <- NULL
@@ -143,7 +144,7 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 
 | Data                |                                        |
 |:--------------------|:---------------------------------------|
-| Source              | dataset `echo` (echo_20261120.parquet) |
+| Source              | dataset `echo` (echo_20261125.parquet) |
 | Rows read           | 1,180                                  |
 | ID                  | `patient_id`                           |
 | Identifiers dropped | none                                   |
@@ -541,8 +542,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(bundle, .root), MODEL_PATH)
 
 | Group           | Item           | Value                      |
 |:----------------|:---------------|:---------------------------|
-| Run             | Started        | 2026-11-20 17:29:17 EST    |
-|                 | Ended          | 2026-11-20 17:29:17 EST    |
+| Run             | Started        | 2026-11-25 13:11:24 EST    |
+|                 | Ended          | 2026-11-25 13:11:25 EST    |
 |                 | Duration       | 1 s                        |
 |                 | Status         | final                      |
 |                 | Rendered by    | gallery                    |
@@ -551,9 +552,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(bundle, .root), MODEL_PATH)
 |                 | Template       | mm                         |
 |                 | Subject        | lvef                       |
 |                 | Type           | mixed                      |
-|                 | hvtiRtemplates | 1.6.2                      |
-| Dataset `echo`  | Version file   | echo_20261120.parquet      |
-|                 | Version date   | 2026-11-20                 |
+|                 | hvtiRtemplates | 1.6.3                      |
+| Dataset `echo`  | Version file   | echo_20261125.parquet      |
+|                 | Version date   | 2026-11-25                 |
 |                 | Source file    | echo.rds                   |
 |                 | Rows kept      | 1,180 rows on 300 patients |
 |                 | WHERE          | none                       |

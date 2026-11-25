@@ -2242,7 +2242,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-20 17:38</p>
+      <p class="date">2026-11-25 13:23</p>
     </div>
   </div>
   
@@ -2254,7 +2254,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: vt.explain 1.6.2 sha256:3159937584dfb6de0ec9091c76eb87880a8532a39544a783c27aea4c33f3ede1 -->
+<!-- hvtiRtemplates: vt.explain 1.6.3 sha256:2609f555b31305e7f8646444ccc53471fd72af9cbc10eb2f2902f90b0d7a91c7 -->
 <p>Explains the <code>vt-fit</code> job in this set: which patients the twins say repair suits, stratified by the echo-phenotype clusters.</p>
 <!--
      decision the contrast is meant to inform. -->
@@ -2314,7 +2314,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.6.2</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.6.3</p>
 </div>
 </div>
 </div>
@@ -2354,25 +2354,29 @@ vertical-align: -.125em;
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>.cfg <span class="ot">&lt;-</span> <span class="fu">study_config</span>(<span class="at">start =</span> .root)</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>.vt_read <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.read_handoff</span>(.handoff, <span class="st">&quot;twins&quot;</span>, .cfg, <span class="st">&quot;the vt-fit job&quot;</span>)</span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>.vt <span class="ot">&lt;-</span> .vt_read<span class="sc">$</span>value</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> .vt_read<span class="sc">$</span>lineage<span class="sc">$</span>data</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>.provenance_artifacts <span class="ot">&lt;-</span> <span class="fu">c</span>(.vt_read<span class="sc">$</span>lineage<span class="sc">$</span>artifacts, <span class="fu">list</span>(.vt_read<span class="sc">$</span>record))</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>ARMS <span class="ot">&lt;-</span> .vt<span class="sc">$</span>settings<span class="sc">$</span>arms</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="ot">&lt;-</span> .vt<span class="sc">$</span>settings<span class="sc">$</span>horizon</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># The sign of a beta: log_rr is the log of the risk under the first arm over the risk under the second.</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>.beta_sign <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;A positive beta: the characteristic goes with a higher relative risk of the event by &quot;</span>, HORIZON,</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot; under &quot;</span>, ARMS[<span class="dv">1</span>], <span class="st">&quot; than under &quot;</span>, ARMS[<span class="dv">2</span>], <span class="st">&quot;.&quot;</span>)</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>.beta_cap_tbl <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Standardized beta for each characteristic.&quot;</span>, .beta_sign,</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>                       <span class="st">&quot;unestimable: bootstrap resamples in which the characteristic did not vary.&quot;</span>)</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>.beta_cap_fig <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Standardized association of each characteristic with the estimated effect, by overlap-weighted&quot;</span>,</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                       <span class="st">&quot;regression.&quot;</span>, .beta_sign, <span class="st">&quot;Bars, where drawn, are the 2.5th to 97.5th percentile over bootstrap&quot;</span>,</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>                       <span class="st">&quot;resamples of patients.&quot;</span>)</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> .vt<span class="sc">$</span>rmst</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="co"># A patient who received neither arm has no_arm TRUE and arm NA. `received` is the label figures</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="co"># and tables group by, so an arm that is really named &quot;none&quot; stays apart from them.</span></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>r<span class="sc">$</span>received <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(r<span class="sc">$</span>no_arm, <span class="st">&quot;No arm&quot;</span>, r<span class="sc">$</span>arm)</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>.no_elig_note <span class="ot">&lt;-</span> <span class="st">&quot;No patient is in distribution under the combined rule; see the eligibility tables.&quot;</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Named `.eligible`, never `.in`: `.in` is setup&#39;s source path, which the provenance chunk needs.</span></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>.eligible <span class="ot">&lt;-</span> r<span class="sc">$</span>elig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">isTRUE</span>(.vt<span class="sc">$</span>settings<span class="sc">$</span>eligibility_only)) {</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;The fit at &quot;</span>, .handoff, <span class="st">&quot; is eligibility only (TIME &lt;- NULL in vt-fit): it has no forests or twin curves &quot;</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;to explain. Name the outcome in vt-fit and render it again.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> .vt_read<span class="sc">$</span>lineage<span class="sc">$</span>data</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>.provenance_artifacts <span class="ot">&lt;-</span> <span class="fu">c</span>(.vt_read<span class="sc">$</span>lineage<span class="sc">$</span>artifacts, <span class="fu">list</span>(.vt_read<span class="sc">$</span>record))</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>ARMS <span class="ot">&lt;-</span> .vt<span class="sc">$</span>settings<span class="sc">$</span>arms</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="ot">&lt;-</span> .vt<span class="sc">$</span>settings<span class="sc">$</span>horizon</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># The sign of a beta: log_rr is the log of the risk under the first arm over the risk under the second.</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>.beta_sign <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;A positive beta: the characteristic goes with a higher relative risk of the event by &quot;</span>, HORIZON,</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot; under &quot;</span>, ARMS[<span class="dv">1</span>], <span class="st">&quot; than under &quot;</span>, ARMS[<span class="dv">2</span>], <span class="st">&quot;.&quot;</span>)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>.beta_cap_tbl <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Standardized beta for each characteristic.&quot;</span>, .beta_sign,</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>                       <span class="st">&quot;unestimable: bootstrap resamples in which the characteristic did not vary.&quot;</span>)</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>.beta_cap_fig <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Standardized association of each characteristic with the estimated effect, by overlap-weighted&quot;</span>,</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>                       <span class="st">&quot;regression.&quot;</span>, .beta_sign, <span class="st">&quot;Bars, where drawn, are the 2.5th to 97.5th percentile over bootstrap&quot;</span>,</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>                       <span class="st">&quot;resamples of patients.&quot;</span>)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> .vt<span class="sc">$</span>rmst</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co"># A patient who received neither arm has no_arm TRUE and arm NA. `received` is the label figures</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co"># and tables group by, so an arm that is really named &quot;none&quot; stays apart from them.</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>r<span class="sc">$</span>received <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(r<span class="sc">$</span>no_arm, <span class="st">&quot;No arm&quot;</span>, r<span class="sc">$</span>arm)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>.no_elig_note <span class="ot">&lt;-</span> <span class="st">&quot;No patient is in distribution under the combined rule; see the eligibility tables.&quot;</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Named `.eligible`, never `.in`: `.in` is setup&#39;s source path, which the provenance chunk needs.</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>.eligible <span class="ot">&lt;-</span> r<span class="sc">$</span>elig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
@@ -2579,7 +2583,7 @@ Figure 4: In each arm, the share of patients in distribution whose own arm’s 
 <div id="fig-components" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-components-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/fe0863e0e800f11b556c09016fda5961.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/d03a599940f751d6eeb81da8fd2a346f.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-components-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 5: Each treated patient in distribution: predicted RMST under the arm received (own) against under the other arm (twin). On the dashed line the two are equal.
@@ -2770,7 +2774,7 @@ Table 1: The RMST difference under each eligibility rule: patients kept, median
 <div id="fig-distance" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-distance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/9fb4eb36741f2e25a9ae95da35dd00ee.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/186992989ad94ea2330158be5c5005e2.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-distance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 6: Each treated patient’s RMST difference against their distance to the nearest patient of the other arm (for the isolation forest, their score). Dashed: that arm’s eligibility line, its largest own gap or the isolation cutoff; dotted: its typical (median) gap or score. Ringed: out of distribution.
@@ -2886,7 +2890,24 @@ Table 2: Treated patients by arm received and method: how many, how many are ou
 <span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.refuse_display</span>(STRATIFY, hvtiRtemplates<span class="sc">:::</span><span class="fu">.no_values</span>(.d_all, .vt<span class="sc">$</span>settings<span class="sc">$</span>id, <span class="fu">attr</span>(.jd<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)<span class="sc">$</span>key),</span>
 <span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">&quot;STRATIFY&quot;</span>)</span>
 <span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  .strata <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">ID =</span> .d_all[[.vt<span class="sc">$</span>settings<span class="sc">$</span>id]], <span class="at">stratum =</span> <span class="fu">as.character</span>(.d_all[[STRATIFY]]))</span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a><span class="co"># A missing stratum value is no stratum. Dropping it here keeps the table, both figures and their captions</span></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a><span class="co"># agreeing: the table and the curves&#39; aggregate() would drop it anyway, without counting it.</span></span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.strata)) .strata <span class="ot">&lt;-</span> .strata[<span class="sc">!</span><span class="fu">is.na</span>(.strata<span class="sc">$</span>stratum), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a><span class="co"># A patient with no stratum is left out of both figures below, and a figure read on its own must say so.</span></span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure draws its own patients, so each counts its own; the counts are made here because a</span></span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a><span class="co"># caption is read before its chunk runs.</span></span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>.no_stratum <span class="ot">&lt;-</span> <span class="cf">function</span>(ids) {</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(.strata)) <span class="dv">0</span>L <span class="cf">else</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">unique</span>(ids) <span class="sc">%in%</span> .strata<span class="sc">$</span>ID)</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (n <span class="sc">==</span> <span class="dv">0</span>L) <span class="fu">return</span>(<span class="st">&quot;&quot;</span>)</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(<span class="st">&quot; &quot;</span>, n, <span class="cf">if</span> (n <span class="sc">==</span> <span class="dv">1</span>L) <span class="st">&quot; patient has no stratum and is not shown.&quot;</span> <span class="cf">else</span> <span class="st">&quot; patients have no stratum and are not shown.&quot;</span>)</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>.cap_stratum <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;The RMST difference by stratum, one panel per arm received. Box: 15th to 85th percentile of the &quot;</span>,</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>                       <span class="st">&quot;patients in distribution, whiskers 5th to 95th, drawn where a cell holds at least 5; every patient &quot;</span>,</span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>                       <span class="st">&quot;is a point, and the ringed ones are out of distribution.&quot;</span>, <span class="fu">.no_stratum</span>(r<span class="sc">$</span>ID[<span class="sc">!</span>r<span class="sc">$</span>no_arm]))</span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>.cap_stratum_curves <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Mean predicted survival under each arm&#39;s forest, patients in distribution, one panel per &quot;</span>,</span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;stratum. The shaded area to the horizon is the restricted mean survival time.&quot;</span>,</span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">.no_stratum</span>(r<span class="sc">$</span>ID[.eligible]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <details class="code-fold">
@@ -3034,7 +3055,7 @@ Table 3: The RMST difference by stratum and arm received, patients in distribut
 <div id="fig-stratum" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-stratum-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/08c467bb8383944a2c1e198568933129.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/c24be4ab2d6d5a0d160f1d9c69fc4637.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-stratum-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 7: The RMST difference by stratum, one panel per arm received. Box: 15th to 85th percentile of the patients in distribution, whiskers 5th to 95th, drawn where a cell holds at least 5; every patient is a point, and the ringed ones are out of distribution.
@@ -3184,21 +3205,21 @@ Table 4: Standardized beta for each characteristic. A positive beta: the charac
 <tr class="odd">
 <td style="text-align: left;">age</td>
 <td style="text-align: right;">0.27</td>
-<td style="text-align: right;">0.19</td>
+<td style="text-align: right;">0.20</td>
 <td style="text-align: right;">0.34</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">female</td>
 <td style="text-align: right;">0.06</td>
-<td style="text-align: right;">0.00</td>
-<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">-0.01</td>
+<td style="text-align: right;">0.13</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">bmi</td>
 <td style="text-align: right;">0.00</td>
-<td style="text-align: right;">-0.08</td>
+<td style="text-align: right;">-0.07</td>
 <td style="text-align: right;">0.06</td>
 <td style="text-align: right;">0</td>
 </tr>
@@ -3212,21 +3233,21 @@ Table 4: Standardized beta for each characteristic. A positive beta: the charac
 <tr class="odd">
 <td style="text-align: left;">hx_dm</td>
 <td style="text-align: right;">0.00</td>
-<td style="text-align: right;">-0.07</td>
-<td style="text-align: right;">0.08</td>
+<td style="text-align: right;">-0.06</td>
+<td style="text-align: right;">0.07</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nyha_pr</td>
 <td style="text-align: right;">0.04</td>
-<td style="text-align: right;">-0.02</td>
-<td style="text-align: right;">0.11</td>
+<td style="text-align: right;">-0.04</td>
+<td style="text-align: right;">0.12</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lvef</td>
 <td style="text-align: right;">-0.05</td>
-<td style="text-align: right;">-0.11</td>
+<td style="text-align: right;">-0.13</td>
 <td style="text-align: right;">0.02</td>
 <td style="text-align: right;">0</td>
 </tr>
@@ -3247,7 +3268,7 @@ Table 4: Standardized beta for each characteristic. A positive beta: the charac
 <tr class="even">
 <td style="text-align: left;">lvesd</td>
 <td style="text-align: right;">0.86</td>
-<td style="text-align: right;">0.83</td>
+<td style="text-align: right;">0.82</td>
 <td style="text-align: right;">0.89</td>
 <td style="text-align: right;">0</td>
 </tr>
@@ -3255,14 +3276,14 @@ Table 4: Standardized beta for each characteristic. A positive beta: the charac
 <td style="text-align: left;">la_diam</td>
 <td style="text-align: right;">0.18</td>
 <td style="text-align: right;">0.11</td>
-<td style="text-align: right;">0.26</td>
+<td style="text-align: right;">0.27</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">rvsp</td>
 <td style="text-align: right;">0.16</td>
-<td style="text-align: right;">0.09</td>
-<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.24</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
@@ -3298,7 +3319,7 @@ Table 4: Standardized beta for each characteristic. A positive beta: the charac
 <div id="fig-betas" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-betas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/95c2ca6abb0add85c5032edf64ec3afc.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/81934056af58d6f0f78f16083b86ed2d.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-betas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 9: Standardized association of each characteristic with the estimated effect, by overlap-weighted regression. A positive beta: the characteristic goes with a higher relative risk of the event by 8 under repair than under replace. Bars, where drawn, are the 2.5th to 97.5th percentile over bootstrap resamples of patients.
@@ -3657,12 +3678,12 @@ Table 5: Patients in distribution whose twin favors the arm they did not receiv
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-20 17:38:14 EST</td>
+<td style="text-align: left;">2026-11-25 13:23:10 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-20 17:38:20 EST</td>
+<td style="text-align: left;">2026-11-25 13:23:16 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3712,17 +3733,17 @@ Table 5: Patients in distribution whose twin favors the arm they did not receiv
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.2</td>
+<td style="text-align: left;">1.6.3</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261120.parquet</td>
+<td style="text-align: left;">built_20261125.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-20</td>
+<td style="text-align: left;">2026-11-25</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3757,12 +3778,12 @@ Table 5: Patients in distribution whose twin favors the arm they did not receiv
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>reint-vt/vt.rds</code> (twins), rendered 2026-11-20 17:37:56 -0500, data built_20261120.parquet</td>
+<td style="text-align: left;"><code>reint-vt/vt.rds</code> (twins), rendered 2026-11-25 13:22:53 -0500, data built_20261125.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>echo-sid/sid-clusters.rds</code> (SID clusters), rendered 2026-11-20 17:37:00 -0500, data built_20261120.parquet</td>
+<td style="text-align: left;"><code>echo-sid/sid-clusters.rds</code> (SID clusters), rendered 2026-11-25 13:21:58 -0500, data built_20261125.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Reproducibility</td>
@@ -3772,7 +3793,7 @@ Table 5: Patients in distribution whose twin favors the arm they did not receiv
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"vt.explain.reint.vt","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:38:20","job":"vt.explain.reint.vt","rendered":"2026-11-20T22:38:20Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"22efb2006c7a5bb52ef0f5835ff411c15d3d7c302aad63ef291ede46874c447a"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRpropensity","version":"0.2.3","source":"github","sha":"93e94b717ef162e50f640b0ff3999197c2ce5cd5"},{"package":"hvtiRtemplates","version":"1.6.2","source":null},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261120.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-20T22:12:32Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261120.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-20T22:12:32Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261120.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-20T22:12:32Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261120.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-20T22:12:32Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261120.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-20T22:12:32Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[{"path":"90_estimates/echo-sid/sid-clusters.rds","role":"SID clusters","bytes":1040777,"mtime":"2026-11-20T22:37:05Z","sha256":"2d6d9d129ca19b52a69ab8dc3e45fa99471e575bf69f308afb6d109760a3b9e8"},{"path":"90_estimates/echo-sid/sid.rds","role":"SID fit","bytes":4863243,"mtime":"2026-11-20T22:36:55Z","sha256":"3da7baf1dcce8c098155daad004a3a7ab67021507bb28c9b26d3777ea883a2eb"},{"path":"90_estimates/echo-sid/sid.rds","role":"SID fit","bytes":4863243,"mtime":"2026-11-20T22:36:55Z","sha256":"3da7baf1dcce8c098155daad004a3a7ab67021507bb28c9b26d3777ea883a2eb"},{"path":"90_estimates/reint-vt/vt.rds","role":"twins","bytes":7799749,"mtime":"2026-11-20T22:38:06Z","sha256":"09417f3c17f7790331eb579d27c64fb460fb707617ace805226e71f5c38473dd"}],"subject":"reint","type":"vt","source_sha256":"d514a3d31020af0c44d13020c62a6d1754264cd461acf00fe76cce82885fcb65","run":{"start":"2026-11-20T17:38:14-0500","end":"2026-11-20T17:38:20-0500","time_zone":"EST","duration_seconds":6.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vt.explain.reint.vt.qmd","template":"vt.explain","prefix":"vt","qualifier":"explain","subject":"reint","type":"vt","hvtiRtemplates":"1.6.2"},"datasets":[{"name":"built","version_file":"built_20261120.parquet","registered":"2026-11-20","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[{"file":"90_estimates/echo-sid/sid.rds","set":"echo-sid","role":"SID fit"},{"file":"90_estimates/reint-vt/vt.rds","set":"reint-vt","role":"twins","rendered_at":"2026-11-20T17:37:56-0500","dataset_version":"built_20261120.parquet"},{"file":"90_estimates/echo-sid/sid-clusters.rds","set":"echo-sid","role":"SID clusters","rendered_at":"2026-11-20T17:37:00-0500","dataset_version":"built_20261120.parquet"}],"reproducibility":{"renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.2","sha":null,"method":"vt.explain","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:38:14"},"identifiability":[{"check":"small","column":"patients by stratum and arm","count":1}]},"source":"30_analyses/vt.explain.reint.vt.qmd",".hvti_render_id":"ee4e6513d5dc0d6bb3b5be6961f64c5b215007bea2d0910a868e74a38a16a7be",".hvti_source_sha256":"d514a3d31020af0c44d13020c62a6d1754264cd461acf00fe76cce82885fcb65"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.29","sha":null,"method":"vt.explain.reint.vt","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-25 13:23:16","job":"vt.explain.reint.vt","rendered":"2026-11-25T18:23:16Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"6089c7526828fa75f1ad0f6b4f2db2b588532f060a02059960901bd6d3100399"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRpropensity","version":"0.2.3","source":"github","sha":"93e94b717ef162e50f640b0ff3999197c2ce5cd5"},{"package":"hvtiRtemplates","version":"1.6.3","source":null},{"package":"hvtiRutilities","version":"1.5.29","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261125.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-25T18:03:42Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261125.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-25T18:03:42Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261125.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-25T18:03:42Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261125.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-25T18:03:42Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261125.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-25T18:03:42Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[{"path":"90_estimates/echo-sid/sid-clusters.rds","role":"SID clusters","bytes":1041081,"mtime":"2026-11-25T18:22:03Z","sha256":"4fbecfb485ff8d8a9511385d49cb05317c5063f3691006e42c36c7561de91ea0"},{"path":"90_estimates/echo-sid/sid.rds","role":"SID fit","bytes":4863332,"mtime":"2026-11-25T18:21:53Z","sha256":"46037bbbdec6a4da40a542722f66ec540f33ecf01ff8b1d8aed9dbe3b80eed75"},{"path":"90_estimates/echo-sid/sid.rds","role":"SID fit","bytes":4863332,"mtime":"2026-11-25T18:21:53Z","sha256":"46037bbbdec6a4da40a542722f66ec540f33ecf01ff8b1d8aed9dbe3b80eed75"},{"path":"90_estimates/reint-vt/vt.rds","role":"twins","bytes":7824680,"mtime":"2026-11-25T18:23:04Z","sha256":"b1e39bba68f83910de72b0cee6ccb434591792b3f640ffeea56759d10fcc07b0"}],"subject":"reint","type":"vt","source_sha256":"95bb1b09b3a51259f42d14f875e41244a9f683d45f6cd3c848dfcdb291d4cadd","run":{"start":"2026-11-25T13:23:10-0500","end":"2026-11-25T13:23:16-0500","time_zone":"EST","duration_seconds":6.1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vt.explain.reint.vt.qmd","template":"vt.explain","prefix":"vt","qualifier":"explain","subject":"reint","type":"vt","hvtiRtemplates":"1.6.3"},"datasets":[{"name":"built","version_file":"built_20261125.parquet","registered":"2026-11-25","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[{"file":"90_estimates/echo-sid/sid.rds","set":"echo-sid","role":"SID fit"},{"file":"90_estimates/reint-vt/vt.rds","set":"reint-vt","role":"twins","rendered_at":"2026-11-25T13:22:53-0500","dataset_version":"built_20261125.parquet"},{"file":"90_estimates/echo-sid/sid-clusters.rds","set":"echo-sid","role":"SID clusters","rendered_at":"2026-11-25T13:21:58-0500","dataset_version":"built_20261125.parquet"}],"reproducibility":{"renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.3","sha":null,"method":"vt.explain","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-25 13:23:10"},"identifiability":[{"check":"small","column":"patients by stratum and arm","count":1}]},"source":"30_analyses/vt.explain.reint.vt.qmd",".hvti_render_id":"a67def4309994c2bcedc4362b3352bd7f23f97fda506a0d38925d55b40a1d272",".hvti_source_sha256":"95bb1b09b3a51259f42d14f875e41244a9f683d45f6cd3c848dfcdb291d4cadd"}</script>
 </section>
 
 </main>

@@ -2243,7 +2243,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-20 17:21</p>
+      <p class="date">2026-11-25 13:07</p>
     </div>
   </div>
   
@@ -2255,7 +2255,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: dc.general 1.6.2 sha256:5c87c647b9327af91f4952e6aff702df76b1fa38b5e3e46d6a4e9d73cfef433b -->
+<!-- hvtiRtemplates: dc.general 1.6.3 sha256:271965c226076a0ce841ed6d8961b3d22477a61c2509fc49bf58adb5d2d0f7c3 -->
 <!-- Demo: name the job this replaces (descriptive/dc.general). -->
 <p>Replaces <code>descriptive/dc.general</code>.</p>
 <p>A <code>dc-general</code> job is the first look at a built cohort, before any table or model: what the data contain, how each categorical variable breaks down, how each continuous variable is distributed, and which variables move together. It uses base procedures only.</p>
@@ -2287,7 +2287,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261120.parquet</code>, dated 2026-11-20 · rendered by gallery on gallery · hvtiRtemplates 1.6.2</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261125.parquet</code>, dated 2026-11-25 · rendered by gallery on gallery · hvtiRtemplates 1.6.3</p>
 </div>
 </div>
 </div>
@@ -2298,68 +2298,71 @@ vertical-align: -.125em;
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the registered dataset this job reads (&quot;built&quot; is the study dataset).</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;built&quot;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>ANALYSIS_SET <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- quote(age &gt;= 18)</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- rlang::exprs(age &gt;= 18, hx_chf == 1)</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN;</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># name another column, such as &quot;randid&quot;, if the study uses one.</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: what makes a row unique; one row per patient unless repeated measures</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># add their visit time or date, for example KEY &lt;- c(ID, &quot;iv_echo&quot;).</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> ID</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional, and needs no edit: NULL reads the cohort alone. To join one</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># registered ancillary dataset (echoes, labs), name it in JOIN. The cohort</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># above decides the patients, one row each; the joined records of other</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are dropped and counted in the data table.</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#     and a column both datasets have stops, so list only those the job needs.</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#   REDUCE: NULL keeps a row per joined record, keyed on that dataset&#39;s key;</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     list(rule = &quot;first&quot;, by = &quot;echo_date&quot;) keeps one row per patient (&quot;last&quot;,</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     or &quot;nearest&quot; with to = a cohort date column). WHERE on a joined column</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">#     filters the records first, so &quot;last&quot; with WHERE echo_type == &quot;TTE&quot;</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co">#     keeps each patient&#39;s last TTE. A tie stops: picking one record</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co">#     silently would be a hidden choice; by = c(&quot;echo_date&quot;, &quot;echo_seq&quot;)</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co">#     breaks it. A job that counts or models</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co">#     patients, one row each, needs REDUCE: NULL would count every record.</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_KEY: overrides the joined dataset&#39;s registered key.</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>JOIN <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>JOIN_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>REDUCE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>JOIN_KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: grouped categorical variables. Each name is a section heading, in this</span></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co"># order. Carry the /* Demography */ banners across from the SAS %macro freq</span></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co"># tables list. Missing values are tabulated as their own level (missprint).</span></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>CATEGORICAL <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>  <span class="at">Demography =</span> <span class="fu">c</span>(<span class="st">&quot;female&quot;</span>, <span class="st">&quot;race_grp&quot;</span>),</span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>  <span class="at">History    =</span> <span class="fu">c</span>(<span class="st">&quot;hx_chf&quot;</span>, <span class="st">&quot;hx_dm&quot;</span>, <span class="st">&quot;nyha_pr&quot;</span>)</span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: continuous variables, grouped the same way (the SAS %macro cdfs var</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># list).</span></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>CONTINUOUS <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>  <span class="at">Demography =</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>, <span class="st">&quot;bmi&quot;</span>),</span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>  <span class="at">Echo       =</span> <span class="fu">c</span>(<span class="st">&quot;lvef&quot;</span>, <span class="st">&quot;plvmassi&quot;</span>),</span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>  <span class="at">Laboratory =</span> <span class="st">&quot;creat_pr&quot;</span></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: variables for the pairwise correlation sweep (SAS proc corr nosimple</span></span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># rank). Defaults to every continuous variable; character() skips the section.</span></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>CORR_VARS <span class="ot">&lt;-</span> <span class="fu">unlist</span>(CONTINUOUS, <span class="at">use.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: leave NULL for most jobs. A column name (the SAS job used id ccfid) lists</span></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># the extreme values with it on the console, on stderr(), so a value can be looked</span></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># up. It never reaches the report: no table shows a patient identifier.</span></span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>ID_COL <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># A file name, such as &quot;match_set.rds&quot;, reads an unregistered file in the datasets folder, as a draft.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;built&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>ANALYSIS_SET <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- quote(age &gt;= 18)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- rlang::exprs(age &gt;= 18, hx_chf == 1)</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># name another column, such as &quot;randid&quot;, if the study uses one.</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: what makes a row unique; one row per patient unless repeated measures</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># add their visit time or date, for example KEY &lt;- c(ID, &quot;iv_echo&quot;).</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> ID</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional, and needs no edit: NULL reads the cohort alone. To join one</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># registered ancillary dataset (echoes, labs), name it in JOIN. The cohort</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># above decides the patients, one row each; the joined records of other</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are dropped and counted in the data table.</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#     and a column both datasets have stops, so list only those the job needs.</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">#   REDUCE: NULL keeps a row per joined record, keyed on that dataset&#39;s key;</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     a cohort patient with no record is left out, and counted in the text,</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">#     unless the join is keyed on the ID alone, which keeps them;</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co">#     list(rule = &quot;first&quot;, by = &quot;echo_date&quot;) keeps one row per patient (&quot;last&quot;,</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co">#     or &quot;nearest&quot; with to = a cohort date column). WHERE on a joined column</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co">#     filters the records first, so &quot;last&quot; with WHERE echo_type == &quot;TTE&quot;</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co">#     keeps each patient&#39;s last TTE. A tie stops: picking one record</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co">#     silently would be a hidden choice; by = c(&quot;echo_date&quot;, &quot;echo_seq&quot;)</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="co">#     breaks it. A job that counts or models</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co">#     patients, one row each, needs REDUCE: NULL would count every record.</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_KEY: overrides the joined dataset&#39;s registered key.</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>JOIN <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>JOIN_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>REDUCE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>JOIN_KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: grouped categorical variables. Each name is a section heading, in this</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># order. Carry the /* Demography */ banners across from the SAS %macro freq</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co"># tables list. Missing values are tabulated as their own level (missprint).</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>CATEGORICAL <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>  <span class="at">Demography =</span> <span class="fu">c</span>(<span class="st">&quot;female&quot;</span>, <span class="st">&quot;race_grp&quot;</span>),</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>  <span class="at">History    =</span> <span class="fu">c</span>(<span class="st">&quot;hx_chf&quot;</span>, <span class="st">&quot;hx_dm&quot;</span>, <span class="st">&quot;nyha_pr&quot;</span>)</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: continuous variables, grouped the same way (the SAS %macro cdfs var</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># list).</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>CONTINUOUS <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>  <span class="at">Demography =</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>, <span class="st">&quot;bmi&quot;</span>),</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>  <span class="at">Echo       =</span> <span class="fu">c</span>(<span class="st">&quot;lvef&quot;</span>, <span class="st">&quot;plvmassi&quot;</span>),</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>  <span class="at">Laboratory =</span> <span class="st">&quot;creat_pr&quot;</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: variables for the pairwise correlation sweep (SAS proc corr nosimple</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># rank). Defaults to every continuous variable; character() skips the section.</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>CORR_VARS <span class="ot">&lt;-</span> <span class="fu">unlist</span>(CONTINUOUS, <span class="at">use.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: leave NULL for most jobs. A column name (the SAS job used id ccfid) lists</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># the extreme values with it on the console, on stderr(), so a value can be looked</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co"># up. It never reaches the report: no table shows a patient identifier.</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>ID_COL <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2416,7 +2419,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261120.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261125.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -3724,17 +3727,17 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-20 17:21:49 EST</td>
+<td style="text-align: left;">2026-11-25 13:07:24 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-20 17:21:50 EST</td>
+<td style="text-align: left;">2026-11-25 13:07:25 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">1 s</td>
+<td style="text-align: left;">0 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3774,17 +3777,17 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.2</td>
+<td style="text-align: left;">1.6.3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261120.parquet</td>
+<td style="text-align: left;">built_20261125.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-20</td>
+<td style="text-align: left;">2026-11-25</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3819,7 +3822,7 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"dc.general.cohort.eda","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:21:50","job":"dc.general.cohort.eda","rendered":"2026-11-20T22:21:50Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.6.2","source":null},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261120.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-20T22:12:32Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"cohort","type":"eda","source_sha256":"a44edb638a9ac95e3c860e2944e7691c9a7b1dd0df6af78f4ed35bc7a3b25911","run":{"start":"2026-11-20T17:21:49-0500","end":"2026-11-20T17:21:50-0500","time_zone":"EST","duration_seconds":0.8,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.general.cohort.eda.qmd","template":"dc.general","prefix":"dc","qualifier":"general","subject":"cohort","type":"eda","hvtiRtemplates":"1.6.2"},"datasets":[{"name":"built","version_file":"built_20261120.parquet","registered":"2026-11-20","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.2","sha":null,"method":"dc.general","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:21:49"}},"source":"10_descriptive/dc.general.cohort.eda.qmd",".hvti_render_id":"051bada3256fc0f2bdaac4b5aa4194c7432d552f19731bb1c2c51e7bd10207d6",".hvti_source_sha256":"a44edb638a9ac95e3c860e2944e7691c9a7b1dd0df6af78f4ed35bc7a3b25911"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.29","sha":null,"method":"dc.general.cohort.eda","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-25 13:07:25","job":"dc.general.cohort.eda","rendered":"2026-11-25T18:07:25Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.6.3","source":null},{"package":"hvtiRutilities","version":"1.5.29","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261125.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-25T18:03:42Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"cohort","type":"eda","source_sha256":"c72cfa56e3afba6331915d3fc8dd8b3a29cf8030867b83e3665719c8e6b52f82","run":{"start":"2026-11-25T13:07:24-0500","end":"2026-11-25T13:07:25-0500","time_zone":"EST","duration_seconds":0.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.general.cohort.eda.qmd","template":"dc.general","prefix":"dc","qualifier":"general","subject":"cohort","type":"eda","hvtiRtemplates":"1.6.3"},"datasets":[{"name":"built","version_file":"built_20261125.parquet","registered":"2026-11-25","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.3","sha":null,"method":"dc.general","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-25 13:07:24"}},"source":"10_descriptive/dc.general.cohort.eda.qmd",".hvti_render_id":"b117c46c4f06799cd99b43c23781665dc05b6b79c7e358b8a7bd77b9fcc9c271",".hvti_source_sha256":"c72cfa56e3afba6331915d3fc8dd8b3a29cf8030867b83e3665719c8e6b52f82"}</script>
 </section>
 
 </main>

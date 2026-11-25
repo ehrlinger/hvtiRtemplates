@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:28
+2026-11-25 13:11
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -54,8 +54,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -85,6 +85,7 @@ GROUP_LABELS <- c(surgical = "Surgical", transcatheter = "Transcatheter")
 # it. The flag is joined onto the bundle's patients by a study-keyed digest of
 # ID, so no identifier is kept or printed.
 MATCH <- "match_pair"
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 ID <- "patient_id"
 
@@ -288,7 +289,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261120.parquet) |
+| Source              | dataset `study` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -527,8 +528,8 @@ Table 5: Patients in each group, and those matched
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-20 17:28:55 EST |
-|  | Ended | 2026-11-20 17:28:57 EST |
+| Run | Started | 2026-11-25 13:11:03 EST |
+|  | Ended | 2026-11-25 13:11:05 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -537,13 +538,13 @@ Table 5: Patients in each group, and those matched
 |  | Template | lp.mirror |
 |  | Subject | approach |
 |  | Type | matched |
-|  | hvtiRtemplates | 1.6.2 |
-| Dataset `built` | Version file | built_20261120.parquet |
-|  | Version date | 2026-11-20 |
+|  | hvtiRtemplates | 1.6.3 |
+| Dataset `built` | Version file | built_20261125.parquet |
+|  | Version date | 2026-11-25 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-11-20 17:28:43 -0500, data built_20261120.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-11-25 13:10:51 -0500, data built_20261125.parquet |
 | Reproducibility | renv | not active |

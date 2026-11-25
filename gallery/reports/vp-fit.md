@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:33
+2026-11-25 13:15
 
 Gallery job on the synthetic cohort: a VarPro screen of survival after
 operation (iv_dead, dead) on the nine preoperative predictors rfs-fit
@@ -104,8 +104,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -115,6 +115,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -143,7 +144,7 @@ KEY <- ID
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
 #     or "nearest" with to = a cohort date column). A tie stops: picking one
 #     record silently would be a hidden choice. This job screens one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
@@ -382,7 +383,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -849,18 +850,34 @@ Code
 # how much the selection moves, so each refit also draws its patients.
 .stab <- data.frame(r = integer(), variable = character(), selected = logical(), tested = logical())
 if (REPEATS > 0) {
-  .stab <- do.call(rbind, lapply(seq_len(REPEATS), function(r) {
+  # Refit r's patients and noise. Drawing them is cheap and seeded, so they are drawn once to ask which
+  # refits the cache lacks and again to fit, and come out the same both times.
+  .repeat_data <- function(r) {
     set.seed(abs(SEED) + r)
     rows <- sort(sample.int(nrow(d), floor(SUBSAMPLE * nrow(d))))
-    dr <- vp_add_noise(d[rows, , drop = FALSE], PREDICTORS, NOISE_N, SEED + r)
+    vp_add_noise(d[rows, , drop = FALSE], PREDICTORS, NOISE_N, SEED + r)
+  }
+  # The cache keys on this code as written, so it must not change: a refit cached by an earlier copy of this
+  # job then still loads.
+  .repeat_code <- quote(
+    varpro(model, dr, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, sparse = SPARSE, mtry = .mtry,
+           nodesize.external = .nodesize_external, max.tree = .max_tree, max.rules.tree = MAX_RULES_TREE,
+           verbose = FALSE, cores = 1L, seed = -abs(SEED + r))
+  )
+  .todo <- vapply(seq_len(REPEATS), function(r) {
+    dr <- .repeat_data(r)
     .nodesize_external <- vp_nodesize_external(dr)
-    fr <- cache_fit(
-      sprintf("vp-repeat-%02d", r),
-      varpro(model, dr, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, sparse = SPARSE, mtry = .mtry,
-             nodesize.external = .nodesize_external, max.tree = .max_tree, max.rules.tree = MAX_RULES_TREE,
-             verbose = FALSE, cores = 1L, seed = -abs(SEED + r)),
-      seed = SEED + r, dir = CACHE_DIR, refit = REFIT
-    )
+    hvtiRutilities::cache_would_fit(sprintf("vp-repeat-%02d", r), .repeat_code, seed = SEED + r, dir = CACHE_DIR,
+                                    refit = REFIT)
+  }, logical(1L))
+  # Each refit that fits is reported to job_status() and the render log as done of total, with an estimate of
+  # what is left. Refits read from the cache are not counted. Outside a render the reporter is NULL.
+  .tick <- .job$progress("refit")
+  .stab <- do.call(rbind, lapply(seq_len(REPEATS), function(r) {
+    dr <- .repeat_data(r)
+    .nodesize_external <- vp_nodesize_external(dr)
+    fr <- cache_fit(sprintf("vp-repeat-%02d", r), .repeat_code, seed = SEED + r, dir = CACHE_DIR, refit = REFIT)
+    if (.todo[r] && !is.null(.tick)) .tick(sum(.todo[seq_len(r)]), sum(.todo))
     cr <- vp_judge(vp_coverage(fr, abs(SEED) + r))
     cr <- cr[!cr$noise, ]
     data.frame(r = r, variable = cr$variable, selected = cr$selected, tested = cr$tested)
@@ -989,9 +1006,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-20 17:32:42 EST  |
-|                 | Ended          | 2026-11-20 17:33:47 EST  |
-|                 | Duration       | 1 min 5 s                |
+| Run             | Started        | 2026-11-25 13:14:42 EST  |
+|                 | Ended          | 2026-11-25 13:15:46 EST  |
+|                 | Duration       | 1 min 4 s                |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -999,9 +1016,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 |                 | Template       | vp.fit                   |
 |                 | Subject        | dead                     |
 |                 | Type           | vp                       |
-|                 | hvtiRtemplates | 1.6.2                    |
-| Dataset `built` | Version file   | built_20261120.parquet   |
-|                 | Version date   | 2026-11-20               |
+|                 | hvtiRtemplates | 1.6.3                    |
+| Dataset `built` | Version file   | built_20261125.parquet   |
+|                 | Version date   | 2026-11-25               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |

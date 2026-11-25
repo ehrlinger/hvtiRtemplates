@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:27
+2026-11-25 13:09
 
 An `hs-concordance` job predicts **every patient through every treatment
 group’s model**. Each group’s risk-factor model was fitted by its own
@@ -85,8 +85,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -99,6 +99,7 @@ Code
 # job's own choice, not taken from a model: each hm model was fitted on ONE
 # group's rows, and this job predicts for all of them.
 # Demo: the dataset, and a WHERE that keeps every group being compared.
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 ANALYSIS_SET <- NULL
 WHERE <- quote(!is.na(creat_pr))
@@ -118,7 +119,7 @@ KEY <- ID
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
 #     breaks it. This job models one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
@@ -232,7 +233,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -1047,8 +1048,8 @@ saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-20 17:27:08 EST |
-|  | Ended | 2026-11-20 17:27:15 EST |
+| Run | Started | 2026-11-25 13:09:25 EST |
+|  | Ended | 2026-11-25 13:09:31 EST |
 |  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -1057,16 +1058,16 @@ saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 |  | Template | hs.concordance |
 |  | Subject | dead |
 |  | Type | approach |
-|  | hvtiRtemplates | 1.6.2 |
-| Dataset `built` | Version file | built_20261120.parquet |
-|  | Version date | 2026-11-20 |
+|  | hvtiRtemplates | 1.6.3 |
+| Dataset `built` | Version file | built_20261125.parquet |
+|  | Version date | 2026-11-25 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-surgical/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-11-20 17:26:39 -0500, data built_20261120.parquet |
+|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-11-25 13:08:59 -0500, data built_20261125.parquet |
 |  | Handoff | `dead-transcatheter/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-11-20 17:26:59 -0500, data built_20261120.parquet |
+|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-11-25 13:09:17 -0500, data built_20261125.parquet |
 | Reproducibility | renv | not active |

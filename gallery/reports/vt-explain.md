@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:38
+2026-11-25 13:23
 
 Explains the `vt-fit` job in this set: which patients the twins say
 repair suits, stratified by the echo-phenotype clusters.
@@ -72,7 +72,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.2
+hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -111,6 +111,10 @@ if (!file.exists(.handoff)) {
 .cfg <- study_config(start = .root)
 .vt_read <- hvtiRtemplates:::.read_handoff(.handoff, "twins", .cfg, "the vt-fit job")
 .vt <- .vt_read$value
+if (isTRUE(.vt$settings$eligibility_only)) {
+  stop("The fit at ", .handoff, " is eligibility only (TIME <- NULL in vt-fit): it has no forests or twin curves ",
+       "to explain. Name the outcome in vt-fit and render it again.", call. = FALSE)
+}
 .provenance_data <- .vt_read$lineage$data
 .provenance_artifacts <- c(.vt_read$lineage$artifacts, list(.vt_read$record))
 ARMS <- .vt$settings$arms
@@ -312,7 +316,7 @@ if (!nrow(.cp)) {
 }
 ```
 
-![](assets/fe0863e0e800f11b556c09016fda5961.png)
+![](assets/d03a599940f751d6eeb81da8fd2a346f.png)
 
 Figure 5: Each treated patient in distribution: predicted RMST under the
 arm received (own) against under the other arm (twin). On the dashed
@@ -406,7 +410,7 @@ if (!nrow(.dd)) {
 }
 ```
 
-![](assets/9fb4eb36741f2e25a9ae95da35dd00ee.png)
+![](assets/186992989ad94ea2330158be5c5005e2.png)
 
 Figure 6: Each treated patient’s RMST difference against their distance
 to the nearest patient of the other arm (for the isolation forest, their
@@ -482,6 +486,23 @@ if (is.list(STRATIFY)) {
                                    "STRATIFY")
   .strata <- data.frame(ID = .d_all[[.vt$settings$id]], stratum = as.character(.d_all[[STRATIFY]]))
 }
+# A missing stratum value is no stratum. Dropping it here keeps the table, both figures and their captions
+# agreeing: the table and the curves' aggregate() would drop it anyway, without counting it.
+if (!is.null(.strata)) .strata <- .strata[!is.na(.strata$stratum), , drop = FALSE]
+# A patient with no stratum is left out of both figures below, and a figure read on its own must say so.
+# Each figure draws its own patients, so each counts its own; the counts are made here because a
+# caption is read before its chunk runs.
+.no_stratum <- function(ids) {
+  n <- if (is.null(.strata)) 0L else sum(!unique(ids) %in% .strata$ID)
+  if (n == 0L) return("")
+  paste0(" ", n, if (n == 1L) " patient has no stratum and is not shown." else " patients have no stratum and are not shown.")
+}
+.cap_stratum <- paste0("The RMST difference by stratum, one panel per arm received. Box: 15th to 85th percentile of the ",
+                       "patients in distribution, whiskers 5th to 95th, drawn where a cell holds at least 5; every patient ",
+                       "is a point, and the ringed ones are out of distribution.", .no_stratum(r$ID[!r$no_arm]))
+.cap_stratum_curves <- paste0("Mean predicted survival under each arm's forest, patients in distribution, one panel per ",
+                              "stratum. The shaded area to the horizon is the restricted mean survival time.",
+                              .no_stratum(r$ID[.eligible]))
 ```
 
 Code
@@ -558,7 +579,7 @@ if (!is.null(.sa) && nrow(.sa)) {
 }
 ```
 
-![](assets/08c467bb8383944a2c1e198568933129.png)
+![](assets/c24be4ab2d6d5a0d160f1d9c69fc4637.png)
 
 Figure 7: The RMST difference by stratum, one panel per arm received.
 Box: 15th to 85th percentile of the patients in distribution, whiskers
@@ -683,18 +704,18 @@ print(knitr::kable(.betas, digits = 2, row.names = FALSE))
 
 | variable |  beta | lower | upper | unestimable |
 |:---------|------:|------:|------:|------------:|
-| age      |  0.27 |  0.19 |  0.34 |           0 |
-| female   |  0.06 |  0.00 |  0.14 |           0 |
-| bmi      |  0.00 | -0.08 |  0.06 |           0 |
+| age      |  0.27 |  0.20 |  0.34 |           0 |
+| female   |  0.06 | -0.01 |  0.13 |           0 |
+| bmi      |  0.00 | -0.07 |  0.06 |           0 |
 | hx_chf   | -0.05 | -0.12 |  0.03 |           0 |
-| hx_dm    |  0.00 | -0.07 |  0.08 |           0 |
-| nyha_pr  |  0.04 | -0.02 |  0.11 |           0 |
-| lvef     | -0.05 | -0.11 |  0.02 |           0 |
+| hx_dm    |  0.00 | -0.06 |  0.07 |           0 |
+| nyha_pr  |  0.04 | -0.04 |  0.12 |           0 |
+| lvef     | -0.05 | -0.13 |  0.02 |           0 |
 | creat_pr |  0.00 | -0.08 |  0.07 |           0 |
 | lvedd    |  0.84 |  0.81 |  0.88 |           0 |
-| lvesd    |  0.86 |  0.83 |  0.89 |           0 |
-| la_diam  |  0.18 |  0.11 |  0.26 |           0 |
-| rvsp     |  0.16 |  0.09 |  0.25 |           0 |
+| lvesd    |  0.86 |  0.82 |  0.89 |           0 |
+| la_diam  |  0.18 |  0.11 |  0.27 |           0 |
+| rvsp     |  0.16 |  0.10 |  0.24 |           0 |
 | e_e      |  0.09 |  0.03 |  0.16 |           0 |
 
 Table 4: Standardized beta for each characteristic. A positive beta: the
@@ -720,7 +741,7 @@ if (!nrow(.bp)) {
 }
 ```
 
-![](assets/95c2ca6abb0add85c5032edf64ec3afc.png)
+![](assets/81934056af58d6f0f78f16083b86ed2d.png)
 
 Figure 9: Standardized association of each characteristic with the
 estimated effect, by overlap-weighted regression. A positive beta: the
@@ -925,8 +946,8 @@ WarningBefore this goes in a manuscript
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-20 17:38:14 EST |
-|  | Ended | 2026-11-20 17:38:20 EST |
+| Run | Started | 2026-11-25 13:23:10 EST |
+|  | Ended | 2026-11-25 13:23:16 EST |
 |  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -936,15 +957,15 @@ WarningBefore this goes in a manuscript
 |  | Template | vt.explain |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.6.2 |
-| Dataset `built` | Version file | built_20261120.parquet |
-|  | Version date | 2026-11-20 |
+|  | hvtiRtemplates | 1.6.3 |
+| Dataset `built` | Version file | built_20261125.parquet |
+|  | Version date | 2026-11-25 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered not recorded |
-|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-20 17:37:56 -0500, data built_20261120.parquet |
-|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-20 17:37:00 -0500, data built_20261120.parquet |
+|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-25 13:22:53 -0500, data built_20261125.parquet |
+|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-25 13:21:58 -0500, data built_20261125.parquet |
 | Reproducibility | renv | not active |

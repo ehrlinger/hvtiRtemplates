@@ -39,7 +39,7 @@ and [Work a
 job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-what-you-have-to-change)
 shows three ways to find them.
 
-1.  **Study choices**: 10 choices marked `EDIT:`.
+1.  **Study choices**: 12 choices marked `EDIT:`.
 2.  **Cohort**: reads the study data.
 3.  **Missing values**
 4.  **Imputation**: fits and caches its results, so a later render
@@ -77,5 +77,5 @@ and it records the job's provenance beside the report.
   name the file and its set. Add it with
   `add_job("vt.fit", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.6.2 · built 2026-11-20.
+Generated from the template by hvtiRtemplates, 1.6.3 · built 2026-11-25.
 The template holds the details; this sheet is its outline.

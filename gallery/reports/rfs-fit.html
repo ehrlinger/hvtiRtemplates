@@ -2238,7 +2238,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-20 17:31</p>
+      <p class="date">2026-11-25 13:13</p>
     </div>
   </div>
   
@@ -2250,7 +2250,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: rfs.fit 1.6.2 sha256:28965c82be3a5c036ebce68ea159f68478a448666751847991081e6f210ecaa2 -->
+<!-- hvtiRtemplates: rfs.fit 1.6.3 sha256:b7a562d097ed4474a557dc908175223906d6c285a92fe5bab73b03f97836630f -->
 <p>Gallery job on the synthetic cohort: survival after operation (iv_dead, dead) on nine preoperative predictors.</p>
 <!--
      survival outcome), and say which outcome and candidate predictors it
@@ -2270,7 +2270,7 @@ vertical-align: -.125em;
      A set is keyed on (subject, analysis type), not on the subject alone.
      One subject may be analyzed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
-     Two sets keyed on `dead_pa` alone would write their life tables to the
+     Two sets keyed on `dead` alone would write their life tables to the
      same file. -->
 <details class="code-fold">
 <summary>Code</summary>
@@ -2342,7 +2342,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261120.parquet</code>, dated 2026-11-20 · rendered by gallery on gallery · hvtiRtemplates 1.6.2</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261125.parquet</code>, dated 2026-11-25 · rendered by gallery on gallery · hvtiRtemplates 1.6.3</p>
 </div>
 </div>
 </div>
@@ -2353,128 +2353,138 @@ vertical-align: -.125em;
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the registered dataset this job reads (&quot;built&quot; is the study dataset).</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;built&quot;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>ANALYSIS_SET <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- quote(age &gt;= 18)</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- rlang::exprs(age &gt;= 18, hx_chf == 1)</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN;</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># name another column, such as &quot;randid&quot;, if the study uses one.</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: what makes a row unique; one row per patient unless repeated measures</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># add their visit time or date, for example KEY &lt;- c(ID, &quot;iv_echo&quot;).</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> ID</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional, and needs no edit: NULL reads the cohort alone. To join one</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># registered ancillary dataset (echoes, labs), name it in JOIN. The cohort</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># above decides the patients, one row each; the joined records of other</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are dropped and counted in the data table.</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#     and a column both datasets have stops, so list only those the job needs.</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#   REDUCE: NULL keeps a row per joined record, keyed on that dataset&#39;s key;</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     list(rule = &quot;first&quot;, by = &quot;echo_date&quot;) keeps one row per patient (&quot;last&quot;,</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     or &quot;nearest&quot; with to = a cohort date column). WHERE on a joined column</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">#     filters the records first, so &quot;last&quot; with WHERE echo_type == &quot;TTE&quot;</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co">#     keeps each patient&#39;s last TTE. A tie stops: picking one record</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co">#     silently would be a hidden choice; by = c(&quot;echo_date&quot;, &quot;echo_seq&quot;)</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co">#     breaks it. This job models one row per</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co">#     patient, so a JOIN without REDUCE stops here.</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_KEY: overrides the joined dataset&#39;s registered key.</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>JOIN <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>JOIN_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>REDUCE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>JOIN_KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: follow-up time and the event indicator, coded 1 = event, 0 = censored.</span></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>TIME   <span class="ot">&lt;-</span> <span class="st">&quot;iv_dead&quot;</span></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>EVENT  <span class="ot">&lt;-</span> <span class="st">&quot;dead&quot;</span></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the candidate predictors. Name them rather than taking every column: a</span></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co"># built dataset carries identifiers, dates and derived outcomes, and a forest</span></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co"># will split on a date that quietly encodes follow-up.</span></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>PREDICTORS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>, <span class="st">&quot;female&quot;</span>, <span class="st">&quot;bmi&quot;</span>, <span class="st">&quot;hx_chf&quot;</span>, <span class="st">&quot;hx_dm&quot;</span>, <span class="st">&quot;nyha_pr&quot;</span>, <span class="st">&quot;lvef&quot;</span>, <span class="st">&quot;plvmassi&quot;</span>, <span class="st">&quot;creat_pr&quot;</span>)</span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the fewest events per candidate predictor before the report is marked</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># draft (a final render stops). 20 is a guess, the low end of a 20 to 30 rule of</span></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># thumb with no study behind it; 0 reports the ratio only. The learning curve</span></span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co"># under &quot;Does the forest work?&quot; measures what this ratio only guesses at, on</span></span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># this cohort.</span></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>MIN_EVENTS_PER_FEATURE <span class="ot">&lt;-</span> <span class="dv">20</span></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: forest size and seed. The error-by-trees plot below says whether NTREE</span></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co"># was enough: a curve still falling at its right edge was not. SEED makes the</span></span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># forest reproducible and is part of its cache key. It is used twice, on</span></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># purpose: cache_fit() seeds R&#39;s generator with it, and rfsrc() is handed it</span></span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># as `seed =`, negated as randomForestSRC documents. Without that</span></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># argument rfsrc() draws a seed from R&#39;s generator, so the forest would depend</span></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># on whatever ran before it.</span></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>NTREE <span class="ot">&lt;-</span> <span class="dv">300</span></span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>SEED  <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how the trees split, sized for the events this cohort has. A survival</span></span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># split is decided by events, not patients, so a leaf needs a few events to say</span></span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co"># anything. NULL sizes a leaf for about 2 events, nodesize = 2 * n / events, and</span></span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># never below randomForestSRC&#39;s survival default of 15: about 60 for 60 events</span></span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co"># in 1,900 patients, about 160 for 150 in 12,000, and 15 for a cohort where</span></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co"># events are common. A number overrides it.</span></span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>NODESIZE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC&#39;s own defaults, written out so the report says what was used:</span></span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># 10 random split points per variable, sqrt(predictors) tried at each split</span></span>
-<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co"># (MTRY &lt;- NULL), and log-rank splitting.</span></span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>NSPLIT    <span class="ot">&lt;-</span> <span class="dv">10</span></span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>MTRY      <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>SPLITRULE <span class="ot">&lt;-</span> <span class="st">&quot;logrank&quot;</span></span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: TRUE searches for the leaf size with randomForestSRC::tune.nodesize()</span></span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># instead, and the forest uses the size it picks. Off by default: each grid</span></span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># value grows a 100-tree forest. The search here differs from that function&#39;s</span></span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># defaults in two ways, both for sparse events. It grows each forest on 63.2% of</span></span>
-<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># patients; the default, min(0.632 n, max(150, n^0.8)), keeps about 420 of</span></span>
-<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># 1,900 patients and 1,830 of 12,000, which is about 13 and 23 events at the</span></span>
-<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="co"># event rates above, too few to tell one leaf size from another. And its grid</span></span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># reaches twice the 2-event size rather than stopping at 150, which a large</span></span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="co"># sparse cohort needs. The search always drops patients missing a predictor,</span></span>
-<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="co"># so with NA_ACTION &lt;- &quot;na.impute&quot; it tunes on the complete cases only.</span></span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>TUNE_NODESIZE <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># The learning curve: is the cohort large enough? It refits the forest on</span></span>
-<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># subsamples of LEARNING_FRACTIONS of the patients, LEARNING_B times each, plus</span></span>
-<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="co"># a bootstrap of the whole cohort, and tracks two things against the number of</span></span>
-<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="co"># events: the out-of-bag error, and whether the top LEARNING_TOP_K variables by</span></span>
-<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a><span class="co"># importance agree from one refit to the next (the top one fewer than there are</span></span>
-<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="co"># predictors, when that is smaller). The second is the bar for</span></span>
-<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="co"># rfs-explain, and it needs far more events than the first. The refits use a</span></span>
-<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="co"># forest of their own, LEARNING_NTREE trees with the leaf size above, because</span></span>
-<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="co"># the curve needs agreement between forests rather than one precise forest,</span></span>
-<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="co"># and NTREE trees each would multiply the cost by NTREE / LEARNING_NTREE.</span></span>
-<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="co"># Three fractions and the whole-cohort bootstrap, 20 refits each, is 80</span></span>
-<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="co"># forests; it is cached and run by run_job().</span></span>
-<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>LEARNING_FRACTIONS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.125</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>)</span>
-<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>LEARNING_B         <span class="ot">&lt;-</span> <span class="dv">20</span></span>
-<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a>LEARNING_TOP_K     <span class="ot">&lt;-</span> <span class="dv">5</span></span>
-<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>LEARNING_NTREE     <span class="ot">&lt;-</span> <span class="dv">250</span></span>
-<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: &quot;na.omit&quot; drops a patient missing any predictor; &quot;na.impute&quot; keeps them</span></span>
-<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a><span class="co"># and imputes inside the forest. The classification and regression exemplars</span></span>
-<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a><span class="co"># imputed. Dropping is simpler to report and can shrink the cohort a great deal.</span></span>
-<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a>NA_ACTION <span class="ot">&lt;-</span> <span class="st">&quot;na.omit&quot;</span></span>
-<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
-<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old forest; TRUE recomputes only the caches</span></span>
-<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date, so it is safe to leave on while iterating.</span></span>
-<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># A file name, such as &quot;match_set.rds&quot;, reads an unregistered file in the datasets folder, as a draft.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;built&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>ANALYSIS_SET <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- quote(age &gt;= 18)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- rlang::exprs(age &gt;= 18, hx_chf == 1)</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># name another column, such as &quot;randid&quot;, if the study uses one.</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: what makes a row unique; one row per patient unless repeated measures</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># add their visit time or date, for example KEY &lt;- c(ID, &quot;iv_echo&quot;).</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> ID</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional, and needs no edit: NULL reads the cohort alone. To join one</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># registered ancillary dataset (echoes, labs), name it in JOIN. The cohort</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># above decides the patients, one row each; the joined records of other</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are dropped and counted in the data table.</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#     and a column both datasets have stops, so list only those the job needs.</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">#   REDUCE: NULL keeps a row per joined record, keyed on that dataset&#39;s key;</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     list(rule = &quot;first&quot;, by = &quot;echo_date&quot;) keeps one row per patient (&quot;last&quot;,</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">#     or &quot;nearest&quot; with to = a cohort date column). WHERE on a joined column</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co">#     filters the records first, so &quot;last&quot; with WHERE echo_type == &quot;TTE&quot;</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co">#     keeps each patient&#39;s last TTE. A tie stops: picking one record</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co">#     silently would be a hidden choice; by = c(&quot;echo_date&quot;, &quot;echo_seq&quot;)</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co">#     breaks it. This job models one row per</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co">#     patient, so a long JOIN without REDUCE stops here.</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_KEY: overrides the joined dataset&#39;s registered key.</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>JOIN <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>JOIN_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>REDUCE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>JOIN_KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: follow-up time and the event indicator, coded 1 = event, 0 = censored.</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>TIME   <span class="ot">&lt;-</span> <span class="st">&quot;iv_dead&quot;</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>EVENT  <span class="ot">&lt;-</span> <span class="st">&quot;dead&quot;</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the candidate predictors. Name them rather than taking every column: a</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co"># built dataset carries identifiers, dates and derived outcomes, and a forest</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co"># will split on a date that quietly encodes follow-up.</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>PREDICTORS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>, <span class="st">&quot;female&quot;</span>, <span class="st">&quot;bmi&quot;</span>, <span class="st">&quot;hx_chf&quot;</span>, <span class="st">&quot;hx_dm&quot;</span>, <span class="st">&quot;nyha_pr&quot;</span>, <span class="st">&quot;lvef&quot;</span>, <span class="st">&quot;plvmassi&quot;</span>, <span class="st">&quot;creat_pr&quot;</span>)</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the fewest events per candidate predictor before the report is marked</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># draft (a final render stops). 20 is a guess, the low end of a 20 to 30 rule of</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co"># thumb with no study behind it; 0 reports the ratio only. The learning curve</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># under &quot;Does the forest work?&quot; measures what this ratio only guesses at, on</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co"># this cohort.</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>MIN_EVENTS_PER_FEATURE <span class="ot">&lt;-</span> <span class="dv">20</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: forest size and seed. The error-by-trees plot below says whether NTREE</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># was enough: a curve still falling at its right edge was not. SEED makes the</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># forest reproducible and is part of its cache key. It is used twice, on</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># purpose: cache_fit() seeds R&#39;s generator with it, and rfsrc() is handed it</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># as `seed =`, negated as randomForestSRC documents. Without that</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># argument rfsrc() draws a seed from R&#39;s generator, so the forest would depend</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># on whatever ran before it.</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>NTREE <span class="ot">&lt;-</span> <span class="dv">300</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>SEED  <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how the trees split, sized for the events this cohort has. A survival</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co"># split is decided by events, not patients, so a leaf needs a few events to say</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># anything. NULL sizes a leaf for about 2 events, nodesize = 2 * n / events, and</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co"># never below randomForestSRC&#39;s survival default of 15: about 60 for 60 events</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co"># in 1,900 patients, about 160 for 150 in 12,000, and 15 for a cohort where</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># events are common. A number overrides it.</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>NODESIZE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC&#39;s own defaults, written out so the report says what was used:</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co"># 10 random split points per variable, sqrt(predictors) tried at each split</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="co"># (MTRY &lt;- NULL), and log-rank splitting.</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>NSPLIT    <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>MTRY      <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>SPLITRULE <span class="ot">&lt;-</span> <span class="st">&quot;logrank&quot;</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: TRUE searches for the leaf size with randomForestSRC::tune.nodesize()</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># instead, and the forest uses the size it picks. Off by default: each grid</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># value grows a 100-tree forest. The search here differs from that function&#39;s</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># defaults in two ways, both for sparse events. It grows each forest on 63.2% of</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># patients; the default, min(0.632 n, max(150, n^0.8)), keeps about 420 of</span></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="co"># 1,900 patients and 1,830 of 12,000, which is about 13 and 23 events at the</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># event rates above, too few to tell one leaf size from another. And its grid</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="co"># reaches twice the 2-event size rather than stopping at 150, which a large</span></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="co"># sparse cohort needs. The search always drops patients missing a predictor,</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># so with NA_ACTION &lt;- &quot;na.impute&quot; it tunes on the complete cases only.</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>TUNE_NODESIZE <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># The learning curve: is the cohort large enough? It refits the forest on</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="co"># subsamples of LEARNING_FRACTIONS of the patients, LEARNING_B times each, plus</span></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="co"># a bootstrap of the whole cohort, and tracks two things against the number of</span></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a><span class="co"># events: the out-of-bag error, and whether the top LEARNING_TOP_K variables by</span></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="co"># importance agree from one refit to the next (the top one fewer than there are</span></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="co"># predictors, when that is smaller). The second is the bar for</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="co"># rfs-explain, and it needs far more events than the first. The refits use a</span></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="co"># forest of their own, LEARNING_NTREE trees with the leaf size above, because</span></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="co"># the curve needs agreement between forests rather than one precise forest,</span></span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="co"># and NTREE trees each would multiply the cost by NTREE / LEARNING_NTREE.</span></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="co"># Three fractions and the whole-cohort bootstrap, 20 refits each, is 80</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a><span class="co"># forests; it is cached and run by run_job().</span></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>LEARNING_FRACTIONS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.125</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>)</span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a>LEARNING_B         <span class="ot">&lt;-</span> <span class="dv">20</span></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>LEARNING_TOP_K     <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a>LEARNING_NTREE     <span class="ot">&lt;-</span> <span class="dv">250</span></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the recommendation printed under the learning curve. LEARNING_AGREEMENT is</span></span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a><span class="co"># the agreement, Jaccard and Kendall tau both, that the top variables must reach at</span></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="co"># the rightmost point to call the cohort large enough. 0.8 is a cautious start, not</span></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a><span class="co"># evidence: with the top 5, a mean Jaccard of 0.8 needs most refits to share all</span></span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a><span class="co"># five. MIN_PREDICTORS is the fewest candidate predictors for which a forest is</span></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a><span class="co"># worth fitting over a regression model. Both are advice; the job never stops on them.</span></span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>LEARNING_AGREEMENT <span class="ot">&lt;-</span> <span class="fl">0.8</span></span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>MIN_PREDICTORS     <span class="ot">&lt;-</span> <span class="dv">10</span></span>
 <span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
-<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;rfs-fit-diagnostics&quot;). The names are the</span></span>
-<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
-<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: &quot;na.omit&quot; drops a patient missing any predictor; &quot;na.impute&quot; keeps them</span></span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a><span class="co"># and imputes inside the forest. The classification and regression exemplars</span></span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a><span class="co"># imputed. Dropping is simpler to report and can shrink the cohort a great deal.</span></span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>NA_ACTION <span class="ot">&lt;-</span> <span class="st">&quot;na.omit&quot;</span></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old forest; TRUE recomputes only the caches</span></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date, so it is safe to leave on while iterating.</span></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;rfs-fit-diagnostics&quot;). The names are the</span></span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2564,7 +2574,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261120.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261125.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2816,128 +2826,214 @@ Figure 3: Brier score over follow-up. The black solid line is the out-of-bag Br
 </div>
 </div>
 </div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The survival counterpart of variance explained. A patient no tree left out</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># has no out-of-bag prediction, and randomForestSRC leaves them out.</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>.oob <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">complete.cases</span>(forest<span class="sc">$</span>survival.oob)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>.brier <span class="ot">&lt;-</span> randomForestSRC<span class="sc">::</span><span class="fu">get.brier.survival</span>(forest, <span class="at">cens.model =</span> <span class="st">&quot;km&quot;</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># The baseline: the cohort&#39;s Kaplan-Meier survival given to every patient,</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># scored by the same function, so it has the same censoring weights, times and</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># patients as the forest. It is swapped into a copy of the forest only for the</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co"># rows that have an out-of-bag prediction, so the patients stay the same.</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>.km <span class="ot">&lt;-</span> survival<span class="sc">::</span><span class="fu">survfit</span>(survival<span class="sc">::</span><span class="fu">Surv</span>(forest<span class="sc">$</span>yvar[, <span class="dv">1</span>], forest<span class="sc">$</span>yvar[, <span class="dv">2</span>]) <span class="sc">~</span> <span class="dv">1</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>.km_surv <span class="ot">&lt;-</span> <span class="fu">summary</span>(.km, <span class="at">times =</span> forest<span class="sc">$</span>time.interest, <span class="at">extend =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>surv</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>.reference <span class="ot">&lt;-</span> forest</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>.reference<span class="sc">$</span>survival.oob[.oob, ] <span class="ot">&lt;-</span> <span class="fu">matrix</span>(.km_surv, <span class="fu">sum</span>(.oob), <span class="fu">length</span>(.km_surv), <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>.brier_ref <span class="ot">&lt;-</span> randomForestSRC<span class="sc">::</span><span class="fu">get.brier.survival</span>(.reference, <span class="at">cens.model =</span> <span class="st">&quot;km&quot;</span>)</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Harrell&#39;s C from the out-of-bag mortality, on the same patients. get.cindex()</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="co"># returns the concordance error, one minus C. The error curve&#39;s last point is</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="co"># not used: randomForestSRC 3.10.0 records a value there that differs from</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="co"># get.cindex() and survival::concordance() by about 0.007 on the veteran data.</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>.cindex <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> randomForestSRC<span class="sc">::</span><span class="fu">get.cindex</span>(forest<span class="sc">$</span>yvar[.oob, <span class="dv">1</span>], forest<span class="sc">$</span>yvar[.oob, <span class="dv">2</span>], forest<span class="sc">$</span>predicted.oob[.oob])</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">measure =</span> <span class="fu">c</span>(<span class="st">&quot;Patients with an out-of-bag prediction&quot;</span>, <span class="st">&quot;Integrated out-of-bag Brier score&quot;</span>,</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>              <span class="st">&quot;Integrated Brier score of Kaplan-Meier&quot;</span>, <span class="st">&quot;Integrated Brier skill score&quot;</span>, <span class="st">&quot;Harrell&#39;s C&quot;</span>),</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(<span class="fu">paste</span>(<span class="fu">sum</span>(.oob), <span class="st">&quot;of&quot;</span>, <span class="fu">length</span>(.oob)),</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>            <span class="fu">format</span>(<span class="fu">signif</span>(<span class="fu">c</span>(.brier<span class="sc">$</span>crps.std, .brier_ref<span class="sc">$</span>crps.std, <span class="dv">1</span> <span class="sc">-</span> .brier<span class="sc">$</span>crps.std <span class="sc">/</span> .brier_ref<span class="sc">$</span>crps.std, .cindex), <span class="dv">3</span>)))</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div id="tbl-brier-skill" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-brier-skill-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 3: Integrated Brier skill score. How many patients have an out-of-bag prediction, the forest’s out-of-bag Brier score averaged over follow-up, the same for the Kaplan-Meier curve given to every patient, and the forest’s skill, one minus their ratio, then the forest’s out-of-bag Harrell’s C.
+</figcaption>
+<div aria-describedby="tbl-brier-skill-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">measure</th>
+<th style="text-align: left;">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Patients with an out-of-bag prediction</td>
+<td style="text-align: left;">725 of 725</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Integrated out-of-bag Brier score</td>
+<td style="text-align: left;">0.175</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Integrated Brier score of Kaplan-Meier</td>
+<td style="text-align: left;">0.210</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Integrated Brier skill score</td>
+<td style="text-align: left;">0.165</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Harrell’s C</td>
+<td style="text-align: left;">0.671</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The five rows, in order:</p>
+<ul>
+<li><strong>Patients with an out-of-bag prediction.</strong> A patient gets one only from a tree grown without them. Each tree leaves out about a third of the patients, so after <em>b</em> trees a patient has none with a chance of roughly 0.63 to the power <em>b</em>. Both scores below rest on these patients alone. When this row is short of the whole cohort, the forest has too few trees; raise <code>NTREE</code>.</li>
+<li><strong>Integrated out-of-bag Brier score.</strong> The curve in the Brier figure above, averaged over follow-up: the area under it divided by the length of follow-up. At each time the Brier score is the mean squared difference between a patient’s predicted survival and whether they were still alive, with censored patients handled by weighting the others by the chance of still being under observation (the Kaplan-Meier estimate of censoring). 0 is perfect.</li>
+<li><strong>Integrated Brier score of Kaplan-Meier.</strong> The same score for the simplest prediction there is: every patient given the cohort’s Kaplan-Meier curve. It needs no predictors, so it is the baseline the forest must beat. It is computed with the same function, censoring weights, times and patients as the forest’s, so the two differ only in the predictions.</li>
+<li><strong>Integrated Brier skill score.</strong> One minus the second row over the third: the share of the Kaplan-Meier curve’s error the forest removes, sometimes called R squared for survival. It reads like variance explained, 1 perfect and 0 no better than Kaplan-Meier, and it is out of bag, so it is not inflated by scoring the patients the forest was fit to. It can fall below 0, and when it does the forest predicts survival worse than the cohort’s curve. Late in follow-up few patients remain at risk and the censoring weights grow large, so a long thin tail can move this score; read it with the Brier figure.</li>
+<li><strong>Harrell’s C.</strong> Over every pair of patients whose order of events is known, the share in which the forest gave the patient with the earlier event the higher risk. 0.5 is a coin flip and 1 a perfect ordering. It is computed from the out-of-bag predictions and is close to, though not exactly, one minus the last point of the error curve above, which randomForestSRC records its own way. C measures discrimination, the order, and the rows above measure accuracy, the probabilities: a forest whose predicted survival is off by the same amount for everyone keeps its C and loses Brier skill. Read the two together.</li>
+</ul>
 <section id="is-the-cohort-large-enough" class="level3">
 <h3 class="anchored" data-anchor-id="is-the-cohort-large-enough">Is the cohort large enough?</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># One randomForestSRC::subsample() result per fraction and the whole-cohort</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># bootstrap last. Each subsample keeps the share of events of the cohort</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># (stratify = TRUE), and learning_subsample() records that, so the events in each</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># subsample refit are exact. The bootstrap draws with replacement, so its events</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># vary from draw to draw: the count shown for it is the cohort&#39;s, the expected</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># number in each draw, not an exact one.</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC 3.10.0 crashes R when it double-bootstraps a forest that imputed missing values (na.impute on</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co"># data with any NA); the plain subsamples are safe. So the learning curve first fills the gaps, once, with the main</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co"># forest&#39;s imputed values, and its own forests then have nothing to impute. Those values came from the whole cohort,</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co"># outcomes included, so each refit has seen part of the patients it leaves out, and every fraction may be</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co"># optimistic; the table, captions and reading text say so. If the gaps cannot be filled (the forest dropped rows),</span></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the whole-cohort bootstrap is left out instead and the curve stops at the largest fraction.</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>.learning_filled <span class="ot">&lt;-</span> NA_ACTION <span class="sc">==</span> <span class="st">&quot;na.impute&quot;</span> <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(forest<span class="sc">$</span>imputed.indv) <span class="sc">&gt;</span> <span class="dv">0</span>L <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(forest<span class="sc">$</span>xvar) <span class="sc">==</span> <span class="fu">nrow</span>(d)</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>.d_learn <span class="ot">&lt;-</span> d</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (.learning_filled) {</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  .d_learn[forest<span class="sc">$</span>imputed.indv, <span class="fu">names</span>(forest<span class="sc">$</span>imputed.data)] <span class="ot">&lt;-</span> forest<span class="sc">$</span>imputed.data</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="fu">sprintf</span>(<span class="fu">paste0</span>(<span class="st">&quot;The learning curve fills the gaps in %d rows once, with the main forest&#39;s imputed values. &quot;</span>,</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;Those were estimated from the whole cohort, so every fraction may be optimistic.&quot;</span>),</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">length</span>(forest<span class="sc">$</span>imputed.indv)))</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>.learning_boot <span class="ot">&lt;-</span> <span class="sc">!</span>(NA_ACTION <span class="sc">==</span> <span class="st">&quot;na.impute&quot;</span> <span class="sc">&amp;&amp;</span> <span class="fu">anyNA</span>(.d_learn))</span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>.learning_boot) {</span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;The whole-cohort bootstrap is left out: the forest imputes missing values, and randomForestSRC cannot &quot;</span>,</span>
-<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>          <span class="st">&quot;double-bootstrap such a forest. The curve stops at the largest fraction.&quot;</span>)</span>
-<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Quoted once, so the check below and cache_fit() read the same call.</span></span>
-<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>.learning_code <span class="ot">&lt;-</span> <span class="fu">quote</span>({</span>
-<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>  .lf <span class="ot">&lt;-</span> <span class="fu">rfsrc</span>(model, <span class="at">data =</span> .d_learn, <span class="at">ntree =</span> LEARNING_NTREE, <span class="at">nodesize =</span> .nodesize, <span class="at">nsplit =</span> NSPLIT, <span class="at">mtry =</span> MTRY,</span>
-<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>               <span class="at">splitrule =</span> SPLITRULE, <span class="at">na.action =</span> NA_ACTION, <span class="at">importance =</span> <span class="st">&quot;permute&quot;</span>, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED))</span>
-<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">learning_subsample</span>(.lf, <span class="at">fractions =</span> LEARNING_FRACTIONS, <span class="at">replicates =</span> LEARNING_B, <span class="at">bootstrap =</span> .learning_boot)</span>
-<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Refused outside run_job() only when the refits will actually run: a current cache loads, even under REFIT.</span></span>
-<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (hvtiRutilities<span class="sc">::</span><span class="fu">cache_would_fit</span>(<span class="st">&quot;rfs-learning&quot;</span>, .learning_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)) {</span>
-<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rfs-learning&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
-<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">why =</span> <span class="fu">sprintf</span>(<span class="st">&quot;the learning curve grows %d forests of %d trees&quot;</span>,</span>
-<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a>                                               (<span class="fu">length</span>(LEARNING_FRACTIONS) <span class="sc">+</span> .learning_boot) <span class="sc">*</span> LEARNING_B, LEARNING_NTREE),</span>
-<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">refit =</span> REFIT)</span>
-<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a>learning_fits <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;rfs-learning&quot;</span>, .learning_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a><span class="co"># The top-k set must leave at least one predictor out. With k equal to the number</span></span>
-<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a><span class="co"># of predictors every refit has the same set, and the Jaccard agreement is 1 however</span></span>
-<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a><span class="co"># the ranking moves. With a single predictor there is no ranking to agree on, and</span></span>
-<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a><span class="co"># both measures say nothing.</span></span>
-<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a>.learning_k <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">1</span>L, <span class="fu">min</span>(<span class="fu">as.integer</span>(LEARNING_TOP_K), <span class="fu">length</span>(PREDICTORS) <span class="sc">-</span> <span class="dv">1</span>L))</span>
-<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(PREDICTORS) <span class="sc">&lt;</span> <span class="dv">2</span>L) {</span>
-<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;One predictor: there is no importance ranking, so the agreement measures are not informative. &quot;</span>,</span>
-<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a>          <span class="st">&quot;Read the error curve only.&quot;</span>)</span>
-<span id="cb15-48"><a href="#cb15-48" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-49"><a href="#cb15-49" aria-hidden="true" tabindex="-1"></a><span class="co"># With one predictor gg_learning() warns that top_k covers every predictor and leaves the Jaccard agreement NA. The</span></span>
-<span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a><span class="co"># message above already says so, and its advice to lower top_k cannot apply, so that one warning is muffled.</span></span>
-<span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a>learning <span class="ot">&lt;-</span> <span class="fu">withCallingHandlers</span>(</span>
-<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gg_learning</span>(learning_fits, <span class="at">top_k =</span> .learning_k, <span class="at">min_events =</span> <span class="dv">50</span>),</span>
-<span id="cb15-53"><a href="#cb15-53" aria-hidden="true" tabindex="-1"></a>  <span class="at">warning =</span> <span class="cf">function</span>(w) {</span>
-<span id="cb15-54"><a href="#cb15-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(PREDICTORS) <span class="sc">&lt;</span> <span class="dv">2</span>L <span class="sc">&amp;&amp;</span> <span class="fu">grepl</span>(<span class="st">&quot;&#39;top_k&#39;&quot;</span>, <span class="fu">conditionMessage</span>(w), <span class="at">fixed =</span> <span class="cn">TRUE</span>)) <span class="fu">invokeRestart</span>(<span class="st">&quot;muffleWarning&quot;</span>)</span>
-<span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb15-56"><a href="#cb15-56" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-57"><a href="#cb15-57" aria-hidden="true" tabindex="-1"></a><span class="co"># The captions and the reading note follow what ran. Without the bootstrap the rightmost point is the largest</span></span>
-<span id="cb15-58"><a href="#cb15-58" aria-hidden="true" tabindex="-1"></a><span class="co"># subsample, not the whole cohort; with filled gaps every fraction may be optimistic, not only those above one half.</span></span>
-<span id="cb15-59"><a href="#cb15-59" aria-hidden="true" tabindex="-1"></a><span class="co"># In a saved report or an exported figure the console messages above are gone, so this is where a reader learns it.</span></span>
-<span id="cb15-60"><a href="#cb15-60" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (.learning_filled) {</span>
-<span id="cb15-61"><a href="#cb15-61" aria-hidden="true" tabindex="-1"></a>  .learning_note <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Missing values were filled in once with the forest&#39;s imputed values, which were &quot;</span>,</span>
-<span id="cb15-62"><a href="#cb15-62" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;estimated from the whole cohort, outcomes included. Every refit has therefore &quot;</span>,</span>
-<span id="cb15-63"><a href="#cb15-63" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;seen part of the patients it leaves out, so its error and agreement may be &quot;</span>,</span>
-<span id="cb15-64"><a href="#cb15-64" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;optimistic at every fraction, not only above one half.&quot;</span>)</span>
-<span id="cb15-65"><a href="#cb15-65" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span>.learning_boot) {</span>
-<span id="cb15-66"><a href="#cb15-66" aria-hidden="true" tabindex="-1"></a>  .learning_note <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;The whole-cohort bootstrap was left out: the forest imputes missing values that &quot;</span>,</span>
-<span id="cb15-67"><a href="#cb15-67" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;could not be filled in, and randomForestSRC cannot double-bootstrap such a &quot;</span>,</span>
-<span id="cb15-68"><a href="#cb15-68" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;forest. The curve stops at the largest fraction, a subsample.&quot;</span>)</span>
-<span id="cb15-69"><a href="#cb15-69" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb15-70"><a href="#cb15-70" aria-hidden="true" tabindex="-1"></a>  .learning_note <span class="ot">&lt;-</span> <span class="st">&quot;&quot;</span></span>
-<span id="cb15-71"><a href="#cb15-71" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-72"><a href="#cb15-72" aria-hidden="true" tabindex="-1"></a>.learning_right <span class="ot">&lt;-</span> <span class="cf">if</span> (.learning_boot) <span class="fu">paste0</span>(<span class="st">&quot; (for the rightmost point, the whole-cohort bootstrap, drawn &quot;</span>,</span>
-<span id="cb15-73"><a href="#cb15-73" aria-hidden="true" tabindex="-1"></a>                                              <span class="st">&quot;as a square, the cohort&#39;s events: the expected number in each &quot;</span>,</span>
-<span id="cb15-74"><a href="#cb15-74" aria-hidden="true" tabindex="-1"></a>                                              <span class="st">&quot;draw)&quot;</span>) <span class="cf">else</span> <span class="st">&quot;&quot;</span></span>
-<span id="cb15-75"><a href="#cb15-75" aria-hidden="true" tabindex="-1"></a>.learning_caps <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb15-76"><a href="#cb15-76" aria-hidden="true" tabindex="-1"></a>  <span class="at">tbl =</span> <span class="fu">paste</span>(<span class="fu">paste0</span>(<span class="st">&quot;Learning curve. Error is the mean out-of-bag error (1 - C-index) of the refits at each&quot;</span>,</span>
-<span id="cb15-77"><a href="#cb15-77" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot; fraction; agreement is between the refits&#39; top variables by importance.&quot;</span>),</span>
-<span id="cb15-78"><a href="#cb15-78" aria-hidden="true" tabindex="-1"></a>              <span class="cf">if</span> (.learning_boot) <span class="fu">paste0</span>(<span class="st">&quot;Fraction 1 is a bootstrap of the whole cohort: its events are the &quot;</span>,</span>
-<span id="cb15-79"><a href="#cb15-79" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">&quot;cohort&#39;s, the number expected in each draw, which varies because &quot;</span>,</span>
-<span id="cb15-80"><a href="#cb15-80" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">&quot;the bootstrap draws with replacement.&quot;</span>),</span>
-<span id="cb15-81"><a href="#cb15-81" aria-hidden="true" tabindex="-1"></a>              .learning_note),</span>
-<span id="cb15-82"><a href="#cb15-82" aria-hidden="true" tabindex="-1"></a>  <span class="at">stability =</span> <span class="fu">paste</span>(<span class="fu">sprintf</span>(<span class="fu">paste0</span>(<span class="st">&quot;Agreement of the top variables by importance between refits, by the &quot;</span>,</span>
-<span id="cb15-83"><a href="#cb15-83" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">&quot;number of events in each refit%s. A line that is still rising at the &quot;</span>,</span>
-<span id="cb15-84"><a href="#cb15-84" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">&quot;rightmost point means the importance ranking would change with more &quot;</span>,</span>
-<span id="cb15-85"><a href="#cb15-85" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">&quot;patients. Open markers have fewer than 50 events; triangles are &quot;</span>,</span>
-<span id="cb15-86"><a href="#cb15-86" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">&quot;fractions above one half, where agreement is optimistic.&quot;</span>), .learning_right),</span>
-<span id="cb15-87"><a href="#cb15-87" aria-hidden="true" tabindex="-1"></a>                    .learning_note),</span>
-<span id="cb15-88"><a href="#cb15-88" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="fu">paste</span>(<span class="fu">sprintf</span>(<span class="fu">paste0</span>(<span class="st">&quot;Out-of-bag error (1 - C-index) by the number of events in each refit%s. Gray&quot;</span>,</span>
-<span id="cb15-89"><a href="#cb15-89" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot; points are single refits and the black line their mean, each mean drawn in &quot;</span>,</span>
-<span id="cb15-90"><a href="#cb15-90" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot;its fraction&#39;s marker. Open markers have fewer than 50 events, too few for &quot;</span>,</span>
-<span id="cb15-91"><a href="#cb15-91" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot;their error to be trusted.&quot;</span>), .learning_right),</span>
-<span id="cb15-92"><a href="#cb15-92" aria-hidden="true" tabindex="-1"></a>                .learning_note)</span>
-<span id="cb15-93"><a href="#cb15-93" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># One randomForestSRC::subsample() result per fraction and the whole-cohort</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># bootstrap last. Each subsample keeps the share of events of the cohort</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># (stratify = TRUE), and learning_subsample() records that, so the events in each</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># subsample refit are exact. The bootstrap draws with replacement, so its events</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># vary from draw to draw: the count shown for it is the cohort&#39;s, the expected</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co"># number in each draw, not an exact one.</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC 3.10.0 crashes R when it double-bootstraps a forest that imputed missing values (na.impute on</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co"># data with any NA); the plain subsamples are safe. So the learning curve first fills the gaps, once, with the main</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co"># forest&#39;s imputed values, and its own forests then have nothing to impute. Those values came from the whole cohort,</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co"># outcomes included, so each refit has seen part of the patients it leaves out, and every fraction may be</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="co"># optimistic; the table, captions and reading text say so. If the gaps cannot be filled (the forest dropped rows),</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the whole-cohort bootstrap is left out instead and the curve stops at the largest fraction.</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>.learning_filled <span class="ot">&lt;-</span> NA_ACTION <span class="sc">==</span> <span class="st">&quot;na.impute&quot;</span> <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(forest<span class="sc">$</span>imputed.indv) <span class="sc">&gt;</span> <span class="dv">0</span>L <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(forest<span class="sc">$</span>xvar) <span class="sc">==</span> <span class="fu">nrow</span>(d)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>.d_learn <span class="ot">&lt;-</span> d</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (.learning_filled) {</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  .d_learn[forest<span class="sc">$</span>imputed.indv, <span class="fu">names</span>(forest<span class="sc">$</span>imputed.data)] <span class="ot">&lt;-</span> forest<span class="sc">$</span>imputed.data</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="fu">sprintf</span>(<span class="fu">paste0</span>(<span class="st">&quot;The learning curve fills the gaps in %d rows once, with the main forest&#39;s imputed values. &quot;</span>,</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;Those were estimated from the whole cohort, so every fraction may be optimistic.&quot;</span>),</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">length</span>(forest<span class="sc">$</span>imputed.indv)))</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>.learning_boot <span class="ot">&lt;-</span> <span class="sc">!</span>(NA_ACTION <span class="sc">==</span> <span class="st">&quot;na.impute&quot;</span> <span class="sc">&amp;&amp;</span> <span class="fu">anyNA</span>(.d_learn))</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>.learning_boot) {</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;The whole-cohort bootstrap is left out: the forest imputes missing values, and randomForestSRC cannot &quot;</span>,</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>          <span class="st">&quot;double-bootstrap such a forest. The curve stops at the largest fraction.&quot;</span>)</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Quoted once, so the check below and cache_fit() read the same call.</span></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>.learning_code <span class="ot">&lt;-</span> <span class="fu">quote</span>({</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>  .lf <span class="ot">&lt;-</span> <span class="fu">rfsrc</span>(model, <span class="at">data =</span> .d_learn, <span class="at">ntree =</span> LEARNING_NTREE, <span class="at">nodesize =</span> .nodesize, <span class="at">nsplit =</span> NSPLIT, <span class="at">mtry =</span> MTRY,</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>               <span class="at">splitrule =</span> SPLITRULE, <span class="at">na.action =</span> NA_ACTION, <span class="at">importance =</span> <span class="st">&quot;permute&quot;</span>, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED))</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">learning_subsample</span>(.lf, <span class="at">fractions =</span> LEARNING_FRACTIONS, <span class="at">replicates =</span> LEARNING_B, <span class="at">bootstrap =</span> .learning_boot)</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Refused outside run_job() only when the refits will actually run: a current cache loads, even under REFIT.</span></span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (hvtiRutilities<span class="sc">::</span><span class="fu">cache_would_fit</span>(<span class="st">&quot;rfs-learning&quot;</span>, .learning_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)) {</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rfs-learning&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">why =</span> <span class="fu">sprintf</span>(<span class="st">&quot;the learning curve grows %d forests of %d trees&quot;</span>,</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>                                               (<span class="fu">length</span>(LEARNING_FRACTIONS) <span class="sc">+</span> .learning_boot) <span class="sc">*</span> LEARNING_B, LEARNING_NTREE),</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">refit =</span> REFIT)</span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>learning_fits <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;rfs-learning&quot;</span>, .learning_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a><span class="co"># The top-k set must leave at least one predictor out. With k equal to the number</span></span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a><span class="co"># of predictors every refit has the same set, and the Jaccard agreement is 1 however</span></span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a><span class="co"># the ranking moves. With a single predictor there is no ranking to agree on, and</span></span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a><span class="co"># both measures say nothing.</span></span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>.learning_k <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">1</span>L, <span class="fu">min</span>(<span class="fu">as.integer</span>(LEARNING_TOP_K), <span class="fu">length</span>(PREDICTORS) <span class="sc">-</span> <span class="dv">1</span>L))</span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(PREDICTORS) <span class="sc">&lt;</span> <span class="dv">2</span>L) {</span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;One predictor: there is no importance ranking, so the agreement measures are not informative. &quot;</span>,</span>
+<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>          <span class="st">&quot;Read the error curve only.&quot;</span>)</span>
+<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a><span class="co"># With one predictor gg_learning() warns that top_k covers every predictor and leaves the Jaccard agreement NA. The</span></span>
+<span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a><span class="co"># message above already says so, and its advice to lower top_k cannot apply, so that one warning is muffled.</span></span>
+<span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a>learning <span class="ot">&lt;-</span> <span class="fu">withCallingHandlers</span>(</span>
+<span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gg_learning</span>(learning_fits, <span class="at">top_k =</span> .learning_k, <span class="at">min_events =</span> <span class="dv">50</span>),</span>
+<span id="cb16-53"><a href="#cb16-53" aria-hidden="true" tabindex="-1"></a>  <span class="at">warning =</span> <span class="cf">function</span>(w) {</span>
+<span id="cb16-54"><a href="#cb16-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(PREDICTORS) <span class="sc">&lt;</span> <span class="dv">2</span>L <span class="sc">&amp;&amp;</span> <span class="fu">grepl</span>(<span class="st">&quot;&#39;top_k&#39;&quot;</span>, <span class="fu">conditionMessage</span>(w), <span class="at">fixed =</span> <span class="cn">TRUE</span>)) <span class="fu">invokeRestart</span>(<span class="st">&quot;muffleWarning&quot;</span>)</span>
+<span id="cb16-55"><a href="#cb16-55" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-56"><a href="#cb16-56" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-57"><a href="#cb16-57" aria-hidden="true" tabindex="-1"></a><span class="co"># The captions and the reading note follow what ran. Without the bootstrap the rightmost point is the largest</span></span>
+<span id="cb16-58"><a href="#cb16-58" aria-hidden="true" tabindex="-1"></a><span class="co"># subsample, not the whole cohort; with filled gaps every fraction may be optimistic, not only those above one half.</span></span>
+<span id="cb16-59"><a href="#cb16-59" aria-hidden="true" tabindex="-1"></a><span class="co"># In a saved report or an exported figure the console messages above are gone, so this is where a reader learns it.</span></span>
+<span id="cb16-60"><a href="#cb16-60" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (.learning_filled) {</span>
+<span id="cb16-61"><a href="#cb16-61" aria-hidden="true" tabindex="-1"></a>  .learning_note <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Missing values were filled in once with the forest&#39;s imputed values, which were &quot;</span>,</span>
+<span id="cb16-62"><a href="#cb16-62" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;estimated from the whole cohort, outcomes included. Every refit has therefore &quot;</span>,</span>
+<span id="cb16-63"><a href="#cb16-63" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;seen part of the patients it leaves out, so its error and agreement may be &quot;</span>,</span>
+<span id="cb16-64"><a href="#cb16-64" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;optimistic at every fraction, not only above one half.&quot;</span>)</span>
+<span id="cb16-65"><a href="#cb16-65" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span>.learning_boot) {</span>
+<span id="cb16-66"><a href="#cb16-66" aria-hidden="true" tabindex="-1"></a>  .learning_note <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;The whole-cohort bootstrap was left out: the forest imputes missing values that &quot;</span>,</span>
+<span id="cb16-67"><a href="#cb16-67" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;could not be filled in, and randomForestSRC cannot double-bootstrap such a &quot;</span>,</span>
+<span id="cb16-68"><a href="#cb16-68" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;forest. The curve stops at the largest fraction, a subsample.&quot;</span>)</span>
+<span id="cb16-69"><a href="#cb16-69" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb16-70"><a href="#cb16-70" aria-hidden="true" tabindex="-1"></a>  .learning_note <span class="ot">&lt;-</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb16-71"><a href="#cb16-71" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-72"><a href="#cb16-72" aria-hidden="true" tabindex="-1"></a>.learning_right <span class="ot">&lt;-</span> <span class="cf">if</span> (.learning_boot) <span class="fu">paste0</span>(<span class="st">&quot; (for the rightmost point, the whole-cohort bootstrap, drawn &quot;</span>,</span>
+<span id="cb16-73"><a href="#cb16-73" aria-hidden="true" tabindex="-1"></a>                                              <span class="st">&quot;as a square, the cohort&#39;s events: the expected number in each &quot;</span>,</span>
+<span id="cb16-74"><a href="#cb16-74" aria-hidden="true" tabindex="-1"></a>                                              <span class="st">&quot;draw)&quot;</span>) <span class="cf">else</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb16-75"><a href="#cb16-75" aria-hidden="true" tabindex="-1"></a>.learning_caps <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb16-76"><a href="#cb16-76" aria-hidden="true" tabindex="-1"></a>  <span class="at">tbl =</span> <span class="fu">paste</span>(<span class="fu">paste0</span>(<span class="st">&quot;Learning curve. Error is the mean out-of-bag error (1 - C-index) of the refits at each&quot;</span>,</span>
+<span id="cb16-77"><a href="#cb16-77" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot; fraction; agreement is between the refits&#39; top variables by importance.&quot;</span>),</span>
+<span id="cb16-78"><a href="#cb16-78" aria-hidden="true" tabindex="-1"></a>              <span class="cf">if</span> (.learning_boot) <span class="fu">paste0</span>(<span class="st">&quot;Fraction 1 is a bootstrap of the whole cohort: its events are the &quot;</span>,</span>
+<span id="cb16-79"><a href="#cb16-79" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">&quot;cohort&#39;s, the number expected in each draw, which varies because &quot;</span>,</span>
+<span id="cb16-80"><a href="#cb16-80" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">&quot;the bootstrap draws with replacement.&quot;</span>),</span>
+<span id="cb16-81"><a href="#cb16-81" aria-hidden="true" tabindex="-1"></a>              .learning_note),</span>
+<span id="cb16-82"><a href="#cb16-82" aria-hidden="true" tabindex="-1"></a>  <span class="at">stability =</span> <span class="fu">paste</span>(<span class="fu">sprintf</span>(<span class="fu">paste0</span>(<span class="st">&quot;Agreement of the top variables by importance between refits, by the &quot;</span>,</span>
+<span id="cb16-83"><a href="#cb16-83" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">&quot;number of events in each refit%s. A line that is still rising at the &quot;</span>,</span>
+<span id="cb16-84"><a href="#cb16-84" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">&quot;rightmost point means the importance ranking would change with more &quot;</span>,</span>
+<span id="cb16-85"><a href="#cb16-85" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">&quot;patients. Open markers have fewer than 50 events; triangles are &quot;</span>,</span>
+<span id="cb16-86"><a href="#cb16-86" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">&quot;fractions above one half, where agreement is optimistic.&quot;</span>), .learning_right),</span>
+<span id="cb16-87"><a href="#cb16-87" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">paste0</span>(<span class="st">&quot;Jaccard runs from 0, no top variable shared, to 1, the same set; Kendall tau &quot;</span>,</span>
+<span id="cb16-88"><a href="#cb16-88" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;from -1, the order reversed, through 0, no relation, to 1, the same order. The dashed line marks 0.&quot;</span>),</span>
+<span id="cb16-89"><a href="#cb16-89" aria-hidden="true" tabindex="-1"></a>                    .learning_note),</span>
+<span id="cb16-90"><a href="#cb16-90" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="fu">paste</span>(<span class="fu">sprintf</span>(<span class="fu">paste0</span>(<span class="st">&quot;Out-of-bag error (1 - C-index) by the number of events in each refit%s. Gray&quot;</span>,</span>
+<span id="cb16-91"><a href="#cb16-91" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot; points are single refits and the black line their mean, each mean drawn in &quot;</span>,</span>
+<span id="cb16-92"><a href="#cb16-92" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot;its fraction&#39;s marker. Boxes span the 15th to 85th percentile of the refits, &quot;</span>,</span>
+<span id="cb16-93"><a href="#cb16-93" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot;with a line at the median. Open markers have fewer than 50 events, too few for &quot;</span>,</span>
+<span id="cb16-94"><a href="#cb16-94" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot;their error to be trusted.&quot;</span>), .learning_right),</span>
+<span id="cb16-95"><a href="#cb16-95" aria-hidden="true" tabindex="-1"></a>                .learning_note)</span>
+<span id="cb16-96"><a href="#cb16-96" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
+<p><strong>What the agreement measures.</strong> Every refit ranks the predictors by importance, and each pair of refits at a fraction is compared on its top 5 variables. The table and figure show the mean over all pairs. Both measures are 1 when two refits agree exactly and share the figure’s axis, but they do not share a floor.</p>
+<ul>
+<li><strong>Jaccard</strong> asks whether two refits pick the same top variables, in any order: the number they share divided by the number in either. It runs from 0, no variable in common, to 1, the same set. With the top 5, a pair sharing 4 of them scores 0.67, 3 scores 0.43, 2 scores 0.25, 1 scores 0.11.</li>
+<li><strong>Kendall tau</strong> asks whether two refits put those variables in the same order. It is taken over every variable in either top set, ranked by each refit’s full importance, so a variable in one top set and not the other counts against it. It runs from -1, the order reversed, through 0, no relation, to 1, the same order. A tau of 0.6 means about 80% of pairs of variables fall in the same order in both refits; at or below 0 the order is no better than chance.</li>
+</ul>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>.lt <span class="ot">&lt;-</span> <span class="fu">summary</span>(learning)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Exact for a stratified subsample; for the bootstrap, and any unstratified draw, the count is the expected one.</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>.lt_deaths <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(.lt<span class="sc">$</span>counts <span class="sc">==</span> <span class="st">&quot;exact&quot;</span>, <span class="fu">format</span>(.lt<span class="sc">$</span>events), <span class="fu">paste</span>(<span class="fu">format</span>(.lt<span class="sc">$</span>events), <span class="st">&quot;(expected)&quot;</span>))</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>.lt_caution <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(.lt<span class="sc">$</span>low_events, <span class="st">&quot;few events&quot;</span>, <span class="fu">ifelse</span>(.lt<span class="sc">$</span>optimistic, <span class="st">&quot;optimistic&quot;</span>, <span class="st">&quot;&quot;</span>))</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Filled gaps make every fraction optimistic, so every row says so; the caption says why.</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (.learning_filled) .lt_caution <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">nzchar</span>(.lt_caution), <span class="fu">paste0</span>(.lt_caution, <span class="st">&quot;, imputed&quot;</span>), <span class="st">&quot;imputed&quot;</span>)</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">Fraction =</span> .lt<span class="sc">$</span>fraction, <span class="at">Patients =</span> .lt<span class="sc">$</span>n, <span class="at">Events =</span> .lt_deaths, <span class="at">Refits =</span> .lt<span class="sc">$</span>B,</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">Error =</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.3f (SD %.3f)&quot;</span>, .lt<span class="sc">$</span>error_mean, .lt<span class="sc">$</span>error_sd),</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">Jaccard =</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.2f&quot;</span>, .lt<span class="sc">$</span>jaccard), <span class="st">`</span><span class="at">Kendall tau</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.2f&quot;</span>, .lt<span class="sc">$</span>kendall),</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>             <span class="at">Caution =</span> .lt_caution,</span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>             <span class="at">check.names =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">align =</span> <span class="st">&quot;rrrrrrrl&quot;</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>.lt <span class="ot">&lt;-</span> <span class="fu">summary</span>(learning)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Exact for a stratified subsample; for the bootstrap, and any unstratified draw, the count is the expected one.</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>.lt_deaths <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(.lt<span class="sc">$</span>counts <span class="sc">==</span> <span class="st">&quot;exact&quot;</span>, <span class="fu">format</span>(.lt<span class="sc">$</span>events), <span class="fu">paste</span>(<span class="fu">format</span>(.lt<span class="sc">$</span>events), <span class="st">&quot;(expected)&quot;</span>))</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>.lt_caution <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(.lt<span class="sc">$</span>low_events, <span class="st">&quot;few events&quot;</span>, <span class="fu">ifelse</span>(.lt<span class="sc">$</span>optimistic, <span class="st">&quot;optimistic&quot;</span>, <span class="st">&quot;&quot;</span>))</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Filled gaps make every fraction optimistic, so every row says so; the caption says why.</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (.learning_filled) .lt_caution <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">nzchar</span>(.lt_caution), <span class="fu">paste0</span>(.lt_caution, <span class="st">&quot;, imputed&quot;</span>), <span class="st">&quot;imputed&quot;</span>)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">Fraction =</span> .lt<span class="sc">$</span>fraction, <span class="at">Patients =</span> .lt<span class="sc">$</span>n, <span class="at">Events =</span> .lt_deaths, <span class="at">Refits =</span> .lt<span class="sc">$</span>B,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">Error =</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.3f (SD %.3f)&quot;</span>, .lt<span class="sc">$</span>error_mean, .lt<span class="sc">$</span>error_sd),</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">Jaccard =</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.2f&quot;</span>, .lt<span class="sc">$</span>jaccard), <span class="st">`</span><span class="at">Kendall tau</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.2f&quot;</span>, .lt<span class="sc">$</span>kendall),</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>             <span class="at">Caution =</span> .lt_caution,</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>             <span class="at">check.names =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">align =</span> <span class="st">&quot;rrrrrrrl&quot;</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-learning" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-learning-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 3: Learning curve. Error is the mean out-of-bag error (1 - C-index) of the refits at each fraction; agreement is between the refits’ top variables by importance. Fraction 1 is a bootstrap of the whole cohort: its events are the cohort’s, the number expected in each draw, which varies because the bootstrap draws with replacement.
+Table 4: Learning curve. Error is the mean out-of-bag error (1 - C-index) of the refits at each fraction; agreement is between the refits’ top variables by importance. Fraction 1 is a bootstrap of the whole cohort: its events are the cohort’s, the number expected in each draw, which varies because the bootstrap draws with replacement.
 </figcaption>
 <div aria-describedby="tbl-learning-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -3015,19 +3111,22 @@ Table 3: Learning curve. Error is the mean out-of-bag error (1 - C-index) of th
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(learning) <span class="sc">+</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-fit-learning-stability&quot;</span>)</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The dashed line marks 0, Kendall tau&#39;s no relation between two orders, and the floor of Jaccard.</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(learning) <span class="sc">+</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Two legends, the measures and the markers: side by side they run past a 6.5 inch figure, so they stack.</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.box =</span> <span class="st">&quot;vertical&quot;</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-fit-learning-stability&quot;</span>)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-learning-stability" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-learning-stability-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/436f1f5337852799ef48a703816fbdd7.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/62beac31b8b211c68ae8b661218fa6c8.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-learning-stability-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 4: Agreement of the top variables by importance between refits, by the number of events in each refit (for the rightmost point, the whole-cohort bootstrap, drawn as a square, the cohort’s events: the expected number in each draw). A line that is still rising at the rightmost point means the importance ranking would change with more patients. Open markers have fewer than 50 events; triangles are fractions above one half, where agreement is optimistic.
+Figure 4: Agreement of the top variables by importance between refits, by the number of events in each refit (for the rightmost point, the whole-cohort bootstrap, drawn as a square, the cohort’s events: the expected number in each draw). A line that is still rising at the rightmost point means the importance ranking would change with more patients. Open markers have fewer than 50 events; triangles are fractions above one half, where agreement is optimistic. Jaccard runs from 0, no top variable shared, to 1, the same set; Kendall tau from -1, the order reversed, through 0, no relation, to 1, the same order. The dashed line marks 0.
 </figcaption>
 </figure>
 </div>
@@ -3036,50 +3135,67 @@ Figure 4: Agreement of the top variables by importance between refits, by the n
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(learning, <span class="at">panel =</span> <span class="st">&quot;error&quot;</span>) <span class="sc">+</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-fit-learning-error&quot;</span>)</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A box per fraction, from the 15th to the 85th percentile of its refits, with a line at the median.</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(learning, <span class="at">panel =</span> <span class="st">&quot;error&quot;</span>) <span class="sc">+</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.learning_error_box</span>(learning) <span class="sc">+</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rfs-fit-learning-error&quot;</span>)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-learning-error" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-learning-error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/169a8d6571849468ef6fb15f368daa9e.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/1a92cda21bd90f7a2e7657c91f1702fc.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-learning-error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 5: Out-of-bag error (1 - C-index) by the number of events in each refit (for the rightmost point, the whole-cohort bootstrap, drawn as a square, the cohort’s events: the expected number in each draw). Gray points are single refits and the black line their mean, each mean drawn in its fraction’s marker. Open markers have fewer than 50 events, too few for their error to be trusted.
+Figure 5: Out-of-bag error (1 - C-index) by the number of events in each refit (for the rightmost point, the whole-cohort bootstrap, drawn as a square, the cohort’s events: the expected number in each draw). Gray points are single refits and the black line their mean, each mean drawn in its fraction’s marker. Boxes span the 15th to 85th percentile of the refits, with a line at the median. Open markers have fewer than 50 events, too few for their error to be trusted.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 <p><strong>Reading the curve.</strong> The error usually levels off long before the importance ranking does. A cohort whose error has flattened can still give a ranking that a second cohort of the same size would not reproduce. Read the agreement at the whole cohort, and whether the line is still rising there. How many events a stable ranking needs depends on the signal: the weaker the predictors, the more events it takes to reach an agreement of 0.8. That 0.8 is a reference point, not a threshold this job enforces. Agreement at a fraction above one half is optimistic, because refits that large share most of their patients, and the whole-cohort point is a bootstrap for that reason. Its events are the cohort’s: a bootstrap draws with replacement, so each draw has about that many, some more and some fewer. The agreement is between the top variables, so it needs predictors left out: with 5 or fewer predictors the job compares the top one fewer than there are.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Recommendation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Cohort size: not yet.</strong> At the rightmost point, 406 events, the top-5 Jaccard is 0.77 and Kendall tau 0.72, against 0.80 (LEARNING_AGREEMENT), and agreement was still rising, by 0.13 since the previous point. The top variables change from refit to refit at this cohort size. The forest may still predict (see the error curve), but its importance ranking and the partial plots drawn from it are not yet reproducible.</p>
+<p><strong>Predictors: few.</strong> 9 predictors, under 10 (MIN_PREDICTORS). With this few, a Cox model on the same predictors is likely as informative and simpler to report; fit one alongside before relying on the forest.</p>
+<p>Both thresholds are study choices, set under <code>EDIT:</code>, not rules.</p>
+</div>
+</div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job, and what rfs-explain reads. It is separate from the</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co"># cache on purpose: cache_fit() stores a keyed record rather than the bare</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co"># forest, so the cache is this job&#39;s internals and this file is its interface.</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The price is the forest on disk twice.</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>.forest_event <span class="ot">&lt;-</span> forest<span class="sc">$</span>yvar[[EVENT]]</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>.forest_cohort <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">n =</span> <span class="fu">as.integer</span>(<span class="fu">nrow</span>(forest<span class="sc">$</span>yvar)),</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_events =</span> <span class="fu">as.integer</span>(<span class="fu">sum</span>(.forest_event <span class="sc">==</span> <span class="dv">1</span>)),</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_censored =</span> <span class="fu">as.integer</span>(<span class="fu">sum</span>(.forest_event <span class="sc">==</span> <span class="dv">0</span>))</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>forest <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  forest,</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> .forest_cohort,</span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># rfs-explain takes the rows, ID and KEY of this fit from this record.</span></span>
-<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(forest, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;rfs.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job, and what rfs-explain reads. It is separate from the</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># cache on purpose: cache_fit() stores a keyed record rather than the bare</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co"># forest, so the cache is this job&#39;s internals and this file is its interface.</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The price is the forest on disk twice.</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>.forest_event <span class="ot">&lt;-</span> forest<span class="sc">$</span>yvar[[EVENT]]</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>.forest_cohort <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">n =</span> <span class="fu">as.integer</span>(<span class="fu">nrow</span>(forest<span class="sc">$</span>yvar)),</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_events =</span> <span class="fu">as.integer</span>(<span class="fu">sum</span>(.forest_event <span class="sc">==</span> <span class="dv">1</span>)),</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_censored =</span> <span class="fu">as.integer</span>(<span class="fu">sum</span>(.forest_event <span class="sc">==</span> <span class="dv">0</span>))</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>forest <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  forest,</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> .forest_cohort,</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># rfs-explain takes the rows, ID and KEY of this fit from this record.</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(forest, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;rfs.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -3098,17 +3214,17 @@ Figure 5: Out-of-bag error (1 - C-index) by the number of events in each refit 
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-20 17:30:58 EST</td>
+<td style="text-align: left;">2026-11-25 13:13:02 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-20 17:31:25 EST</td>
+<td style="text-align: left;">2026-11-25 13:13:29 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">27 s</td>
+<td style="text-align: left;">26 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3148,17 +3264,17 @@ Figure 5: Out-of-bag error (1 - C-index) by the number of events in each refit 
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.2</td>
+<td style="text-align: left;">1.6.3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261120.parquet</td>
+<td style="text-align: left;">built_20261125.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-20</td>
+<td style="text-align: left;">2026-11-25</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3198,7 +3314,7 @@ Figure 5: Out-of-bag error (1 - C-index) by the number of events in each refit 
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"rfs.fit.dead.rf","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:31:25","job":"rfs.fit.dead.rf","rendered":"2026-11-20T22:31:25Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.1","source":null},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRtemplates","version":"1.6.2","source":null},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261120.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-20T22:12:32Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"dead","type":"rf","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"source_sha256":"15987865798e41fb2d9d02c7c21a5751916f01bf5fd4bb8d38b2bfc57332155b","run":{"start":"2026-11-20T17:30:58-0500","end":"2026-11-20T17:31:25-0500","time_zone":"EST","duration_seconds":27.1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rfs.fit.dead.rf.qmd","template":"rfs.fit","prefix":"rfs","qualifier":"fit","subject":"dead","type":"rf","hvtiRtemplates":"1.6.2"},"datasets":[{"name":"built","version_file":"built_20261120.parquet","registered":"2026-11-20","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.2","sha":null,"method":"rfs.fit","seed":2026,"rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:30:58"}},"source":"30_analyses/rfs.fit.dead.rf.qmd",".hvti_render_id":"646561ac893bac026562a13d9afa105f16cb6eadb12655beb22b53ee49be50f5",".hvti_source_sha256":"15987865798e41fb2d9d02c7c21a5751916f01bf5fd4bb8d38b2bfc57332155b"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.29","sha":null,"method":"rfs.fit.dead.rf","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-25 13:13:29","job":"rfs.fit.dead.rf","rendered":"2026-11-25T18:13:29Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.1","source":"github","sha":"ffacbe0dc8536af639a6b88c7d7382808fac5f72"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRtemplates","version":"1.6.3","source":null},{"package":"hvtiRutilities","version":"1.5.29","source":null},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261125.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-25T18:03:42Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"dead","type":"rf","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"source_sha256":"e8f5eac64a79c495d83c09fd25e7be7c72625f65bd75a5bdd59a7350832d22d2","run":{"start":"2026-11-25T13:13:02-0500","end":"2026-11-25T13:13:29-0500","time_zone":"EST","duration_seconds":26.2,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rfs.fit.dead.rf.qmd","template":"rfs.fit","prefix":"rfs","qualifier":"fit","subject":"dead","type":"rf","hvtiRtemplates":"1.6.3"},"datasets":[{"name":"built","version_file":"built_20261125.parquet","registered":"2026-11-25","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.3","sha":null,"method":"rfs.fit","seed":2026,"rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-25 13:13:02"}},"source":"30_analyses/rfs.fit.dead.rf.qmd",".hvti_render_id":"b3d312c84faeddc48cfbe66e128c0ffd07384a3561ce5fc2279e5bd304d41fa7",".hvti_source_sha256":"e8f5eac64a79c495d83c09fd25e7be7c72625f65bd75a5bdd59a7350832d22d2"}</script>
 </section>
 
 </main>

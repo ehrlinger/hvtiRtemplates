@@ -42,7 +42,7 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 10 choices marked `EDIT:`.
+2.  **Study choices**: 12 choices marked `EDIT:`.
 3.  **Cohort**: reads the study data.
 4.  **Forest**: fits and caches its results, so a later render reloads
     them (`REFIT <- TRUE` recomputes them).
@@ -84,5 +84,5 @@ and it records the job's provenance beside the report.
   pair is how it finds the file:
   `add_job("rfc.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.6.2 · built 2026-11-20.
+Generated from the template by hvtiRtemplates, 1.6.3 · built 2026-11-25.
 The template holds the details; this sheet is its outline.

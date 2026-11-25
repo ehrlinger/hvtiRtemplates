@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:20
+2026-11-25 13:06
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -80,6 +80,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 # MIGRATE-BEGIN: dc-tables-data
 DATASET <- "built"
 # MIGRATE-END: dc-tables-data
@@ -107,6 +108,8 @@ KEY <- ID
 #   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
 #     and a column both datasets have stops, so list only those the job needs.
 #   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     a cohort patient with no record is left out, and counted in the text,
+#     unless the join is keyed on the ID alone, which keeps them;
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
 #     or "nearest" with to = a cohort date column). WHERE on a joined column
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
@@ -197,7 +200,7 @@ CATEGORICAL <- NULL
 COMPARE <- "none"             # Demo: choose whether to compare groups
 CONTINUOUS_STAT <- "median"   # Demo: choose the continuous summary
 PERCENTILES <- c(15, 85)       # Demo: choose the reported percentiles
-ABBREVIATIONS <- character(0) # Demo: define abbreviations used in the table
+ABBREVIATIONS <- character(0) # Demo: c(ABBR = "expansion") to add to or override the table's Key
 WORD_FILE <- "dc-tables.docx"  # Demo: choose the Word filename within this set
 MANUSCRIPT_LAYOUT <- "compare" # Demo: choose the Word table's layout
 # MIGRATE-END: dc-tables-config
@@ -300,7 +303,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -613,7 +616,36 @@ if (STDDIFF) {
 # header marks, notes and abbreviation key the Word table carries, from the
 # saver's own code.
 ft <- hvtiRtables::hv_man_table(tbl)
-hvtiRtables::hv_man_table_display(ft, abbreviations = ABBREVIATIONS)
+# Every abbreviation a table prints is defined in its own Key, whether or not
+# the manuscript's Abbreviations list carries it: that list is for the text.
+# The Key is built from what the table prints, keying each abbreviation the
+# study's list (_study.yml, then the group defaults) can expand; ABBREVIATIONS
+# adds to it. An abbreviation nothing expands is named in a warning, so define
+# it in _study.yml for every table in the study, or in ABBREVIATIONS for this one.
+# The table's own wording is defined here, since no study list need carry it:
+# SD from the Mean±SD note, NA from a cell with no value to compute (a
+# difference for a row that has none), and Std. Diff. from STDDIFF's column.
+# Each is keyed only when the table prints it, and only where neither
+# ABBREVIATIONS nor the study's list defines it.
+.key_own <- c(SD = "standard deviation", "NA" = "not applicable",
+              if (STDDIFF) c("Std. Diff." = "standardized difference"))
+# The words are read from a display copy, because the display and the saver add
+# the footer notes (Mean±SD, the test marks) after this point, and an
+# abbreviation printed only there needs the Key too. The table's own
+# definitions, such as CI for an interval column, are already in its Key.
+.key_for <- function(table) {
+  shown <- hvtiRtables::hv_man_table_display(table, abbreviations = NULL)
+  own <- attr(table, "hv_abbreviations", exact = TRUE)
+  key <- hvtiRtemplates:::.table_key(hvtiRtemplates:::.table_cells_text(flextable::information_data_chunk(shown)),
+                                     hvtiRutilities::study_abbreviations(.cfg),
+                                     c(ABBREVIATIONS, own[setdiff(names(own), names(ABBREVIATIONS))]), .key_own)
+  if (length(key$missing)) {
+    warning("The table prints ", paste(key$missing, collapse = ", "), ", which its Key cannot expand. ",
+            "Define each in _study.yml's abbreviations or in ABBREVIATIONS.", call. = FALSE)
+  }
+  key$key
+}
+hvtiRtables::hv_man_table_display(ft, abbreviations = .key_for(ft))
 ```
 
 | Characteristic | Variable | No.\* | N = 800† |
@@ -641,6 +673,7 @@ hvtiRtables::hv_man_table_display(ft, abbreviations = ABBREVIATIONS)
 | Creatinine (mg/dL) | creat_pr | 725 | 1.0 \[0.75, 1.4\] |
 | \* Number of non-missing values. |  |  |  |
 | † No. (%) or Median \[15th, 85th percentiles\]. |  |  |  |
+| Key: LV, Left ventricular; NYHA, New York Heart Association |  |  |  |
 
 Table 2: Summary statistics for the study cohort
 
@@ -712,7 +745,8 @@ if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
 }
 word_path <- file.path(study_dir("documents", .root), paste0(SUBJECT, "-", TYPE), WORD_FILE)
 dir.create(dirname(word_path), recursive = TRUE, showWarnings = FALSE)
-hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS, caption = MANUSCRIPT_CAPTION,
+.word_key <- .key_for(word_ft)
+hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = .word_key, caption = MANUSCRIPT_CAPTION,
                                orientation = TABLE_ORIENTATION)
 # The file carries what wrote it, the job, the render and the package versions,
 # as document properties (File > Info in Word), so a copy that is emailed on
@@ -728,7 +762,7 @@ if (nrow(check)) stop("Word output failed the CORR structural check", call. = FA
 Code
 
 ``` r
-hvtiRtables::hv_man_table_display(word_ft, abbreviations = ABBREVIATIONS)
+hvtiRtables::hv_man_table_display(word_ft, abbreviations = .word_key)
 ```
 
 | Characteristic | n\* | All patients (N = 800)† |
@@ -756,6 +790,7 @@ hvtiRtables::hv_man_table_display(word_ft, abbreviations = ABBREVIATIONS)
 | Creatinine (mg/dL) | 725 | 1.0 \[0.75, 1.4\] |
 | \*Patients with non-missing data. |  |  |
 | †Values are No. (%) or median \[15th, 85th percentiles\]. |  |  |
+| Key: LV, Left ventricular; NYHA, New York Heart Association |  |  |
 
 Table 4: The table as saved to Word, in the manuscript style
 
@@ -804,9 +839,9 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-20 17:20:32 EST  |
-|                 | Ended          | 2026-11-20 17:20:36 EST  |
-|                 | Duration       | 3 s                      |
+| Run             | Started        | 2026-11-25 13:06:49 EST  |
+|                 | Ended          | 2026-11-25 13:06:51 EST  |
+|                 | Duration       | 2 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -815,9 +850,9 @@ Correlation variant not requested (`CORR <- NULL`).
 |                 | Template       | dc.tables                |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.6.2                    |
-| Dataset `built` | Version file   | built_20261120.parquet   |
-|                 | Version date   | 2026-11-20               |
+|                 | hvtiRtemplates | 1.6.3                    |
+| Dataset `built` | Version file   | built_20261125.parquet   |
+|                 | Version date   | 2026-11-25               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |

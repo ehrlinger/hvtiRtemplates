@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:20
+2026-11-25 13:06
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -67,8 +67,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -78,6 +78,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 # MIGRATE-BEGIN: dc-trends-data
 DATASET <- "built"
 # MIGRATE-END: dc-trends-data
@@ -107,6 +108,8 @@ KEY <- ID
 #   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
 #     and a column both datasets have stops, so list only those the job needs.
 #   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     a cohort patient with no record is left out, and counted in the text,
+#     unless the join is keyed on the ID alone, which keeps them;
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
 #     or "nearest" with to = a cohort date column). WHERE on a joined column
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
@@ -191,7 +194,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -509,8 +512,8 @@ against an older figure by its shape and not point by point.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-20 17:20:45 EST |
-|  | Ended | 2026-11-20 17:20:47 EST |
+| Run | Started | 2026-11-25 13:06:57 EST |
+|  | Ended | 2026-11-25 13:06:58 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -521,9 +524,9 @@ against an older figure by its shape and not point by point.
 |  | Template | dc.trends |
 |  | Subject | cohort |
 |  | Type | eda |
-|  | hvtiRtemplates | 1.6.2 |
-| Dataset `built` | Version file | built_20261120.parquet |
-|  | Version date | 2026-11-20 |
+|  | hvtiRtemplates | 1.6.3 |
+| Dataset `built` | Version file | built_20261125.parquet |
+|  | Version date | 2026-11-25 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |

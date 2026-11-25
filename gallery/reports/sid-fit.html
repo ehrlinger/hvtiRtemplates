@@ -2237,7 +2237,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-20 17:36</p>
+      <p class="date">2026-11-25 13:21</p>
     </div>
   </div>
   
@@ -2249,9 +2249,9 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: sid.fit 1.6.2 sha256:b63e90d32ff7de09e5c6b9ae3ba17c449b9714582f91931a8a9d65fdb730bee3 -->
+<!-- hvtiRtemplates: sid.fit 1.6.3 sha256:e98299f32c09654201286c9dcf2dfa36f161d4717fae7aa8d50cc76bf6060472 -->
 <p>This job builds the dissimilarity that <code>sid-clusters</code> turns into clusters. SID clustering (Mantero and Ishwaran, 2021) is unsupervised: there is no outcome. It stretches the clustering variables into staggered copies and their pairwise interactions, grows a multivariate random forest predicting the one from the other, and measures how often two patients fall in the same terminal nodes. Two patients the forest cannot tell apart are close.</p>
-<p>The forest needs complete data, so the job first drops variables that are mostly missing and fills the rest with one imputation. The imputed values stay inside this job. Whatever describes the clusters later reads the study data, so it describes what was measured, not what was imputed.</p>
+<p>The forest needs complete data, so the job first drops variables that are mostly missing and fills the rest with one imputation, unless the data arrive complete. The imputed values stay inside this job. Whatever describes the clusters later reads the study data, so it describes what was measured, not what was imputed.</p>
 <p>This template is <strong>in flight</strong>: no study has yet run it end to end.</p>
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
@@ -2277,26 +2277,34 @@ vertical-align: -.125em;
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># changes with the thread count with every seed held fixed.</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">rf.cores =</span> <span class="dv">1</span>L, <span class="at">mc.cores =</span> <span class="dv">1</span>L)</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># The oldest versions this template works with.</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;randomForestSRC&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;3.7.0&quot;</span>) {</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs randomForestSRC &gt;= 3.7.0; &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;randomForestSRC&quot;</span>),</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;mice&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;3.19.0&quot;</span>) {</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs mice &gt;= 3.19.0; &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;mice&quot;</span>),</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># To render a job you have not finished, leave a chunk out with the chunk</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># in a chunk to leave out everything below it. A draft lists each one in a</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># callout; a final render refuses them, as it refuses an unresolved marker.</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># ?stop_here has more.</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>.job <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_setup</span>(SUBJECT, TYPE, <span class="at">envir =</span> <span class="fu">environment</span>())</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># `sid-fit` writes sid.rds and `sid-clusters` reads it, both by set.</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC 3.7.0 is the release the random forest templates were written</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># and tested against (2026-09-19); this job copied the floor from them. It needs</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># nothing new in 3.7.0: sidClustering() has taken every argument used here since</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 3.4.5 at least, and 3.7.0 changed survival prediction and added a hybrid</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># distance, neither used here. randomForestSRC is</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="co"># in Suggests, so the floor gates this job, not installing hvtiRtemplates. To</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># reproduce an analysis, match its version: from 3.10.0 the same seed grows a</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># different forest (rfsrc.RNGversion() selects the old generator).</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;randomForestSRC&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;3.7.0&quot;</span>) {</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs randomForestSRC &gt;= 3.7.0; &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;randomForestSRC&quot;</span>),</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;mice&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;3.19.0&quot;</span>) {</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs mice &gt;= 3.19.0; &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;mice&quot;</span>),</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># To render a job you have not finished, leave a chunk out with the chunk</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># in a chunk to leave out everything below it. A draft lists each one in a</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># callout; a final render refuses them, as it refuses an unresolved marker.</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># ?stop_here has more.</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>.job <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_setup</span>(SUBJECT, TYPE, <span class="at">envir =</span> <span class="fu">environment</span>())</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># `sid-fit` writes sid.rds and `sid-clusters` reads it, both by set.</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="callout callout-style-simple callout-note no-icon">
 <div class="callout-body d-flex">
@@ -2304,7 +2312,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261120.parquet</code>, dated 2026-11-20 · rendered by gallery on gallery · hvtiRtemplates 1.6.2</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261125.parquet</code>, dated 2026-11-25 · rendered by gallery on gallery · hvtiRtemplates 1.6.3</p>
 </div>
 </div>
 </div>
@@ -2315,79 +2323,105 @@ vertical-align: -.125em;
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the registered dataset this job reads (&quot;built&quot; is the study dataset).</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;built&quot;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>ANALYSIS_SET <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- quote(age &gt;= 18)</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN;</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># name another column, such as &quot;randid&quot;, if the study uses one.</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: what makes a row unique. Clustering is one row per patient.</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> ID</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional, and needs no edit: NULL reads the cohort alone. To join one</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># registered ancillary dataset (echoes, labs), name it in JOIN. The cohort</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># above decides the patients, one row each; the joined records of other</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are dropped and counted in the data table.</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co">#     and a column both datasets have stops, so list only those the job needs.</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">#   REDUCE: NULL keeps a row per joined record, keyed on that dataset&#39;s key;</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#     list(rule = &quot;first&quot;, by = &quot;echo_date&quot;) keeps one row per patient (&quot;last&quot;,</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#     or &quot;nearest&quot; with to = a cohort date column). A tie stops: picking one</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     record silently would be a hidden choice. This job clusters one row per</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     patient, so a JOIN without REDUCE stops here.</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_KEY: overrides the joined dataset&#39;s registered key.</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>JOIN <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>JOIN_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>REDUCE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>JOIN_KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the clustering variables. These DEFINE the clusters: two patients are</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co"># close when they are alike on these. Name measurements of the thing being</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># grouped (anatomy, physiology), never an outcome: clustering on survival and</span></span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="co"># then comparing survival by cluster answers its own question. Factors are</span></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co"># allowed, but each adds staggered copies and interactions to the forest.</span></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>VARS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;lvedd&quot;</span>, <span class="st">&quot;lvesd&quot;</span>, <span class="st">&quot;la_diam&quot;</span>, <span class="st">&quot;rvsp&quot;</span>, <span class="st">&quot;e_e&quot;</span>, <span class="st">&quot;lvef&quot;</span>)</span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: a variable missing in more than this share of patients is dropped and</span></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co"># listed, not imputed. An imputation that invents most of a column decides the</span></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># clusters it was meant to inform.</span></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>MAX_MISSING <span class="ot">&lt;-</span> <span class="fl">0.4</span></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the forest. NTREE = 5000 is what the studies behind this template</span></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co"># used. SID_REDUCE = TRUE runs sidClustering&#39;s holdout-VIMP step, which drops</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># staggered variables that carry no structure; it is slow, and recommended</span></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># with more than a handful of variables because the interactions grow with the</span></span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co"># square of their number. (It is not the join&#39;s REDUCE above.)</span></span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>NTREE <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>SID_REDUCE <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how missing values are filled before the forest, which needs complete</span></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co"># data. &quot;mice&quot; uses predictive mean matching; &quot;forest&quot; uses randomForestSRC&#39;s</span></span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># own imputation. M is the number of imputations: with M &gt; 1 one SID forest is</span></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># grown on each and their distances are averaged, so the clusters reflect more</span></span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># than one draw of the missing values, at M times the cost. MICE_MAXIT is the</span></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># number of mice iterations, unused by &quot;forest&quot;.</span></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>IMPUTE <span class="ot">&lt;-</span> <span class="st">&quot;mice&quot;</span></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>M <span class="ot">&lt;-</span> <span class="dv">1</span></span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>MICE_MAXIT <span class="ot">&lt;-</span> <span class="dv">50</span></span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the seed. Imputation m and its forest use SEED + m - 1: it is part of</span></span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># each cache key, sets R&#39;s generator for the call (cache_fit() runs it under</span></span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co"># that seed), and is handed to sidClustering() as `seed =`. Both matter:</span></span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># SID_REDUCE = TRUE draws from R&#39;s generator as well as from the forest&#39;s seed.</span></span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">1024</span></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
-<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># A file name, such as &quot;match_set.rds&quot;, reads an unregistered file in the datasets folder, as a draft.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;built&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>ANALYSIS_SET <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- quote(age &gt;= 18)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># name another column, such as &quot;randid&quot;, if the study uses one.</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: what makes a row unique. Clustering is one row per patient.</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> ID</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional, and needs no edit: NULL reads the cohort alone. To join one</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># registered ancillary dataset (echoes, labs), name it in JOIN. The cohort</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># above decides the patients, one row each; the joined records of other</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are dropped and counted in the data table.</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">#     and a column both datasets have stops, so list only those the job needs.</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co">#   REDUCE: NULL keeps a row per joined record, keyed on that dataset&#39;s key;</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#     list(rule = &quot;first&quot;, by = &quot;echo_date&quot;) keeps one row per patient (&quot;last&quot;,</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     or &quot;nearest&quot; with to = a cohort date column). A tie stops: picking one</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     record silently would be a hidden choice. This job clusters one row per</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">#     patient, so a long JOIN without REDUCE stops here.</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co">#   JOIN_KEY: overrides the joined dataset&#39;s registered key.</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>JOIN <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>JOIN_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>REDUCE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>JOIN_KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the clustering variables. These DEFINE the clusters: two patients are</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># close when they are alike on these. Name measurements of the thing being</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="co"># grouped (anatomy, physiology), never an outcome: clustering on survival and</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co"># then comparing survival by cluster answers its own question. Factors are</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># allowed, but each adds staggered copies and interactions to the forest.</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>VARS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;lvedd&quot;</span>, <span class="st">&quot;lvesd&quot;</span>, <span class="st">&quot;la_diam&quot;</span>, <span class="st">&quot;rvsp&quot;</span>, <span class="st">&quot;e_e&quot;</span>, <span class="st">&quot;lvef&quot;</span>)</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: optionally, clustering variables to treat as categories rather than</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># numbers, such as a graded degree (0 to 4) or a coded class (1 to 3):</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co">#   FACTORS &lt;- c(&quot;&lt;graded variable&gt;&quot;, &quot;&lt;coded variable&gt;&quot;)</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co"># sidClustering() staggers and interacts a factor differently from a number,</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co"># so this changes the forest and the clusters. NULL keeps every variable that</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co"># is not text a number, as this job always has. To match an analysis that ran</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># hvtiRutilities::r_data_types() first, list the variables it made factors</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># (by default, numbers with 3 to 9 distinct values). A 0/1 indicator needs</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co"># nothing: the forest treats it the same whether it is a number or logical.</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>FACTORS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: a variable missing in more than this share of patients is dropped and</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="co"># listed, not imputed. An imputation that invents most of a column decides the</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co"># clusters it was meant to inform.</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>MAX_MISSING <span class="ot">&lt;-</span> <span class="fl">0.4</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the forest. NTREE = 5000 is what the studies behind this template</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># used. SID_REDUCE = TRUE runs sidClustering&#39;s holdout-VIMP step, which drops</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># staggered variables that carry no structure; it is slow, and recommended</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># with more than a handful of variables because the interactions grow with the</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># square of their number. (It is not the join&#39;s REDUCE above.)</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>NTREE <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>SID_REDUCE <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: optionally, other sidClustering() arguments by name, to match an</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># analysis that set them:</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co">#   SID_ARGS &lt;- list(ntree.reduce = 200, dist.sharpen = FALSE, nodesize = 5)</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co"># sidClustering()&#39;s own arguments are taken, and the rfsrc() arguments it hands</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># on to the forest (mtry, nodesize). Each changes the distance. The ones this</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># job sets above (data, method, ntree, reduce, seed, k), the formula and</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># na.action are refused, and so are x.no.sid, case.wt and samp: they hold</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co"># patient data, and SID_ARGS is recorded in the report. list() makes the call</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="co"># this job has always made, so caches from before SID_ARGS still load.</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>SID_ARGS <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how missing values are filled before the forest, which needs complete</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># data. &quot;mice&quot; uses predictive mean matching; &quot;forest&quot; uses randomForestSRC&#39;s</span></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># own imputation. &quot;none&quot; imputes nothing, for data already completed upstream,</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># such as one draw of the imputation a published analysis used: the job stops</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># if a clustering variable is missing anywhere, and needs M = 1. M is the</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># number of imputations: with M &gt; 1 one SID forest is grown on each and their</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># distances are averaged, so the clusters reflect more than one draw of the</span></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="co"># missing values, at M times the cost. MICE_MAXIT is the number of mice</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># iterations, used by &quot;mice&quot; only.</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>IMPUTE <span class="ot">&lt;-</span> <span class="st">&quot;mice&quot;</span></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>M <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>MICE_MAXIT <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the seed. Imputation m and its forest use SEED + m - 1: it is part of</span></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># each cache key, sets R&#39;s generator for the call (cache_fit() runs it under</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="co"># that seed), and is handed to sidClustering() as `seed =`. Both matter:</span></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="co"># SID_REDUCE = TRUE draws from R&#39;s generator as well as from the forest&#39;s seed.</span></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">1024</span></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2423,13 +2457,25 @@ vertical-align: -.125em;
 <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  d[.chr] <span class="ot">&lt;-</span> <span class="fu">lapply</span>(d[.chr], factor)</span>
 <span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Text variables converted to factors: &quot;</span>, <span class="fu">paste</span>(.chr, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
 <span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>.empty <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(<span class="sc">!</span><span class="fu">is.na</span>(d[VARS])) <span class="sc">==</span> <span class="dv">0</span></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> d[<span class="sc">!</span>.empty, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(d) <span class="sc">==</span> <span class="dv">0</span>L) {</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;No patients are left: every patient is missing every clustering variable in VARS. Check the names in VARS.&quot;</span>,</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Patients with every clustering variable missing, dropped:&quot;</span>, <span class="fu">sum</span>(.empty), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co"># The variables FACTORS declares are factors too, before the missing values are counted and imputed, so</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="co"># the imputation fills them with one of their levels and the forest treats them as categories.</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(FACTORS)) {</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.character</span>(FACTORS) <span class="sc">||</span> <span class="fu">anyNA</span>(FACTORS)) {</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;FACTORS must be NULL or the names of clustering variables, such as c(</span><span class="sc">\&quot;</span><span class="st">grade</span><span class="sc">\&quot;</span><span class="st">).&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  FACTORS <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">tolower</span>(FACTORS))</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>  .not_var <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(FACTORS, VARS)</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(.not_var)) <span class="fu">stop</span>(<span class="st">&quot;FACTORS names variable(s) not in VARS: &quot;</span>, <span class="fu">toString</span>(.not_var), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>  d[FACTORS] <span class="ot">&lt;-</span> <span class="fu">lapply</span>(d[FACTORS], factor)</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Variables declared as factors: &quot;</span>, <span class="fu">paste</span>(FACTORS, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>.empty <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(<span class="sc">!</span><span class="fu">is.na</span>(d[VARS])) <span class="sc">==</span> <span class="dv">0</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> d[<span class="sc">!</span>.empty, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(d) <span class="sc">==</span> <span class="dv">0</span>L) {</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;No patients are left: every patient is missing every clustering variable in VARS. Check the names in VARS.&quot;</span>,</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Patients with every clustering variable missing, dropped:&quot;</span>, <span class="fu">sum</span>(.empty), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Patients with every clustering variable missing, dropped: 0 </code></pre>
@@ -2451,7 +2497,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261120.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261125.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2567,36 +2613,59 @@ Table 2: Share of patients missing each clustering variable
 </section>
 <section id="imputation" class="level2">
 <h2 class="anchored" data-anchor-id="imputation">Imputation</h2>
-<p>The forest needs complete data. Each imputation fills the missing values once, by predictive mean matching (<code>&quot;mice&quot;</code>) or by randomForestSRC’s forest imputation (<code>&quot;forest&quot;</code>). With one imputation the filled values are treated as known, so the cluster boundaries are conditional on one draw; with several, the forests’ distances are averaged below. Either way, nothing later describes the clusters with imputed values.</p>
+<p>The forest needs complete data. Each imputation fills the missing values once, by predictive mean matching (<code>&quot;mice&quot;</code>) or by randomForestSRC’s forest imputation (<code>&quot;forest&quot;</code>). With one imputation the filled values are treated as known, so the cluster boundaries are conditional on one draw; with several, the forests’ distances are averaged below. Either way, nothing later describes the clusters with imputed values. With <code>IMPUTE = &quot;none&quot;</code> this job imputes nothing: the data must be complete as supplied, for example imputed upstream, and the job stops if they are not.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>IMPUTE <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;mice&quot;</span>, <span class="st">&quot;forest&quot;</span>)) <span class="fu">stop</span>(<span class="st">&quot;IMPUTE must be </span><span class="sc">\&quot;</span><span class="st">mice</span><span class="sc">\&quot;</span><span class="st"> or </span><span class="sc">\&quot;</span><span class="st">forest</span><span class="sc">\&quot;</span><span class="st">.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.numeric</span>(M) <span class="sc">||</span> <span class="fu">length</span>(M) <span class="sc">!=</span> <span class="dv">1</span>L <span class="sc">||</span> M <span class="sc">&lt;</span> <span class="dv">1</span> <span class="sc">||</span> M <span class="sc">!=</span> <span class="fu">trunc</span>(M)) <span class="fu">stop</span>(<span class="st">&quot;M must be a whole number, 1 or more.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="fu">dirname</span>(<span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;sid.rds&quot;</span>))</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>.to_impute <span class="ot">&lt;-</span> d[sid_vars]</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>.n_missing <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(.to_impute))</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Imputation m is cached under its own name and seeded SEED + m - 1, so raising</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># M later reuses the imputations already made.</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>d_complete <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(M), <span class="cf">function</span>(m) {</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (.n_missing <span class="sc">==</span> <span class="dv">0</span>L) <span class="fu">return</span>(.to_impute)</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> SEED <span class="sc">+</span> m <span class="sc">-</span> <span class="dv">1</span>L</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">identical</span>(IMPUTE, <span class="st">&quot;mice&quot;</span>)) {</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    imp <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="fu">paste0</span>(<span class="st">&quot;sid-fit-impute-&quot;</span>, m),</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>                     mice<span class="sc">::</span><span class="fu">mice</span>(.to_impute, <span class="at">m =</span> <span class="dv">1</span>, <span class="at">maxit =</span> MICE_MAXIT, <span class="at">method =</span> <span class="st">&quot;pmm&quot;</span>, <span class="at">printFlag =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>                     <span class="at">seed =</span> s, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    mice<span class="sc">::</span><span class="fu">complete</span>(imp, <span class="dv">1</span>)</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cache_fit</span>(<span class="fu">paste0</span>(<span class="st">&quot;sid-fit-impute-&quot;</span>, m),</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>              randomForestSRC<span class="sc">::</span><span class="fu">impute</span>(<span class="at">data =</span> .to_impute, <span class="at">ntree =</span> <span class="dv">250</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>              <span class="at">seed =</span> s, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(<span class="fu">vapply</span>(d_complete, nrow, <span class="fu">integer</span>(<span class="dv">1</span>L)) <span class="sc">!=</span> <span class="fu">nrow</span>(d))) {</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;The imputation returned fewer patients than the cohort holds, so the distances could not be matched to patients.&quot;</span>,</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Values imputed in each of&quot;</span>, M, <span class="st">&quot;imputation(s):&quot;</span>, .n_missing, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.character</span>(IMPUTE) <span class="sc">||</span> <span class="fu">length</span>(IMPUTE) <span class="sc">!=</span> <span class="dv">1</span>L <span class="sc">||</span> <span class="sc">!</span>IMPUTE <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;mice&quot;</span>, <span class="st">&quot;forest&quot;</span>, <span class="st">&quot;none&quot;</span>)) {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;IMPUTE must be </span><span class="sc">\&quot;</span><span class="st">mice</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">forest</span><span class="sc">\&quot;</span><span class="st"> or </span><span class="sc">\&quot;</span><span class="st">none</span><span class="sc">\&quot;</span><span class="st">.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.numeric</span>(M) <span class="sc">||</span> <span class="fu">length</span>(M) <span class="sc">!=</span> <span class="dv">1</span>L <span class="sc">||</span> M <span class="sc">&lt;</span> <span class="dv">1</span> <span class="sc">||</span> M <span class="sc">!=</span> <span class="fu">trunc</span>(M)) <span class="fu">stop</span>(<span class="st">&quot;M must be a whole number, 1 or more.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="fu">dirname</span>(<span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;sid.rds&quot;</span>))</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>.to_impute <span class="ot">&lt;-</span> d[sid_vars]</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>.n_missing <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(.to_impute))</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">identical</span>(IMPUTE, <span class="st">&quot;none&quot;</span>)) {</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Complete data give M identical forests but for their seeds, which is not M imputations.</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (M <span class="sc">!=</span> <span class="dv">1</span>) <span class="fu">stop</span>(<span class="st">&quot;IMPUTE = </span><span class="sc">\&quot;</span><span class="st">none</span><span class="sc">\&quot;</span><span class="st"> needs M = 1: with nothing imputed there is one dataset.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  .gaps <span class="ot">&lt;-</span> <span class="fu">colSums</span>(<span class="fu">is.na</span>(.to_impute))</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  .gaps <span class="ot">&lt;-</span> .gaps[.gaps <span class="sc">&gt;</span> <span class="dv">0</span>L]</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(.gaps)) {</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;IMPUTE = </span><span class="sc">\&quot;</span><span class="st">none</span><span class="sc">\&quot;</span><span class="st">, but clustering variables have missing values: &quot;</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste0</span>(<span class="fu">names</span>(.gaps), <span class="st">&quot; (&quot;</span>, .gaps, <span class="st">&quot;)&quot;</span>, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;. Supply completed data, drop the variables from VARS, or choose </span><span class="sc">\&quot;</span><span class="st">mice</span><span class="sc">\&quot;</span><span class="st"> or </span><span class="sc">\&quot;</span><span class="st">forest</span><span class="sc">\&quot;</span><span class="st">.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;No imputation (IMPUTE = </span><span class="sc">\&quot;</span><span class="st">none</span><span class="sc">\&quot;</span><span class="st">): the clustering variables were complete as supplied.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Imputation m is cached under its own name and seeded SEED + m - 1, so raising</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="co"># M later reuses the imputations already made.</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="co"># The cache keys on this code as written, so it must not change: an imputation cached by an earlier copy of</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="co"># this job then still loads.</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>.impute_mice <span class="ot">&lt;-</span> <span class="fu">quote</span>(mice<span class="sc">::</span><span class="fu">mice</span>(.to_impute, <span class="at">m =</span> <span class="dv">1</span>, <span class="at">maxit =</span> MICE_MAXIT, <span class="at">method =</span> <span class="st">&quot;pmm&quot;</span>, <span class="at">printFlag =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>.impute_forest <span class="ot">&lt;-</span> <span class="fu">quote</span>(randomForestSRC<span class="sc">::</span><span class="fu">impute</span>(<span class="at">data =</span> .to_impute, <span class="at">ntree =</span> <span class="dv">250</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>.impute_code <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">identical</span>(IMPUTE, <span class="st">&quot;mice&quot;</span>)) .impute_mice <span class="cf">else</span> .impute_forest</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>.todo <span class="ot">&lt;-</span> .n_missing <span class="sc">&gt;</span> <span class="dv">0</span>L <span class="sc">&amp;</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(M), <span class="cf">function</span>(m) {</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  hvtiRutilities<span class="sc">::</span><span class="fu">cache_would_fit</span>(<span class="fu">paste0</span>(<span class="st">&quot;sid-fit-impute-&quot;</span>, m), .impute_code, <span class="at">seed =</span> SEED <span class="sc">+</span> m <span class="sc">-</span> <span class="dv">1</span>L, <span class="at">dir =</span> CACHE_DIR,</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">refit =</span> REFIT)</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>}, <span class="fu">logical</span>(<span class="dv">1</span>L))</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Each imputation that runs is reported to job_status() and the render log as done of total, with an estimate</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a><span class="co"># of what is left. Imputations read from the cache are not counted. Outside a render the reporter is NULL.</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>.tick <span class="ot">&lt;-</span> .job<span class="sc">$</span><span class="fu">progress</span>(<span class="st">&quot;imputation&quot;</span>)</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>d_complete <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(M), <span class="cf">function</span>(m) {</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (.n_missing <span class="sc">==</span> <span class="dv">0</span>L) <span class="fu">return</span>(.to_impute)</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> SEED <span class="sc">+</span> m <span class="sc">-</span> <span class="dv">1</span>L</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">identical</span>(IMPUTE, <span class="st">&quot;mice&quot;</span>)) {</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>    mice<span class="sc">::</span><span class="fu">complete</span>(<span class="fu">cache_fit</span>(<span class="fu">paste0</span>(<span class="st">&quot;sid-fit-impute-&quot;</span>, m), .impute_mice, <span class="at">seed =</span> s, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT), <span class="dv">1</span>)</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cache_fit</span>(<span class="fu">paste0</span>(<span class="st">&quot;sid-fit-impute-&quot;</span>, m), .impute_forest, <span class="at">seed =</span> s, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (.todo[m] <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(.tick)) <span class="fu">.tick</span>(<span class="fu">sum</span>(.todo[<span class="fu">seq_len</span>(m)]), <span class="fu">sum</span>(.todo))</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>  out</span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(<span class="fu">vapply</span>(d_complete, nrow, <span class="fu">integer</span>(<span class="dv">1</span>L)) <span class="sc">!=</span> <span class="fu">nrow</span>(d))) {</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;The imputation returned fewer patients than the cohort holds, so the distances could not be matched to patients.&quot;</span>,</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">identical</span>(IMPUTE, <span class="st">&quot;none&quot;</span>)) <span class="fu">cat</span>(<span class="st">&quot;Values imputed in each of&quot;</span>, M, <span class="st">&quot;imputation(s):&quot;</span>, .n_missing, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Values imputed in each of 1 imputation(s): 203 </code></pre>
@@ -2619,41 +2688,81 @@ Table 2: Share of patients missing each clustering variable
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># a stop: a failed fit is then never cached, and the message names the imputation.</span></span>
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Only the distance and the kept variables are cached; the forest, which</span></span>
 <span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># holds patient values, is left out of the cache as it is of sid.rds.</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>sid_fits <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(M), <span class="cf">function</span>(m) {</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">anyNA</span>(d_complete[[m]])) <span class="fu">stop</span>(<span class="st">&quot;Missing values reached the SID fit after imputation &quot;</span>, m, <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> SEED <span class="sc">+</span> m <span class="sc">-</span> <span class="dv">1</span>L</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cache_fit</span>(<span class="fu">paste0</span>(<span class="st">&quot;sid-fit-&quot;</span>, m), {</span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    o <span class="ot">&lt;-</span> <span class="fu">sidClustering</span>(d_complete[[m]], <span class="at">method =</span> <span class="st">&quot;sid&quot;</span>, <span class="at">ntree =</span> NTREE, <span class="at">reduce =</span> SID_REDUCE, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(s))</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.null</span>(o<span class="sc">$</span>dist)) {</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">stop</span>(<span class="st">&quot;sidClustering() failed on imputation &quot;</span>, m, <span class="st">&quot; (it returned no distance). Look above for the message &quot;</span>,</span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;randomForestSRC gave, and check the clustering variables for a constant or near-empty factor.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    o[<span class="fu">c</span>(<span class="st">&quot;dist&quot;</span>, <span class="st">&quot;outcome.names&quot;</span>)]</span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">seed =</span> s, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>sid_dist <span class="ot">&lt;-</span> <span class="fu">Reduce</span>(<span class="st">`</span><span class="at">+</span><span class="st">`</span>, <span class="fu">lapply</span>(sid_fits, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;dist&quot;</span>)) <span class="sc">/</span> M</span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="co"># How closely each imputation&#39;s distances follow the mean. Near 1, the</span></span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="co"># imputations agree; well below, the missing values are shaping the distance.</span></span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="co"># With nothing missing, every imputation is the same data and the forests differ</span></span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="co"># only by their seeds, so the correlation then measures the forest&#39;s own Monte</span></span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Carlo noise, not the imputation.</span></span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>.lower <span class="ot">&lt;-</span> <span class="cf">function</span>(x) x[<span class="fu">lower.tri</span>(x)]</span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>sid_agreement <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">imputation =</span> <span class="fu">seq_len</span>(M),</span>
-<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">correlation_with_mean =</span> <span class="fu">vapply</span>(sid_fits, <span class="cf">function</span>(f) stats<span class="sc">::</span><span class="fu">cor</span>(<span class="fu">.lower</span>(f<span class="sc">$</span>dist), <span class="fu">.lower</span>(sid_dist)), <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
-<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>.sid_names <span class="ot">&lt;-</span> <span class="fu">names</span>(SID_ARGS)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.list</span>(SID_ARGS) <span class="sc">||</span> (<span class="fu">length</span>(SID_ARGS) <span class="sc">&amp;&amp;</span> (<span class="fu">is.null</span>(.sid_names) <span class="sc">||</span> <span class="fu">anyNA</span>(.sid_names) <span class="sc">||</span> <span class="sc">!</span><span class="fu">all</span>(<span class="fu">nzchar</span>(.sid_names)) <span class="sc">||</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>                                                  <span class="fu">anyDuplicated</span>(.sid_names)))) {</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SID_ARGS must be list() or a list of sidClustering() arguments, each named once, such as list(fast = TRUE).&quot;</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>.owned <span class="ot">&lt;-</span> <span class="fu">intersect</span>(.sid_names, <span class="fu">c</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;method&quot;</span>, <span class="st">&quot;ntree&quot;</span>, <span class="st">&quot;reduce&quot;</span>, <span class="st">&quot;seed&quot;</span>, <span class="st">&quot;k&quot;</span>, <span class="st">&quot;formula&quot;</span>, <span class="st">&quot;na.action&quot;</span>))</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.owned)) {</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SID_ARGS names argument(s) this job sets itself: &quot;</span>, <span class="fu">toString</span>(.owned),</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;. Set NTREE, SID_REDUCE, SEED or IMPUTE above instead.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="co"># These carry patient data, which SID_ARGS would write into the cache key, sid.rds and the report.</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>.data_args <span class="ot">&lt;-</span> <span class="fu">intersect</span>(.sid_names, <span class="fu">c</span>(<span class="st">&quot;x.no.sid&quot;</span>, <span class="st">&quot;case.wt&quot;</span>, <span class="st">&quot;samp&quot;</span>))</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.data_args)) {</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SID_ARGS cannot carry patient-level data: &quot;</span>, <span class="fu">toString</span>(.data_args), <span class="st">&quot;. It is recorded in the report.&quot;</span>,</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a><span class="co"># The method&#39;s formals as well as the generic&#39;s, in case a release declares only (data, method, ...) on the generic.</span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>.takes <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">lapply</span>(<span class="fu">list</span>(randomForestSRC<span class="sc">::</span>sidClustering, randomForestSRC<span class="sc">:::</span>sidClustering.rfsrc, randomForestSRC<span class="sc">::</span>rfsrc),</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">function</span>(f) <span class="fu">names</span>(<span class="fu">formals</span>(f))))</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>.unknown <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(.sid_names, <span class="fu">setdiff</span>(.takes, <span class="st">&quot;...&quot;</span>))</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.unknown)) {</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SID_ARGS names argument(s) neither sidClustering() nor rfsrc() takes: &quot;</span>, <span class="fu">toString</span>(.unknown), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a><span class="co"># SID_ARGS is spliced into the call by value, so the call text, and with it the</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="co"># cache key, names each argument and changes when one does. With list() the</span></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a><span class="co"># call is exactly the one this job made before SID_ARGS existed.</span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>.sid_code <span class="ot">&lt;-</span> <span class="fu">bquote</span>({</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>  o <span class="ot">&lt;-</span> <span class="fu">sidClustering</span>(d_complete[[m]], <span class="at">method =</span> <span class="st">&quot;sid&quot;</span>, <span class="at">ntree =</span> NTREE, <span class="at">reduce =</span> SID_REDUCE, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(s), <span class="fu">..</span>(SID_ARGS))</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(o<span class="sc">$</span>dist)) {</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;sidClustering() failed on imputation &quot;</span>, m, <span class="st">&quot; (it returned no distance). Look above for the message &quot;</span>,</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;randomForestSRC gave, and check the clustering variables for a constant or near-empty factor.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>  o[<span class="fu">c</span>(<span class="st">&quot;dist&quot;</span>, <span class="st">&quot;outcome.names&quot;</span>)]</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>}, <span class="at">splice =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>.todo <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(M), <span class="cf">function</span>(m) {</span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> SEED <span class="sc">+</span> m <span class="sc">-</span> <span class="dv">1</span>L</span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>  hvtiRutilities<span class="sc">::</span><span class="fu">cache_would_fit</span>(<span class="fu">paste0</span>(<span class="st">&quot;sid-fit-&quot;</span>, m), .sid_code, <span class="at">seed =</span> s, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>}, <span class="fu">logical</span>(<span class="dv">1</span>L))</span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Each forest that grows is reported to job_status() and the render log as the imputations are, above.</span></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>.tick <span class="ot">&lt;-</span> .job<span class="sc">$</span><span class="fu">progress</span>(<span class="st">&quot;SID forest&quot;</span>)</span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>sid_fits <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(M), <span class="cf">function</span>(m) {</span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">anyNA</span>(d_complete[[m]])) <span class="fu">stop</span>(<span class="st">&quot;Missing values reached the SID fit after imputation &quot;</span>, m, <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> SEED <span class="sc">+</span> m <span class="sc">-</span> <span class="dv">1</span>L</span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="fu">paste0</span>(<span class="st">&quot;sid-fit-&quot;</span>, m), .sid_code, <span class="at">seed =</span> s, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (.todo[m] <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(.tick)) <span class="fu">.tick</span>(<span class="fu">sum</span>(.todo[<span class="fu">seq_len</span>(m)]), <span class="fu">sum</span>(.todo))</span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>  f</span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a>sid_dist <span class="ot">&lt;-</span> <span class="fu">Reduce</span>(<span class="st">`</span><span class="at">+</span><span class="st">`</span>, <span class="fu">lapply</span>(sid_fits, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;dist&quot;</span>)) <span class="sc">/</span> M</span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a><span class="co"># How closely each imputation&#39;s distances follow the mean. Near 1, the</span></span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a><span class="co"># imputations agree; well below, the missing values are shaping the distance.</span></span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a><span class="co"># With nothing missing, every imputation is the same data and the forests differ</span></span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a><span class="co"># only by their seeds, so the correlation then measures the forest&#39;s own Monte</span></span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Carlo noise, not the imputation.</span></span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a>.lower <span class="ot">&lt;-</span> <span class="cf">function</span>(x) x[<span class="fu">lower.tri</span>(x)]</span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a>sid_agreement <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a>  <span class="at">imputation =</span> <span class="fu">seq_len</span>(M),</span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a>  <span class="at">correlation_with_mean =</span> <span class="fu">vapply</span>(sid_fits, <span class="cf">function</span>(f) stats<span class="sc">::</span><span class="fu">cor</span>(<span class="fu">.lower</span>(f<span class="sc">$</span>dist), <span class="fu">.lower</span>(sid_dist)), <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">step =</span> <span class="fu">c</span>(<span class="st">&quot;Clustering variables&quot;</span>, <span class="st">&quot;Dropped before the fit&quot;</span>, <span class="st">&quot;Kept by the reduce step&quot;</span>, <span class="st">&quot;Imputation&quot;</span>, <span class="st">&quot;Patients&quot;</span>),</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(<span class="fu">toString</span>(sid_vars), <span class="cf">if</span> (<span class="fu">nrow</span>(sid_dropped)) <span class="fu">toString</span>(sid_dropped<span class="sc">$</span>variable) <span class="cf">else</span> <span class="st">&quot;none&quot;</span>,</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>            <span class="fu">toString</span>(<span class="fu">unique</span>(<span class="fu">unlist</span>(<span class="fu">lapply</span>(sid_fits, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;outcome.names&quot;</span>)))),</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (.n_missing <span class="sc">==</span> <span class="dv">0</span>L) <span class="st">&quot;none needed&quot;</span> <span class="cf">else</span> <span class="fu">paste0</span>(IMPUTE, <span class="st">&quot;, &quot;</span>, M, <span class="st">&quot; imputation(s)&quot;</span>),</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>            <span class="fu">nrow</span>(sid_dist))</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>.factors_used <span class="ot">&lt;-</span> sid_vars[<span class="fu">vapply</span>(d[sid_vars], is.factor, <span class="fu">logical</span>(<span class="dv">1</span>L))]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">step =</span> <span class="fu">c</span>(<span class="st">&quot;Clustering variables&quot;</span>, <span class="st">&quot;Treated as factors&quot;</span>, <span class="st">&quot;Dropped before the fit&quot;</span>, <span class="st">&quot;Kept by the reduce step&quot;</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;Imputation&quot;</span>, <span class="st">&quot;Patients&quot;</span>),</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(<span class="fu">toString</span>(sid_vars), <span class="cf">if</span> (<span class="fu">length</span>(.factors_used)) <span class="fu">toString</span>(.factors_used) <span class="cf">else</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (<span class="fu">nrow</span>(sid_dropped)) <span class="fu">toString</span>(sid_dropped<span class="sc">$</span>variable) <span class="cf">else</span> <span class="st">&quot;none&quot;</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>            <span class="fu">toString</span>(<span class="fu">unique</span>(<span class="fu">unlist</span>(<span class="fu">lapply</span>(sid_fits, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;outcome.names&quot;</span>)))),</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (<span class="fu">identical</span>(IMPUTE, <span class="st">&quot;none&quot;</span>)) <span class="st">&quot;none: complete as supplied&quot;</span> <span class="cf">else</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>              <span class="cf">if</span> (.n_missing <span class="sc">==</span> <span class="dv">0</span>L) <span class="st">&quot;none needed&quot;</span> <span class="cf">else</span> <span class="fu">paste0</span>(IMPUTE, <span class="st">&quot;, &quot;</span>, M, <span class="st">&quot; imputation(s)&quot;</span>),</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>            <span class="fu">nrow</span>(sid_dist))</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-used" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2669,18 +2778,22 @@ Table 3: What the forests were grown on
 <td style="text-align: left;">lvedd, lvesd, la_diam, rvsp, e_e, lvef</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Dropped before the fit</td>
+<td style="text-align: left;">Treated as factors</td>
 <td style="text-align: left;">none</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">Dropped before the fit</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">Kept by the reduce step</td>
 <td style="text-align: left;">rvsp, e_e, lvesd, lvedd, la_diam</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Imputation</td>
 <td style="text-align: left;">mice, 1 imputation(s)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Patients</td>
 <td style="text-align: left;">800</td>
 </tr>
@@ -2716,12 +2829,16 @@ Table 3: What the forests were grown on
 <span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>       <span class="co"># The completed data each forest saw, so sid-stability can refit on exactly these values.</span></span>
 <span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>       <span class="at">data_fingerprint =</span> <span class="fu">vapply</span>(d_complete, hvtiRtemplates<span class="sc">:::</span>.sid_data_fingerprint, <span class="fu">character</span>(<span class="dv">1</span>)),</span>
 <span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">settings =</span> <span class="fu">list</span>(<span class="at">ntree =</span> NTREE, <span class="at">sid_reduce =</span> SID_REDUCE, <span class="at">seed =</span> SEED, <span class="at">impute =</span> IMPUTE, <span class="at">m =</span> M,</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>                       <span class="at">mice_maxit =</span> MICE_MAXIT, <span class="at">max_missing =</span> MAX_MISSING)),</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> .cohort,</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(sid_handoff, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;sid.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>                       <span class="at">mice_maxit =</span> MICE_MAXIT, <span class="at">max_missing =</span> MAX_MISSING,</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>                       <span class="co"># The declared factors that were clustered on, which sid-stability converts the same way.</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>                       <span class="at">factors =</span> <span class="cf">if</span> (<span class="fu">length</span>(<span class="fu">intersect</span>(FACTORS, sid_vars))) <span class="fu">intersect</span>(FACTORS, sid_vars),</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>                       <span class="co"># The other sidClustering() arguments the forests were grown with; list() for the defaults.</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>                       <span class="at">sid_args =</span> SID_ARGS)),</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> .cohort,</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(sid_handoff, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;sid.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2739,17 +2856,17 @@ Table 3: What the forests were grown on
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-20 17:36:50 EST</td>
+<td style="text-align: left;">2026-11-25 13:21:48 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-20 17:36:55 EST</td>
+<td style="text-align: left;">2026-11-25 13:21:53 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">5 s</td>
+<td style="text-align: left;">4 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2789,17 +2906,17 @@ Table 3: What the forests were grown on
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.2</td>
+<td style="text-align: left;">1.6.3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261120.parquet</td>
+<td style="text-align: left;">built_20261125.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-20</td>
+<td style="text-align: left;">2026-11-25</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2839,7 +2956,7 @@ Table 3: What the forests were grown on
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"sid.fit.echo.sid","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:36:55","job":"sid.fit.echo.sid","rendered":"2026-11-20T22:36:55Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"61119a9ebfdfffe0ab2f05196c237f9bcf753aed0c7b9715508bbb357851d147"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"backports","version":"1.5.1","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"boot","version":"1.3.32","source":"CRAN"},{"package":"broom","version":"1.0.13","source":"CRAN"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.6.2","source":null},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jomo","version":"2.7.6","source":"CRAN"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"lme4","version":"2.1.0","source":"CRAN"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"MASS","version":"7.3.66","source":"CRAN"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mice","version":"3.19.0","source":"CRAN"},{"package":"minqa","version":"1.2.8","source":"CRAN"},{"package":"mitml","version":"0.4.5","source":"CRAN"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"nloptr","version":"2.2.1","source":"CRAN"},{"package":"nnet","version":"7.3.21","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pan","version":"2.0","source":"CRAN"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"rbibutils","version":"2.4.1","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"Rdpack","version":"2.6.6","source":"CRAN"},{"package":"reformulas","version":"0.4.4","source":"CRAN"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rpart","version":"4.1.27","source":"CRAN"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261120.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-20T22:12:32Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"echo","type":"sid","cohort":{"n":800},"source_sha256":"35aada2f0076aaf35cf2ee5904d1d40931d90910aff84899697b78b1b0d1eea8","run":{"start":"2026-11-20T17:36:50-0500","end":"2026-11-20T17:36:55-0500","time_zone":"EST","duration_seconds":4.7,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"sid.fit.echo.sid.qmd","template":"sid.fit","prefix":"sid","qualifier":"fit","subject":"echo","type":"sid","hvtiRtemplates":"1.6.2"},"datasets":[{"name":"built","version_file":"built_20261120.parquet","registered":"2026-11-20","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"1024","renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.2","sha":null,"method":"sid.fit","seed":1024,"rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:36:50"}},"source":"30_analyses/sid.fit.echo.sid.qmd",".hvti_render_id":"1dd4a8291b3a173db1ab799a82676bbc8d7b9ad6b1623f17ac2e057576987eee",".hvti_source_sha256":"35aada2f0076aaf35cf2ee5904d1d40931d90910aff84899697b78b1b0d1eea8"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.29","sha":null,"method":"sid.fit.echo.sid","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-25 13:21:53","job":"sid.fit.echo.sid","rendered":"2026-11-25T18:21:53Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"61119a9ebfdfffe0ab2f05196c237f9bcf753aed0c7b9715508bbb357851d147"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"backports","version":"1.5.1","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"boot","version":"1.3.32","source":"CRAN"},{"package":"broom","version":"1.0.13","source":"CRAN"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.6.3","source":null},{"package":"hvtiRutilities","version":"1.5.29","source":null},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jomo","version":"2.7.6","source":"CRAN"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"lme4","version":"2.1.0","source":"CRAN"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"MASS","version":"7.3.66","source":"CRAN"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mice","version":"3.19.0","source":"CRAN"},{"package":"minqa","version":"1.2.8","source":"CRAN"},{"package":"mitml","version":"0.4.5","source":"CRAN"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"nloptr","version":"2.2.1","source":"CRAN"},{"package":"nnet","version":"7.3.21","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pan","version":"2.0","source":"CRAN"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"rbibutils","version":"2.4.1","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"Rdpack","version":"2.6.6","source":"CRAN"},{"package":"reformulas","version":"0.4.4","source":"CRAN"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rpart","version":"4.1.27","source":"CRAN"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261125.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-25T18:03:42Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"echo","type":"sid","cohort":{"n":800},"sid":{"impute":"mice","m":1,"sid_args":[]},"source_sha256":"02819c90f7d9fc2f4a8f905b8aeff69c86f688db5c362e35fd702cbe1267ae85","run":{"start":"2026-11-25T13:21:48-0500","end":"2026-11-25T13:21:53-0500","time_zone":"EST","duration_seconds":4.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"sid.fit.echo.sid.qmd","template":"sid.fit","prefix":"sid","qualifier":"fit","subject":"echo","type":"sid","hvtiRtemplates":"1.6.3"},"datasets":[{"name":"built","version_file":"built_20261125.parquet","registered":"2026-11-25","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"1024","renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.3","sha":null,"method":"sid.fit","seed":1024,"rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-25 13:21:48"}},"source":"30_analyses/sid.fit.echo.sid.qmd",".hvti_render_id":"5313f697d53e49f58bb659843b2193addcd783ba6e44f9f426afc290a7b82235",".hvti_source_sha256":"02819c90f7d9fc2f4a8f905b8aeff69c86f688db5c362e35fd702cbe1267ae85"}</script>
 </section>
 
 </main>

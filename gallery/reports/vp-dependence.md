@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:42
+2026-11-25 13:21
 
 Gallery job on the synthetic cohort: how the nine preoperative
 predictors the rf fits grow on depend on each other, with no outcome
@@ -92,8 +92,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -103,6 +103,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -131,7 +132,7 @@ KEY <- ID
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
 #     or "nearest" with to = a cohort date column). A tie stops: picking one
 #     record silently would be a hidden choice. This job reads one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
@@ -287,7 +288,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -347,13 +348,6 @@ if (anyNA(d[VARIABLES])) {
   .imputed[.lgl] <- lapply(.imputed[.lgl], function(x) as.logical(as.character(x)))
   d[VARIABLES] <- .imputed[VARIABLES]
 }
-```
-
-    cache_fit(): loaded 'vp-dependence-impute' from cache
-
-Code
-
-``` r
 if (anyNA(d[.cols])) stop("Variables still hold missing values after NA_ACTION; uvarpro() would drop them.", call. = FALSE)
 .missing_values <- .miss$table
 .cohort <- c(list(n = as.integer(nrow(d))), .miss$cohort)
@@ -574,13 +568,6 @@ fit <- cache_fit("vp-dependence",
                  uvarpro(d_noise, ntree = NTREE, max.tree = min(MAX_TREE, NTREE), max.rules.tree = MAX_RULES_TREE,
                          seed = -abs(SEED)),
                  seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
-```
-
-    cache_fit(): loaded 'vp-dependence' from cache
-
-Code
-
-``` r
 # The lasso step draws its cross-validation folds from R's generator, so it is
 # seeded again. pre.filter = FALSE keeps every column: the pre-filter would
 # drop the noise the bar is made from, and any outcome column.
@@ -588,8 +575,6 @@ set.seed(abs(SEED))
 beta_raw <- cache_fit("vp-dependence-beta", get.beta.entropy(fit, pre.filter = FALSE, papply = lapply),
                       seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "glmnet")
 ```
-
-    cache_fit(): loaded 'vp-dependence-beta' from cache
 
 ## Coverage
 
@@ -772,19 +757,47 @@ Code
 # (abs(SEED) + r, and abs(SEED + r) inside vp_add_noise(), as in vp-fit), and
 # is cached on its own, so raising REPEATS computes only the new ones.
 if (REPEATS > 0) {
-  .runs <- lapply(seq_len(REPEATS), function(r) {
+  # Refit r's patients and noise. Drawing them is cheap and seeded, so they are drawn once to ask which
+  # refits the cache lacks and again to fit, and come out the same both times.
+  .repeat_data <- function(r) {
     set.seed(abs(SEED) + r)
     rows <- sort(sample.int(nrow(d), floor(SUBSAMPLE * nrow(d))))
-    dr <- vp_add_noise(d[rows, , drop = FALSE], .cols, NOISE_N, SEED + r)
+    vp_add_noise(d[rows, , drop = FALSE], .cols, NOISE_N, SEED + r)
+  }
+  # The cache keys on this code as written, so it must not change: a refit cached by an earlier copy of this
+  # job then still loads.
+  .repeat_code <- quote(
+    uvarpro(dr, ntree = NTREE, max.tree = min(MAX_TREE, NTREE), max.rules.tree = MAX_RULES_TREE, seed = -abs(SEED + r))
+  )
+  .beta_code <- quote(get.beta.entropy(fr, pre.filter = FALSE, papply = lapply))
+  # A refit whose forest is cached but whose entropy betas are not still has work to do. Under REFIT the
+  # betas can be stale while the forest is not, as after a glmnet upgrade; their key reads the forest, so
+  # the forest is loaded to ask.
+  .todo <- vapply(seq_len(REPEATS), function(r) {
+    dr <- .repeat_data(r)
+    if (hvtiRutilities::cache_would_fit(sprintf("vp-dependence-repeat-%02d", r), .repeat_code, seed = SEED + r,
+                                        dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")) {
+      return(TRUE)
+    }
+    if (!file.exists(file.path(CACHE_DIR, sprintf("vp-dependence-repeat-%02d-beta.rds", r)))) return(TRUE)
+    if (!isTRUE(REFIT)) return(FALSE)
+    fr <- cache_fit(sprintf("vp-dependence-repeat-%02d", r), .repeat_code,
+                    seed = SEED + r, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
+    hvtiRutilities::cache_would_fit(sprintf("vp-dependence-repeat-%02d-beta", r), .beta_code, seed = SEED + r,
+                                    dir = CACHE_DIR, refit = REFIT, packages = "glmnet")
+  }, logical(1L))
+  # Each refit that fits is reported to job_status() and the render log as done of total, with an estimate of
+  # what is left. Refits read from the cache are not counted. Outside a render the reporter is NULL.
+  .tick <- .job$progress("refit")
+  .runs <- lapply(seq_len(REPEATS), function(r) {
+    dr <- .repeat_data(r)
     set.seed(abs(SEED) + r)
-    fr <- cache_fit(sprintf("vp-dependence-repeat-%02d", r),
-                    uvarpro(dr, ntree = NTREE, max.tree = min(MAX_TREE, NTREE), max.rules.tree = MAX_RULES_TREE,
-                            seed = -abs(SEED + r)),
+    fr <- cache_fit(sprintf("vp-dependence-repeat-%02d", r), .repeat_code,
                     seed = SEED + r, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
     set.seed(abs(SEED) + r)
-    br <- cache_fit(sprintf("vp-dependence-repeat-%02d-beta", r),
-                    get.beta.entropy(fr, pre.filter = FALSE, papply = lapply),
+    br <- cache_fit(sprintf("vp-dependence-repeat-%02d-beta", r), .beta_code,
                     seed = SEED + r, dir = CACHE_DIR, refit = REFIT, packages = "glmnet")
+    if (.todo[r] && !is.null(.tick)) .tick(sum(.todo[seq_len(r)]), sum(.todo))
     pr <- vpd_parent(fr)
     sq <- vpd_square(br, pr)
     nz <- startsWith(unname(pr[rownames(sq)]), "noise") %in% TRUE
@@ -894,9 +907,9 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 
 | Group           | Item           | Value                      |
 |:----------------|:---------------|:---------------------------|
-| Run             | Started        | 2026-11-20 17:39:10 EST    |
-|                 | Ended          | 2026-11-20 17:42:10 EST    |
-|                 | Duration       | 3 min 0 s                  |
+| Run             | Started        | 2026-11-25 13:17:13 EST    |
+|                 | Ended          | 2026-11-25 13:21:13 EST    |
+|                 | Duration       | 4 min 0 s                  |
 |                 | Status         | final                      |
 |                 | Rendered by    | gallery                    |
 |                 | Host           | gallery                    |
@@ -904,9 +917,9 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 |                 | Template       | vp.dependence              |
 |                 | Subject        | preop                      |
 |                 | Type           | vp                         |
-|                 | hvtiRtemplates | 1.6.2                      |
-| Dataset `built` | Version file   | built_20261120.parquet     |
-|                 | Version date   | 2026-11-20                 |
+|                 | hvtiRtemplates | 1.6.3                      |
+| Dataset `built` | Version file   | built_20261125.parquet     |
+|                 | Version date   | 2026-11-25                 |
 |                 | Source file    | built.rds                  |
 |                 | Rows kept      | 800 rows on 800 patients   |
 |                 | WHERE          | none                       |

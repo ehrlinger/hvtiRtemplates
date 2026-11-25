@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:32
+2026-11-25 13:14
 
 Gallery job on the synthetic cohort: postoperative length of stay,
 logged (log_los).
@@ -88,8 +88,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -99,6 +99,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -130,7 +131,7 @@ KEY <- ID
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
 #     breaks it. This job models one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
@@ -172,6 +173,15 @@ LEARNING_FRACTIONS <- c(0.125, 0.25, 0.5)
 LEARNING_B         <- 20
 LEARNING_TOP_K     <- 5
 LEARNING_NTREE     <- 250
+
+# Demo: the recommendation printed under the learning curve. LEARNING_AGREEMENT is
+# the agreement, Jaccard and Kendall tau both, that the top variables must reach at
+# the rightmost point to call the cohort large enough. 0.8 is a cautious start, not
+# evidence: with the top 5, a mean Jaccard of 0.8 needs most refits to share all
+# five. MIN_PREDICTORS is the fewest candidate predictors for which a forest is
+# worth fitting over a regression model. Both are advice; the job never stops on them.
+LEARNING_AGREEMENT <- 0.8
+MIN_PREDICTORS     <- 10
 
 # Demo: "na.omit" drops a patient missing any predictor; "na.impute" keeps them
 # and imputes inside the forest. The classification and regression exemplars
@@ -261,7 +271,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -383,13 +393,79 @@ save_figure(.fig, "rfr-fit-diagnostics-predicted")
 .fig
 ```
 
-![](assets/9c99fceb87e57879bfd01d24e3d6a382.png)
+![](assets/f03e00ef748cc923003d59764e13db49.png)
 
 Figure 2: Out-of-bag predicted values. Black circles, jittered sideways,
 mark the individual predictions, and the unfilled notched box plot marks
 their median and quartiles.
 
 `gg_brier()` is not here: it supports survival forests only.
+
+Code
+
+``` r
+# The R squared randomForestSRC prints with the forest, written out so the
+# report shows where it comes from. Out of bag, so no holdout is needed.
+# A patient no tree left out has no out-of-bag prediction, and the error
+# leaves them out, so the table counts who it rests on.
+.oob_mse <- utils::tail(stats::na.omit(forest$err.rate), 1)
+.var_y <- stats::var(forest$yvar)
+.oob_n <- sum(!is.na(forest$predicted.oob))
+knitr::kable(data.frame(
+  measure = c("Patients with an out-of-bag prediction", "Out-of-bag mean squared error", "Variance of the outcome",
+              "Variance explained (R squared)"),
+  value = c(paste(.oob_n, "of", length(forest$yvar)),
+            format(signif(c(.oob_mse, .var_y, 1 - .oob_mse / .var_y), 3)))
+))
+```
+
+| measure                                | value      |
+|:---------------------------------------|:-----------|
+| Patients with an out-of-bag prediction | 800 of 800 |
+| Out-of-bag mean squared error          | 0.118      |
+| Variance of the outcome                | 0.163      |
+| Variance explained (R squared)         | 0.277      |
+
+Table 3: Variance explained. How many patients have an out-of-bag
+prediction, the out-of-bag mean squared error after the last tree, the
+variance of the outcome, and the share of that variance the forest
+explains, one minus their ratio.
+
+The four rows, in order:
+
+- **Patients with an out-of-bag prediction.** A patient gets one only
+  from a tree grown without them. Each tree leaves out about a third of
+  the patients, so after *b* trees a patient has none with a chance of
+  roughly 0.63 to the power *b*: most of the cohort after one tree,
+  about 1 in 100 after ten. The error below is computed on these
+  patients alone. When this row is short of the whole cohort, the forest
+  has too few trees; raise `NTREE`.
+- **Out-of-bag mean squared error.** Each patient is predicted only by
+  the trees grown without them, the out-of-bag trees, and the error is
+  the mean of the squared differences between those predictions and the
+  observed outcomes. It is in the outcome’s units squared. It is the
+  last point of the error curve above, which is not an average of each
+  tree’s error: the point at tree *b* is the error of the forest made of
+  the first *b* trees. In the first few trees many patients have no
+  out-of-bag prediction yet, so the curve’s left end is high and noisy.
+  The table reads the last tree, and it is trustworthy once that curve
+  has levelled off and the first row counts the whole cohort; if either
+  falls short, raise `NTREE`.
+- **Variance of the outcome.** The sample variance of the observed
+  outcome about its mean, in the same squared units, and the baseline
+  the forest must beat. It divides by the number of patients less one,
+  as randomForestSRC’s R squared does, so it is a shade larger than the
+  mean squared error of the simplest prediction there is, the mean
+  outcome for every patient, which divides by the number of patients.
+- **Variance explained (R squared).** One minus the second row over the
+  third: the share of the outcome’s variance the forest’s predictions
+  account for. It reads like the R squared of a linear model, 1 perfect
+  and near 0 no better than the mean, but it is out of bag, so it is not
+  inflated by fitting the same patients it scores. Because of the
+  divisor above, predicting the mean for every patient scores 1 over the
+  number of patients rather than exactly 0, so a score that small is no
+  better than the mean. It can fall below 0, and when it does the forest
+  predicts worse than the mean outcome.
 
 ### Is the cohort large enough?
 
@@ -485,14 +561,36 @@ if (.learning_filled) {
                                    "rightmost point means the importance ranking would change with more ",
                                    "patients. Open markers have fewer than 50 patients; triangles are ",
                                    "fractions above one half, where agreement is optimistic."), .learning_right),
+                    paste0("Jaccard runs from 0, no top variable shared, to 1, the same set; Kendall tau ",
+                           "from -1, the order reversed, through 0, no relation, to 1, the same order. The dashed line marks 0."),
                     .learning_note),
   error = paste(sprintf(paste0("Out-of-bag mean squared error by the number of patients in each refit%s. ",
                                "Gray points are single refits and the black line their mean, each mean drawn",
-                               " in its fraction's marker. Open markers have fewer than 50 patients, too few",
+                               " in its fraction's marker. Boxes span the 15th to 85th percentile of the ",
+                               "refits, with a line at the median. Open markers have fewer than 50 patients, too few",
                                " for their error to be trusted."), .learning_right),
                 .learning_note)
 )
 ```
+
+**What the agreement measures.** Every refit ranks the predictors by
+importance, and each pair of refits at a fraction is compared on its top
+5 variables. The table and figure show the mean over all pairs. Both
+measures are 1 when two refits agree exactly and share the figure’s
+axis, but they do not share a floor.
+
+- **Jaccard** asks whether two refits pick the same top variables, in
+  any order: the number they share divided by the number in either. It
+  runs from 0, no variable in common, to 1, the same set. With the top
+  5, a pair sharing 4 of them scores 0.67, 3 scores 0.43, 2 scores 0.25,
+  1 scores 0.11.
+- **Kendall tau** asks whether two refits put those variables in the
+  same order. It is taken over every variable in either top set, ranked
+  by each refit’s full importance, so a variable in one top set and not
+  the other counts against it. It runs from -1, the order reversed,
+  through 0, no relation, to 1, the same order. A tau of 0.6 means about
+  80% of pairs of variables fall in the same order in both refits; at or
+  below 0 the order is no better than chance.
 
 Code
 
@@ -518,7 +616,7 @@ knitr::kable(
 |    0.500 |      400 |     20 | 0.122 (SD 0.006) |    0.73 |        0.60 | imputed |
 |    1.000 |      800 |     20 | 0.126 (SD 0.006) |    0.73 |        0.66 | imputed |
 
-Table 3: Learning curve. Error is the mean out-of-bag mean squared error
+Table 4: Learning curve. Error is the mean out-of-bag mean squared error
 of the refits at each fraction; agreement is between the refits’ top
 variables by importance. Fraction 1 is a bootstrap of the whole cohort,
 which draws as many patients as the cohort with replacement. Missing
@@ -530,45 +628,55 @@ agreement may be optimistic at every fraction, not only above one half.
 Code
 
 ``` r
+# The dashed line marks 0, Kendall tau's no relation between two orders, and the floor of Jaccard.
 .fig <- plot(learning) +
-  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
+  ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+  # Two legends, the measures and the markers: side by side they run past a 6.5 inch figure, so they stack.
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.box = "vertical")
 save_figure(.fig, "rfr-fit-learning-stability")
 .fig
 ```
 
-![](assets/764d9f866c87f0fb69a03d7f2847c48d.png)
+![](assets/30a6c418c59323feaa7856f752ba8930.png)
 
 Figure 3: Agreement of the top variables by importance between refits,
 by the number of patients in each refit (for the rightmost point, the
 whole-cohort bootstrap, drawn as a square). A line that is still rising
 at the rightmost point means the importance ranking would change with
 more patients. Open markers have fewer than 50 patients; triangles are
-fractions above one half, where agreement is optimistic. Missing values
-were filled in once with the forest’s imputed values, which were
-estimated from the whole cohort, outcomes included. Every refit has
-therefore seen part of the patients it leaves out, so its error and
-agreement may be optimistic at every fraction, not only above one half.
+fractions above one half, where agreement is optimistic. Jaccard runs
+from 0, no top variable shared, to 1, the same set; Kendall tau from -1,
+the order reversed, through 0, no relation, to 1, the same order. The
+dashed line marks 0. Missing values were filled in once with the
+forest’s imputed values, which were estimated from the whole cohort,
+outcomes included. Every refit has therefore seen part of the patients
+it leaves out, so its error and agreement may be optimistic at every
+fraction, not only above one half.
 
 Code
 
 ``` r
+# A box per fraction, from the 15th to the 85th percentile of its refits, with a line at the median.
 .fig <- plot(learning, panel = "error") +
+  hvtiRtemplates:::.learning_error_box(learning) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
 save_figure(.fig, "rfr-fit-learning-error")
 .fig
 ```
 
-![](assets/05d39561cbf11df2cde3caa50fb9bb37.png)
+![](assets/938903ef3055c72af6611009b5395f35.png)
 
 Figure 4: Out-of-bag mean squared error by the number of patients in
 each refit (for the rightmost point, the whole-cohort bootstrap, drawn
 as a square). Gray points are single refits and the black line their
-mean, each mean drawn in its fraction’s marker. Open markers have fewer
-than 50 patients, too few for their error to be trusted. Missing values
-were filled in once with the forest’s imputed values, which were
-estimated from the whole cohort, outcomes included. Every refit has
-therefore seen part of the patients it leaves out, so its error and
-agreement may be optimistic at every fraction, not only above one half.
+mean, each mean drawn in its fraction’s marker. Boxes span the 15th to
+85th percentile of the refits, with a line at the median. Open markers
+have fewer than 50 patients, too few for their error to be trusted.
+Missing values were filled in once with the forest’s imputed values,
+which were estimated from the whole cohort, outcomes included. Every
+refit has therefore seen part of the patients it leaves out, so its
+error and agreement may be optimistic at every fraction, not only above
+one half.
 
 **Reading the curve.** The error usually levels off long before the
 importance ranking does. A cohort whose error has flattened can still
@@ -587,6 +695,26 @@ agreement may be optimistic at every fraction, not only above one half.
 The agreement is between the top variables, so it needs predictors left
 out: with 5 or fewer predictors the job compares the top one fewer than
 there are.
+
+WarningRecommendation
+
+**Cohort size: not yet.** At the rightmost point, 800 patients, the
+top-5 Jaccard is 0.73 and Kendall tau 0.66, against 0.80
+(LEARNING_AGREEMENT), and agreement was still rising, by 0.05 since the
+previous point. The top variables change from refit to refit at this
+cohort size. The forest may still predict (see the error curve), but its
+importance ranking and the partial plots drawn from it are not yet
+reproducible.
+
+**Predictors: few.** 9 predictors, under 10 (MIN_PREDICTORS). With this
+few, a linear model on the same predictors is likely as informative and
+simpler to report; fit one alongside before relying on the forest.
+
+Both thresholds are study choices, set under `EDIT:`, not rules. Missing
+values were filled in once with the forest’s imputed values, which were
+estimated from the whole cohort, outcomes included. Every refit has
+therefore seen part of the patients it leaves out, so its error and
+agreement may be optimistic at every fraction, not only above one half.
 
 Code
 
@@ -610,9 +738,9 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-20 17:32:15 EST  |
-|                 | Ended          | 2026-11-20 17:32:26 EST  |
-|                 | Duration       | 11 s                     |
+| Run             | Started        | 2026-11-25 13:14:15 EST  |
+|                 | Ended          | 2026-11-25 13:14:25 EST  |
+|                 | Duration       | 10 s                     |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -620,9 +748,9 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 |                 | Template       | rfr.fit                  |
 |                 | Subject        | los                      |
 |                 | Type           | rf                       |
-|                 | hvtiRtemplates | 1.6.2                    |
-| Dataset `built` | Version file   | built_20261120.parquet   |
-|                 | Version date   | 2026-11-20               |
+|                 | hvtiRtemplates | 1.6.3                    |
+| Dataset `built` | Version file   | built_20261125.parquet   |
+|                 | Version date   | 2026-11-25               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |

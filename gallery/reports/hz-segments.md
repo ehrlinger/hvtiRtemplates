@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:27
+2026-11-25 13:09
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -65,8 +65,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `segments` `segments_20261120.parquet`, dated
-2026-11-20 · rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `segments` `segments_20261125.parquet`, dated
+2026-11-25 · rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -76,6 +76,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "segments"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -107,7 +108,7 @@ KEY <- c(ID, "iv_start")
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
 #     breaks it. This job models one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
@@ -174,7 +175,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                                |
 |:--------------------|:-----------------------------------------------|
-| Source              | dataset `segments` (segments_20261120.parquet) |
+| Source              | dataset `segments` (segments_20261125.parquet) |
 | Rows read           | 2,014                                          |
 | ID                  | `patient_id`                                   |
 | Identifiers dropped | none                                           |
@@ -862,9 +863,9 @@ hvtiRtemplates:::.methods_text(sprintf(
 
 | Group              | Item               | Value                      |
 |:-------------------|:-------------------|:---------------------------|
-| Run                | Started            | 2026-11-20 17:27:21 EST    |
-|                    | Ended              | 2026-11-20 17:27:45 EST    |
-|                    | Duration           | 24 s                       |
+| Run                | Started            | 2026-11-25 13:09:36 EST    |
+|                    | Ended              | 2026-11-25 13:09:57 EST    |
+|                    | Duration           | 20 s                       |
 |                    | Status             | final                      |
 |                    | Rendered by        | gallery                    |
 |                    | Host               | gallery                    |
@@ -873,9 +874,9 @@ hvtiRtemplates:::.methods_text(sprintf(
 |                    | Template           | hz                         |
 |                    | Subject            | dead_segments              |
 |                    | Type               | hz                         |
-|                    | hvtiRtemplates     | 1.6.2                      |
-| Dataset `segments` | Version file       | segments_20261120.parquet  |
-|                    | Version date       | 2026-11-20                 |
+|                    | hvtiRtemplates     | 1.6.3                      |
+| Dataset `segments` | Version file       | segments_20261125.parquet  |
+|                    | Version date       | 2026-11-25                 |
 |                    | Source file        | segments.rds               |
 |                    | Rows kept          | 1,823 rows on 725 patients |
 |                    | WHERE              | `!is.na(creat_pr)`         |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:36
+2026-11-25 13:21
 
 This job builds the dissimilarity that `sid-clusters` turns into
 clusters. SID clustering (Mantero and Ishwaran, 2021) is unsupervised:
@@ -15,9 +15,10 @@ two patients fall in the same terminal nodes. Two patients the forest
 cannot tell apart are close.
 
 The forest needs complete data, so the job first drops variables that
-are mostly missing and fills the rest with one imputation. The imputed
-values stay inside this job. Whatever describes the clusters later reads
-the study data, so it describes what was measured, not what was imputed.
+are mostly missing and fills the rest with one imputation, unless the
+data arrive complete. The imputed values stay inside this job. Whatever
+describes the clusters later reads the study data, so it describes what
+was measured, not what was imputed.
 
 This template is **in flight**: no study has yet run it end to end.
 
@@ -37,6 +38,14 @@ suppressPackageStartupMessages({
 # changes with the thread count with every seed held fixed.
 options(rf.cores = 1L, mc.cores = 1L)
 # The oldest versions this template works with.
+# randomForestSRC 3.7.0 is the release the random forest templates were written
+# and tested against (2026-09-19); this job copied the floor from them. It needs
+# nothing new in 3.7.0: sidClustering() has taken every argument used here since
+# 3.4.5 at least, and 3.7.0 changed survival prediction and added a hybrid
+# distance, neither used here. randomForestSRC is
+# in Suggests, so the floor gates this job, not installing hvtiRtemplates. To
+# reproduce an analysis, match its version: from 3.10.0 the same seed grows a
+# different forest (rfsrc.RNGversion() selects the old generator).
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
   stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
@@ -59,8 +68,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -70,6 +79,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -96,7 +106,7 @@ KEY <- ID
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
 #     or "nearest" with to = a cohort date column). A tie stops: picking one
 #     record silently would be a hidden choice. This job clusters one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
@@ -109,6 +119,17 @@ JOIN_KEY <- NULL
 # then comparing survival by cluster answers its own question. Factors are
 # allowed, but each adds staggered copies and interactions to the forest.
 VARS <- c("lvedd", "lvesd", "la_diam", "rvsp", "e_e", "lvef")
+
+# Demo: optionally, clustering variables to treat as categories rather than
+# numbers, such as a graded degree (0 to 4) or a coded class (1 to 3):
+#   FACTORS <- c("<graded variable>", "<coded variable>")
+# sidClustering() staggers and interacts a factor differently from a number,
+# so this changes the forest and the clusters. NULL keeps every variable that
+# is not text a number, as this job always has. To match an analysis that ran
+# hvtiRutilities::r_data_types() first, list the variables it made factors
+# (by default, numbers with 3 to 9 distinct values). A 0/1 indicator needs
+# nothing: the forest treats it the same whether it is a number or logical.
+FACTORS <- NULL
 
 # Demo: a variable missing in more than this share of patients is dropped and
 # listed, not imputed. An imputation that invents most of a column decides the
@@ -123,12 +144,26 @@ MAX_MISSING <- 0.4
 NTREE <- 1000
 SID_REDUCE <- TRUE
 
+# Demo: optionally, other sidClustering() arguments by name, to match an
+# analysis that set them:
+#   SID_ARGS <- list(ntree.reduce = 200, dist.sharpen = FALSE, nodesize = 5)
+# sidClustering()'s own arguments are taken, and the rfsrc() arguments it hands
+# on to the forest (mtry, nodesize). Each changes the distance. The ones this
+# job sets above (data, method, ntree, reduce, seed, k), the formula and
+# na.action are refused, and so are x.no.sid, case.wt and samp: they hold
+# patient data, and SID_ARGS is recorded in the report. list() makes the call
+# this job has always made, so caches from before SID_ARGS still load.
+SID_ARGS <- list()
+
 # Demo: how missing values are filled before the forest, which needs complete
 # data. "mice" uses predictive mean matching; "forest" uses randomForestSRC's
-# own imputation. M is the number of imputations: with M > 1 one SID forest is
-# grown on each and their distances are averaged, so the clusters reflect more
-# than one draw of the missing values, at M times the cost. MICE_MAXIT is the
-# number of mice iterations, unused by "forest".
+# own imputation. "none" imputes nothing, for data already completed upstream,
+# such as one draw of the imputation a published analysis used: the job stops
+# if a clustering variable is missing anywhere, and needs M = 1. M is the
+# number of imputations: with M > 1 one SID forest is grown on each and their
+# distances are averaged, so the clusters reflect more than one draw of the
+# missing values, at M times the cost. MICE_MAXIT is the number of mice
+# iterations, used by "mice" only.
 IMPUTE <- "mice"
 M <- 1
 MICE_MAXIT <- 50
@@ -177,6 +212,18 @@ if (length(.chr)) {
   d[.chr] <- lapply(d[.chr], factor)
   cat("Text variables converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
 }
+# The variables FACTORS declares are factors too, before the missing values are counted and imputed, so
+# the imputation fills them with one of their levels and the forest treats them as categories.
+if (!is.null(FACTORS)) {
+  if (!is.character(FACTORS) || anyNA(FACTORS)) {
+    stop("FACTORS must be NULL or the names of clustering variables, such as c(\"grade\").", call. = FALSE)
+  }
+  FACTORS <- unique(tolower(FACTORS))
+  .not_var <- setdiff(FACTORS, VARS)
+  if (length(.not_var)) stop("FACTORS names variable(s) not in VARS: ", toString(.not_var), ".", call. = FALSE)
+  d[FACTORS] <- lapply(d[FACTORS], factor)
+  cat("Variables declared as factors: ", paste(FACTORS, collapse = ", "), "\n", sep = "")
+}
 .empty <- rowSums(!is.na(d[VARS])) == 0
 d <- d[!.empty, , drop = FALSE]
 if (nrow(d) == 0L) {
@@ -190,7 +237,7 @@ cat("Patients with every clustering variable missing, dropped:", sum(.empty), "\
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -252,37 +299,63 @@ once, by predictive mean matching (`"mice"`) or by randomForestSRC’s
 forest imputation (`"forest"`). With one imputation the filled values
 are treated as known, so the cluster boundaries are conditional on one
 draw; with several, the forests’ distances are averaged below. Either
-way, nothing later describes the clusters with imputed values.
+way, nothing later describes the clusters with imputed values. With
+`IMPUTE = "none"` this job imputes nothing: the data must be complete as
+supplied, for example imputed upstream, and the job stops if they are
+not.
 
 Code
 
 ``` r
-if (!IMPUTE %in% c("mice", "forest")) stop("IMPUTE must be \"mice\" or \"forest\".", call. = FALSE)
+if (!is.character(IMPUTE) || length(IMPUTE) != 1L || !IMPUTE %in% c("mice", "forest", "none")) {
+  stop("IMPUTE must be \"mice\", \"forest\" or \"none\".", call. = FALSE)
+}
 if (!is.numeric(M) || length(M) != 1L || M < 1 || M != trunc(M)) stop("M must be a whole number, 1 or more.", call. = FALSE)
 CACHE_DIR <- dirname(set_path("estimates", "sid.rds"))
 .to_impute <- d[sid_vars]
 .n_missing <- sum(is.na(.to_impute))
+if (identical(IMPUTE, "none")) {
+  # Complete data give M identical forests but for their seeds, which is not M imputations.
+  if (M != 1) stop("IMPUTE = \"none\" needs M = 1: with nothing imputed there is one dataset.", call. = FALSE)
+  .gaps <- colSums(is.na(.to_impute))
+  .gaps <- .gaps[.gaps > 0L]
+  if (length(.gaps)) {
+    stop("IMPUTE = \"none\", but clustering variables have missing values: ",
+         paste0(names(.gaps), " (", .gaps, ")", collapse = ", "),
+         ". Supply completed data, drop the variables from VARS, or choose \"mice\" or \"forest\".", call. = FALSE)
+  }
+  cat("No imputation (IMPUTE = \"none\"): the clustering variables were complete as supplied.\n")
+}
 # Imputation m is cached under its own name and seeded SEED + m - 1, so raising
 # M later reuses the imputations already made.
+# The cache keys on this code as written, so it must not change: an imputation cached by an earlier copy of
+# this job then still loads.
+.impute_mice <- quote(mice::mice(.to_impute, m = 1, maxit = MICE_MAXIT, method = "pmm", printFlag = FALSE))
+.impute_forest <- quote(randomForestSRC::impute(data = .to_impute, ntree = 250, verbose = FALSE))
+.impute_code <- if (identical(IMPUTE, "mice")) .impute_mice else .impute_forest
+.todo <- .n_missing > 0L & vapply(seq_len(M), function(m) {
+  hvtiRutilities::cache_would_fit(paste0("sid-fit-impute-", m), .impute_code, seed = SEED + m - 1L, dir = CACHE_DIR,
+                                  refit = REFIT)
+}, logical(1L))
+# Each imputation that runs is reported to job_status() and the render log as done of total, with an estimate
+# of what is left. Imputations read from the cache are not counted. Outside a render the reporter is NULL.
+.tick <- .job$progress("imputation")
 d_complete <- lapply(seq_len(M), function(m) {
   if (.n_missing == 0L) return(.to_impute)
   s <- SEED + m - 1L
-  if (identical(IMPUTE, "mice")) {
-    imp <- cache_fit(paste0("sid-fit-impute-", m),
-                     mice::mice(.to_impute, m = 1, maxit = MICE_MAXIT, method = "pmm", printFlag = FALSE),
-                     seed = s, dir = CACHE_DIR, refit = REFIT)
-    mice::complete(imp, 1)
+  out <- if (identical(IMPUTE, "mice")) {
+    mice::complete(cache_fit(paste0("sid-fit-impute-", m), .impute_mice, seed = s, dir = CACHE_DIR, refit = REFIT), 1)
   } else {
-    cache_fit(paste0("sid-fit-impute-", m),
-              randomForestSRC::impute(data = .to_impute, ntree = 250, verbose = FALSE),
-              seed = s, dir = CACHE_DIR, refit = REFIT)
+    cache_fit(paste0("sid-fit-impute-", m), .impute_forest, seed = s, dir = CACHE_DIR, refit = REFIT)
   }
+  if (.todo[m] && !is.null(.tick)) .tick(sum(.todo[seq_len(m)]), sum(.todo))
+  out
 })
 if (any(vapply(d_complete, nrow, integer(1L)) != nrow(d))) {
   stop("The imputation returned fewer patients than the cohort holds, so the distances could not be matched to patients.",
        call. = FALSE)
 }
-cat("Values imputed in each of", M, "imputation(s):", .n_missing, "\n")
+if (!identical(IMPUTE, "none")) cat("Values imputed in each of", M, "imputation(s):", .n_missing, "\n")
 ```
 
     Values imputed in each of 1 imputation(s): 203 
@@ -303,17 +376,53 @@ Code
 # a stop: a failed fit is then never cached, and the message names the imputation.
 # Only the distance and the kept variables are cached; the forest, which
 # holds patient values, is left out of the cache as it is of sid.rds.
+.sid_names <- names(SID_ARGS)
+if (!is.list(SID_ARGS) || (length(SID_ARGS) && (is.null(.sid_names) || anyNA(.sid_names) || !all(nzchar(.sid_names)) ||
+                                                  anyDuplicated(.sid_names)))) {
+  stop("SID_ARGS must be list() or a list of sidClustering() arguments, each named once, such as list(fast = TRUE).",
+       call. = FALSE)
+}
+.owned <- intersect(.sid_names, c("data", "method", "ntree", "reduce", "seed", "k", "formula", "na.action"))
+if (length(.owned)) {
+  stop("SID_ARGS names argument(s) this job sets itself: ", toString(.owned),
+       ". Set NTREE, SID_REDUCE, SEED or IMPUTE above instead.", call. = FALSE)
+}
+# These carry patient data, which SID_ARGS would write into the cache key, sid.rds and the report.
+.data_args <- intersect(.sid_names, c("x.no.sid", "case.wt", "samp"))
+if (length(.data_args)) {
+  stop("SID_ARGS cannot carry patient-level data: ", toString(.data_args), ". It is recorded in the report.",
+       call. = FALSE)
+}
+# The method's formals as well as the generic's, in case a release declares only (data, method, ...) on the generic.
+.takes <- unlist(lapply(list(randomForestSRC::sidClustering, randomForestSRC:::sidClustering.rfsrc, randomForestSRC::rfsrc),
+                        function(f) names(formals(f))))
+.unknown <- setdiff(.sid_names, setdiff(.takes, "..."))
+if (length(.unknown)) {
+  stop("SID_ARGS names argument(s) neither sidClustering() nor rfsrc() takes: ", toString(.unknown), ".", call. = FALSE)
+}
+# SID_ARGS is spliced into the call by value, so the call text, and with it the
+# cache key, names each argument and changes when one does. With list() the
+# call is exactly the one this job made before SID_ARGS existed.
+.sid_code <- bquote({
+  o <- sidClustering(d_complete[[m]], method = "sid", ntree = NTREE, reduce = SID_REDUCE, seed = -abs(s), ..(SID_ARGS))
+  if (is.null(o$dist)) {
+    stop("sidClustering() failed on imputation ", m, " (it returned no distance). Look above for the message ",
+         "randomForestSRC gave, and check the clustering variables for a constant or near-empty factor.", call. = FALSE)
+  }
+  o[c("dist", "outcome.names")]
+}, splice = TRUE)
+.todo <- vapply(seq_len(M), function(m) {
+  s <- SEED + m - 1L
+  hvtiRutilities::cache_would_fit(paste0("sid-fit-", m), .sid_code, seed = s, dir = CACHE_DIR, refit = REFIT)
+}, logical(1L))
+# Each forest that grows is reported to job_status() and the render log as the imputations are, above.
+.tick <- .job$progress("SID forest")
 sid_fits <- lapply(seq_len(M), function(m) {
   if (anyNA(d_complete[[m]])) stop("Missing values reached the SID fit after imputation ", m, ".", call. = FALSE)
   s <- SEED + m - 1L
-  cache_fit(paste0("sid-fit-", m), {
-    o <- sidClustering(d_complete[[m]], method = "sid", ntree = NTREE, reduce = SID_REDUCE, seed = -abs(s))
-    if (is.null(o$dist)) {
-      stop("sidClustering() failed on imputation ", m, " (it returned no distance). Look above for the message ",
-           "randomForestSRC gave, and check the clustering variables for a constant or near-empty factor.", call. = FALSE)
-    }
-    o[c("dist", "outcome.names")]
-  }, seed = s, dir = CACHE_DIR, refit = REFIT)
+  f <- cache_fit(paste0("sid-fit-", m), .sid_code, seed = s, dir = CACHE_DIR, refit = REFIT)
+  if (.todo[m] && !is.null(.tick)) .tick(sum(.todo[seq_len(m)]), sum(.todo))
+  f
 })
 sid_dist <- Reduce(`+`, lapply(sid_fits, `[[`, "dist")) / M
 # How closely each imputation's distances follow the mean. Near 1, the
@@ -331,11 +440,15 @@ sid_agreement <- data.frame(
 Code
 
 ``` r
+.factors_used <- sid_vars[vapply(d[sid_vars], is.factor, logical(1L))]
 knitr::kable(data.frame(
-  step = c("Clustering variables", "Dropped before the fit", "Kept by the reduce step", "Imputation", "Patients"),
-  value = c(toString(sid_vars), if (nrow(sid_dropped)) toString(sid_dropped$variable) else "none",
+  step = c("Clustering variables", "Treated as factors", "Dropped before the fit", "Kept by the reduce step",
+           "Imputation", "Patients"),
+  value = c(toString(sid_vars), if (length(.factors_used)) toString(.factors_used) else "none",
+            if (nrow(sid_dropped)) toString(sid_dropped$variable) else "none",
             toString(unique(unlist(lapply(sid_fits, `[[`, "outcome.names")))),
-            if (.n_missing == 0L) "none needed" else paste0(IMPUTE, ", ", M, " imputation(s)"),
+            if (identical(IMPUTE, "none")) "none: complete as supplied" else
+              if (.n_missing == 0L) "none needed" else paste0(IMPUTE, ", ", M, " imputation(s)"),
             nrow(sid_dist))
 ), col.names = c("", ""))
 ```
@@ -343,6 +456,7 @@ knitr::kable(data.frame(
 |                         |                                        |
 |:------------------------|:---------------------------------------|
 | Clustering variables    | lvedd, lvesd, la_diam, rvsp, e_e, lvef |
+| Treated as factors      | none                                   |
 | Dropped before the fit  | none                                   |
 | Kept by the reduce step | rvsp, e_e, lvesd, lvedd, la_diam       |
 | Imputation              | mice, 1 imputation(s)                  |
@@ -374,7 +488,11 @@ sid_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
        # The completed data each forest saw, so sid-stability can refit on exactly these values.
        data_fingerprint = vapply(d_complete, hvtiRtemplates:::.sid_data_fingerprint, character(1)),
        settings = list(ntree = NTREE, sid_reduce = SID_REDUCE, seed = SEED, impute = IMPUTE, m = M,
-                       mice_maxit = MICE_MAXIT, max_missing = MAX_MISSING)),
+                       mice_maxit = MICE_MAXIT, max_missing = MAX_MISSING,
+                       # The declared factors that were clustered on, which sid-stability converts the same way.
+                       factors = if (length(intersect(FACTORS, sid_vars))) intersect(FACTORS, sid_vars),
+                       # The other sidClustering() arguments the forests were grown with; list() for the defaults.
+                       sid_args = SID_ARGS)),
   data = .provenance_data,
   cohort = .cohort,
   selection = attr(job_data$record, "selection")
@@ -386,9 +504,9 @@ saveRDS(sid_handoff, set_path("estimates", "sid.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-20 17:36:50 EST  |
-|                 | Ended          | 2026-11-20 17:36:55 EST  |
-|                 | Duration       | 5 s                      |
+| Run             | Started        | 2026-11-25 13:21:48 EST  |
+|                 | Ended          | 2026-11-25 13:21:53 EST  |
+|                 | Duration       | 4 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -396,9 +514,9 @@ saveRDS(sid_handoff, set_path("estimates", "sid.rds"))
 |                 | Template       | sid.fit                  |
 |                 | Subject        | echo                     |
 |                 | Type           | sid                      |
-|                 | hvtiRtemplates | 1.6.2                    |
-| Dataset `built` | Version file   | built_20261120.parquet   |
-|                 | Version date   | 2026-11-20               |
+|                 | hvtiRtemplates | 1.6.3                    |
+| Dataset `built` | Version file   | built_20261125.parquet   |
+|                 | Version date   | 2026-11-25               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |

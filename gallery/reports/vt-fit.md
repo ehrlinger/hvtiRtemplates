@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:38
+2026-11-25 13:23
 
 Gallery job on the synthetic cohort: mitral repair against replacement,
 and freedom from reintervention to eight years.
@@ -83,8 +83,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -93,6 +93,7 @@ Edit these values for this study before rendering.
 Code
 
 ``` r
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 ANALYSIS_SET <- NULL
 WHERE <- NULL
@@ -106,12 +107,16 @@ KEY <- NULL
 #   JOIN_VARS: the cohort columns each joined row carries; NULL carries all.
 #   REDUCE: NULL keeps a row per joined record; list(rule = "first", by = "date")
 #     keeps one row per patient. This job models one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
+# Demo: the outcome, follow-up time and its 0/1 event. NULL for both runs the
+# eligibility sections alone, for a cohort that has no outcome yet or whose
+# outcomes someone else will analyze: no outcome is read and no forest is grown.
+# vt.rds then carries the eligibility flags, which vt-explain cannot explain.
 TIME <- "iv_reint"
 STATUS <- "reint"
 ARM <- "mv_procedure"
@@ -140,6 +145,12 @@ ELIGIBILITY <- c("gower", "sid")
 # eligible only when both keep them; "all" flags only when every method does. To
 # decide by one method alone, name only that one in ELIGIBILITY.
 COMBINE <- "any"
+# Demo: the Gower line. "max" is the arm's own largest nearest-neighbor gap, the
+# rule with no tuning. A number in (0, 1) is that quantile of the gaps instead
+# (stats::quantile()), which flags more patients: one isolated patient in an arm
+# sets its largest gap, and a quantile keeps that one gap from deciding the line.
+# A SID distance keeps the largest gap.
+GOWER_REFERENCE <- "max"
 SID_SET <- "echo-sid"
 # Demo: the isolation-forest cutoff, a quantile of the arm's own cross-fitted
 # scores. A patient the arm's forest isolates more readily than this share of
@@ -258,19 +269,35 @@ if (any(.other)) {
 # here, and every list below is keyed by that text. A missing arm stays NA.
 ARMS <- as.character(ARMS)
 d[[ARM]] <- as.character(d[[ARM]])
-.no_outcome <- .treated & (is.na(d[[TIME]]) | is.na(d[[STATUS]]))
-if (any(.no_outcome)) {
-  stop(sum(.no_outcome), " treated patient(s) have no outcome. A forest cannot learn from them, and imputing one ",
-       "would invent follow-up. Resolve them in the dataset build.", call. = FALSE)
+# Eligibility only: the sections that need an outcome are skipped from here to the handoff.
+.elig_only <- is.null(TIME)
+if (.elig_only != is.null(STATUS)) {
+  stop("TIME and STATUS are set together: both name the outcome, or both are NULL for eligibility only.", call. = FALSE)
 }
-if (!all(d[[STATUS]][.treated] %in% c(0, 1))) stop(STATUS, " must be coded 0 and 1.", call. = FALSE)
+if (!.elig_only) {
+  .no_outcome <- .treated & (is.na(d[[TIME]]) | is.na(d[[STATUS]]))
+  if (any(.no_outcome)) {
+    stop(sum(.no_outcome), " treated patient(s) have no outcome. A forest cannot learn from them, and imputing one ",
+         "would invent follow-up. Resolve them in the dataset build.", call. = FALSE)
+  }
+  if (!all(d[[STATUS]][.treated] %in% c(0, 1))) stop(STATUS, " must be coded 0 and 1.", call. = FALSE)
+}
 NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
 # Run again after na.omit drops patients (predictors chunk): the guard must hold for the patients the forests see.
 .arm_counts <- function(d, when = "") {
   counts <- do.call(base::rbind, lapply(ARMS, function(a) {
     i <- d[[ARM]] %in% a
-    data.frame(Arm = a, Patients = sum(i), Events = sum(d[[STATUS]][i] == 1, na.rm = TRUE))
+    data.frame(Arm = a, Patients = sum(i), Events = if (.elig_only) NA_integer_ else sum(d[[STATUS]][i] == 1, na.rm = TRUE))
   }))
+  # Eligibility compares an arm's patients with each other, so it needs two of them; only a forest needs an event.
+  if (.elig_only) {
+    thin <- counts$Patients < 2
+    if (any(thin)) {
+      stop("Each arm needs at least 2 treated patients", when, "; ",
+           paste0(counts$Arm[thin], " has ", counts$Patients[thin], collapse = "; "), ".", call. = FALSE)
+    }
+    return(counts)
+  }
   thin <- counts$Patients < 2 | counts$Events < 1
   if (any(thin)) {
     stop("Each arm needs at least 2 treated patients and 1 event", when, "; ",
@@ -281,12 +308,13 @@ NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
 }
 .counts <- .arm_counts(d)
 .counts <- base::rbind(.counts, data.frame(Arm = "No arm", Patients = sum(.no_arm), Events = NA_integer_))
+if (.elig_only) .counts$Events <- NULL
 knitr::kable(.counts)
 ```
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -375,17 +403,32 @@ Code
 ``` r
 if (!is.null(ELIGIBILITY_VARS)) cat("Eligibility variables:", paste(.elig_vars, collapse = ", "), "\n")
 # Each arm's forest is grown on that arm alone, so each arm's events are what its splits have.
-.epf <- hvtiRtemplates:::.check_events_per_feature(
-  vapply(ARMS, function(a) sum(d[[STATUS]][d[[ARM]] %in% a & .treated] == 1), numeric(1L)),
-  length(.predictors), MIN_EVENTS_PER_FEATURE
-)
-cat("Events per candidate feature:",
-    paste0(.epf$group, " ", .epf$events_per_feature, " (", .epf$events, " events)", collapse = "; "), "\n")
+if (!.elig_only) {
+  .epf <- hvtiRtemplates:::.check_events_per_feature(
+    vapply(ARMS, function(a) sum(d[[STATUS]][d[[ARM]] %in% a & .treated] == 1), numeric(1L)),
+    length(.predictors), MIN_EVENTS_PER_FEATURE
+  )
+  cat("Events per candidate feature:",
+      paste0(.epf$group, " ", .epf$events_per_feature, " (", .epf$events, " events)", collapse = "; "), "\n")
+}
 ```
 
     Events per candidate feature: repair 5.5 (72 events); replace 4.4 (57 events) 
 
 ## The observed outcome
+
+Code
+
+``` r
+# With TIME <- NULL every chunk from here to the next gate is skipped: each needs the outcome. A chunk
+# option is evaluated even when its chunk is not, so the captions written by skipped chunks get a value here.
+knitr::opts_chunk$set(eval = !.elig_only)
+if (.elig_only) {
+  .cap_oe <- .cap_oe_km <- .cap_spaghetti <- ""
+  cat("::: {.callout-note}\nEligibility only (`TIME <- NULL`): there is no outcome, so this section is not computed.\n",
+      ":::\n", sep = "")
+}
+```
 
 What happened in each arm, before any model: Kaplan-Meier, with 70%
 confidence limits (about one standard error). The twins below predict
@@ -446,6 +489,12 @@ save_figure(.fig, "vt-fit-km", height = 5)
 Figure 1: Kaplan-Meier survival in each arm, with 70% confidence limits
 and the numbers at risk. The dashed line is the RMST horizon.
 
+Code
+
+``` r
+knitr::opts_chunk$set(eval = TRUE)
+```
+
 ## Eligibility
 
 A patient’s twin curve for the arm they did not receive is only as good
@@ -456,9 +505,11 @@ job can use. For each arm, each patient’s nearest neighbor in that arm
 (never themself) is compared with the largest nearest-neighbor distance
 among the arm’s own patients. That reference is the arm’s own largest
 gap: a patient farther from the arm than its own members are from each
-other is outside what the arm covers. A treated patient is judged
-against the other arm; a patient with no arm is judged against both and
-must pass both.
+other is outside what the arm covers. For Gower, `GOWER_REFERENCE` can
+set the line at a quantile of those gaps instead, a stricter rule that
+one isolated patient in the arm cannot loosen. A treated patient is
+judged against the other arm; a patient with no arm is judged against
+both and must pass both.
 
 The isolation forest (`"isolation"` in `ELIGIBILITY`) asks the same
 question by a different route. It grows random trees on one arm’s
@@ -493,7 +544,8 @@ Code
 # with that reason; an arm member with no finite within-arm neighbor does not
 # set the arm's reference. Every judged patient therefore gets TRUE or FALSE,
 # never NA.
-vt_ood <- function(dist, ids, arm, arms) {
+# `rule` sets the line: "max", the arm's largest gap, or a quantile of the gaps in (0, 1).
+vt_ood <- function(dist, ids, arm, arms, rule = "max") {
   dist <- as.matrix(dist)[ids, ids, drop = FALSE]
   dist[is.na(dist)] <- Inf
   diag(dist) <- Inf
@@ -503,7 +555,9 @@ vt_ood <- function(dist, ids, arm, arms) {
     nn_within <- nn_within[is.finite(nn_within)]
     # An arm whose members have no finite neighbor has no reference gap, so nobody can be shown
     # to sit inside it: they are flagged with that reason, and the eligibility chunk stops on it.
-    reference <- if (length(nn_within)) max(nn_within) else NA_real_
+    reference <- if (!length(nn_within)) NA_real_ else if (identical(rule, "max")) max(nn_within) else
+      unname(stats::quantile(nn_within, rule))
+    line <- if (identical(rule, "max")) "largest gap" else paste0(signif(100 * rule, 3), "th-percentile gap")
     judged <- which(is.na(arm) | !arm %in% c(a, NA))
     if (!length(judged)) return(NULL)
     sub <- dist[judged, members, drop = FALSE]
@@ -515,8 +569,8 @@ vt_ood <- function(dist, ids, arm, arms) {
     if (is.na(reference)) {
       reason[!none] <- sprintf("arm %s has no reference gap", a)
     } else {
-      reason[out & !none] <- sprintf("nearest %s patient at %.3f, beyond that arm's largest gap %.3f",
-                                     a, distance[out & !none], reference)
+      reason[out & !none] <- sprintf("nearest %s patient at %.3f, beyond that arm's %s %.3f",
+                                     a, distance[out & !none], line, reference)
     }
     data.frame(ID = ids[judged], method = NA_character_, arm = a, nn_id = ifelse(none, NA, ids[members][nn]),
                distance = distance, reference = reference,
@@ -782,9 +836,13 @@ Code
     m
   }
 )
+if (!identical(GOWER_REFERENCE, "max") &&
+      !(is.numeric(GOWER_REFERENCE) && length(GOWER_REFERENCE) == 1L && isTRUE(GOWER_REFERENCE > 0 & GOWER_REFERENCE < 1))) {
+  stop("GOWER_REFERENCE must be \"max\" or one number strictly between 0 and 1, a quantile of the arm's gaps.", call. = FALSE)
+}
 .judged <- lapply(stats::setNames(.methods, .methods), function(m) {
   if (m == "isolation") return(vt_elig_isolation(d, .elig_vars, .ids, .arm, ARMS, cutoff = ISOLATION_CUTOFF, seed = SEED))
-  vt_ood(.dist[[m]](), .ids, .arm, ARMS)
+  vt_ood(.dist[[m]](), .ids, .arm, ARMS, rule = if (m == "gower") GOWER_REFERENCE else "max")
 })
 .iso_sens <- attr(.judged$isolation, "sensitivity")
 .elig_rows <- do.call(base::rbind, unname(lapply(.methods, function(m) transform(.judged[[m]], method = m))))
@@ -913,8 +971,9 @@ save_figure(.fig, "vt-fit-eligibility")
 Figure 2: Distance to the nearest patient of the arm judged against (for
 the isolation forest, the score), patients ranked within each panel. The
 dashed line is that arm’s line, its largest nearest-neighbor gap among
-its own patients (for the isolation forest, the ISOLATION_CUTOFF
-quantile of its own scores): points above it are out of distribution.
+its own patients (for Gower, the GOWER_REFERENCE quantile of those gaps
+when one is set; for the isolation forest, the ISOLATION_CUTOFF quantile
+of its own scores): points above it are out of distribution.
 
 Code
 
@@ -1029,6 +1088,19 @@ judged. Kappa is agreement beyond chance: 1 is the same patients, 0 no
 more alike than chance.
 
 ## The arm forests
+
+Code
+
+``` r
+# With TIME <- NULL every chunk from here to the next gate is skipped: each needs the outcome. A chunk
+# option is evaluated even when its chunk is not, so the captions written by skipped chunks get a value here.
+knitr::opts_chunk$set(eval = !.elig_only)
+if (.elig_only) {
+  .cap_oe <- .cap_oe_km <- .cap_spaghetti <- ""
+  cat("::: {.callout-note}\nEligibility only (`TIME <- NULL`): no forest is grown, so the sections from here to the ",
+      "handoff are not computed.\n:::\n", sep = "")
+}
+```
 
 One survival forest per arm, grown on the patients who received that
 arm. A patient’s own-arm curve comes from their forest out of bag, so no
@@ -1207,16 +1279,20 @@ Code
 # Flags what a reader could learn about one patient, by column and count. It changes no number.
 # What this report counts: patients and events by arm, the longest follow-up and the numbers at risk
 # of the observed outcome, the patients each rule flags, and each calibration fifth's patients and
-# events. The rows behind them stay in vt.rds.
-cat(hvtiRtemplates:::.identifiability_notice(rbind(
+# events. The rows behind them stay in vt.rds. It runs in an eligibility-only fit too, since the
+# cohort and eligibility tables still print; only the outcome and forest counts are left out.
+.never_oob <- if (!.elig_only) vapply(ARMS, function(a) .forests[[a]]$n - sum(.cal$patients[.cal$arm == a]), numeric(1L))
+.outcome_findings <- if (!.elig_only) rbind(
   hvtiRtemplates:::.identifiability_check(.km_data, extremes = TIME, within = ARM, upper_only = TRUE, tables = list(c(ARM, STATUS))),
-  hvtiRtemplates:::.identifiability_counts(.counts$Patients, "patients by arm"),
   hvtiRtemplates:::.identifiability_counts(.km$tables$risk$n.risk, "each arm's observed outcome", check = "at_risk"),
-  hvtiRtemplates:::.identifiability_counts(.ood_counts, "out of distribution, by method and arm"),
-  hvtiRtemplates:::.identifiability_counts(as.matrix(.overlap$combinations[-1L]), "patients by the rules that flag them"),
   hvtiRtemplates:::.identifiability_counts(c(.cal$patients, .cal$events, .cal$patients - .cal$events), "calibration fifths"),
-  hvtiRtemplates:::.identifiability_counts(vapply(ARMS, function(a) .forests[[a]]$n - sum(.cal$patients[.cal$arm == a]), numeric(1L)),
-                                           "patients never out of bag")
+  hvtiRtemplates:::.identifiability_counts(.never_oob, "patients never out of bag")
+)
+cat(hvtiRtemplates:::.identifiability_notice(rbind(
+  .outcome_findings,
+  hvtiRtemplates:::.identifiability_counts(.counts$Patients, "patients by arm"),
+  hvtiRtemplates:::.identifiability_counts(.ood_counts, "out of distribution, by method and arm"),
+  hvtiRtemplates:::.identifiability_counts(as.matrix(.overlap$combinations[-1L]), "patients by the rules that flag them")
 )))
 ```
 
@@ -1658,21 +1734,33 @@ Figure 6: Each patient’s predicted survival (thin lines; at most 200 per
 panel, spaced evenly through the ranking at TAU) and their average
 (heavy line).
 
+Code
+
+``` r
+knitr::opts_chunk$set(eval = TRUE)
+```
+
 ## Handoff
 
 Code
 
 ``` r
 # The product of this job, and what vt-explain reads, in one file so its parts
-# cannot drift apart. The forests are kept so vt-explain grows none.
+# cannot drift apart. The forests are kept so vt-explain grows none. An
+# eligibility-only fit saves the flags and leaves every outcome part NULL. `decision` is each patient's
+# combined verdict (`elig`) beside each rule's (`elig_<rule>`): the result an eligibility-only fit exists to give.
+.fitted <- !.elig_only
 vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
-  list(rmst = .rmst, curves = .curves[c("ID", "arm_of_curve", "time", "surv")], forests = .forests, oe = oe,
-       eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ordinal = ORDINAL,
+  list(rmst = if (.fitted) .rmst, curves = if (.fitted) .curves[c("ID", "arm_of_curve", "time", "surv")],
+       forests = if (.fitted) .forests, oe = if (.fitted) oe,
+       eligibility = list(rows = .elig_rows, decision = .elig, methods = .methods, combine = COMBINE,
+                          gower_reference = GOWER_REFERENCE, sid_set = SID_SET, ordinal = ORDINAL,
                           variables = .elig_vars, sid_variables = .sid_vars, ps = .ps,
                           isolation = list(cutoff = ISOLATION_CUTOFF, sensitivity = .iso_sens), age_cap = AGE_CAP,
                           outside_range = .outside),
        predictors = list(names = .predictors, vp_set = VP_SET),
-       settings = list(performance = .perf, calibration = .cal, arms = ARMS, horizon = HORIZON, tau = TAU, test_level = TEST_LEVEL,
+       settings = list(eligibility_only = .elig_only, performance = if (.fitted) .perf, calibration = if (.fitted) .cal,
+                       arms = ARMS, horizon = HORIZON, tau = TAU, test_level = TEST_LEVEL,
                        ntree = NTREE, seed = SEED,
                        time = TIME, status = STATUS,
                        id = ID, id_key = hvtiRtemplates:::.id_key_fingerprint(.id_key),
@@ -1686,7 +1774,7 @@ vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   data = .provenance_data,
   artifacts = c(list(), if (!is.null(.vp_read)) c(.vp_read$lineage$artifacts, list(.vp_read$record)),
                 if (!is.null(.sid_read)) c(.sid_read$lineage$artifacts, list(.sid_read$record))),
-  analysis = list(time = list(variable = TIME), event = list(variable = STATUS, event = 1L, censored = 0L)),
+  analysis = if (.fitted) list(time = list(variable = TIME), event = list(variable = STATUS, event = 1L, censored = 0L)),
   selection = attr(job_data$record, "selection")
 )
 saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
@@ -1696,9 +1784,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-20 17:37:56 EST |
-|  | Ended | 2026-11-20 17:38:07 EST |
-|  | Duration | 11 s |
+| Run | Started | 2026-11-25 13:22:53 EST |
+|  | Ended | 2026-11-25 13:23:04 EST |
+|  | Duration | 10 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -1708,9 +1796,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 |  | Template | vt.fit |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.6.2 |
-| Dataset `built` | Version file | built_20261120.parquet |
-|  | Version date | 2026-11-20 |
+|  | hvtiRtemplates | 1.6.3 |
+| Dataset `built` | Version file | built_20261125.parquet |
+|  | Version date | 2026-11-25 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |

@@ -2231,7 +2231,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-20 17:29</p>
+      <p class="date">2026-11-25 13:11</p>
     </div>
   </div>
   
@@ -2243,7 +2243,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: mm 1.6.2 sha256:1af74efbedbb791513c9d556e335e08cd0e2a64a121d83381be028b7d112d029 -->
+<!-- hvtiRtemplates: mm 1.6.3 sha256:0f00fdd410dc086c70ff583b9fb57f698607c91ffc66d178d10f7f1177df001d -->
 <p>Fits a linear mixed model to a continuous response measured repeatedly on each patient, as PROC MIXED did with a REPEATED or RANDOM statement, and saves the population-average course over time, with its confidence limits, for a plot.</p>
 <details class="code-fold">
 <summary>Code</summary>
@@ -2272,7 +2272,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>echo</code> <code>echo_20261120.parquet</code>, dated 2026-11-20 · rendered by gallery on gallery · hvtiRtemplates 1.6.2</p>
+<p><strong>final</strong> · data <code>echo</code> <code>echo_20261125.parquet</code>, dated 2026-11-25 · rendered by gallery on gallery · hvtiRtemplates 1.6.3</p>
 </div>
 </div>
 </div>
@@ -2288,70 +2288,71 @@ vertical-align: -.125em;
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>REDUCE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>JOIN_KEY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the registered dataset this job reads (&quot;built&quot; is the study dataset).</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;echo&quot;</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: a named analysis set, or NULL for every row WHERE keeps.</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>ANALYSIS_SET <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: a filter on the rows, e.g. WHERE &lt;- quote(echo_type == &quot;TTE&quot;), or NULL.</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN;</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># name another column, such as &quot;randid&quot;, if the study uses one.</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the column giving each measurement&#39;s time since the reference event, in the units</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># the time terms below expect. Every row needs one; a missing or negative time stops the job.</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>TIME <span class="ot">&lt;-</span> <span class="st">&quot;iv_echo&quot;</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: what makes a row unique. A repeated measurement is one row per patient and time;</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># add a sequence column if a patient can have two measurements at the same time. AR(1) and UN</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># need one measurement per visit, so a sequence column suits &quot;cs&quot; or &quot;random&quot; only.</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> <span class="fu">c</span>(ID, TIME)</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the repeated continuous response, named as the column.</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>OUTCOME <span class="ot">&lt;-</span> <span class="st">&quot;lvef&quot;</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the scale the response is modeled on. &quot;identity&quot; models it as measured; &quot;log&quot;</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co"># models log(OUTCOME), what most corpus jobs did, writing ln_ in a DATA step. A</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co"># coefficient is then a change in the log, and the predictions are back-transformed.</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>RESPONSE_SCALE <span class="ot">&lt;-</span> <span class="st">&quot;identity&quot;</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the time terms, as R expressions in TIME. A SAS job&#39;s DATA-step transforms</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># carry over line for line: in_t = 1/(t+1) is &quot;I(1/(time + 1))&quot;, ln_t = log(t+1) is</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;log(time + 1)&quot;. The +1 keeps a measurement at time zero finite.</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>TIME_TERMS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;iv_echo&quot;</span>)</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>PREDICTORS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>, <span class="st">&quot;female&quot;</span>, <span class="st">&quot;hx_chf&quot;</span>, <span class="st">&quot;iv_echo:age&quot;</span>, <span class="st">&quot;iv_echo:female&quot;</span>, <span class="st">&quot;iv_echo:hx_chf&quot;</span>)</span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the within-patient correlation, first listed is reported; list several to compare them.</span></span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;cs&quot;         REPEATED / type=cs sub=id: one correlation between any two of a patient&#39;s</span></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co">#                measurements. The corpus&#39;s main form, in 27 studies or more.</span></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;ar1&quot;        REPEATED visit / type=ar(1): correlation falls with the number of visits</span></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co">#                apart. Needs shared, ordered visits, not free times; more than 20 distinct</span></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co">#                visits stops the job.</span></span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;un&quot;         REPEATED visit / type=un: a correlation and a variance per visit pair.</span></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co">#                Same visit requirement; costs many parameters.</span></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;random&quot;     RANDOM intercept / subject=id.</span></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;slope&quot;      RANDOM int &lt;time term&gt; / subject=id: a random intercept and a random slope in</span></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co">#                time, independent as SAS&#39;s RANDOM default type=vc. SLOPE names the term.</span></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co"># RANDOM and REPEATED in one fit are not offered: one corpus study wrote them so.</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># A spatial structure (type=sp(pow)) is not offered; nlme::corExp(form = ~ time | id)</span></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># is its R form if a study needs one.</span></span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>STRUCTURE <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;cs&quot;</span>, <span class="st">&quot;slope&quot;</span>)</span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: for &quot;ar1&quot; or &quot;un&quot;, the column holding each measurement&#39;s scheduled visit number (1, 2, 3, ...), or NULL.</span></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co"># NULL ranks the observed TIME values, as SAS numbers the levels of a CLASS visit, so a visit no patient attended</span></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="co"># closes up and AR(1) reads visits 1 and 3 as neighbors. Name the column when the schedule has such a gap or TIME</span></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="co"># is not the visit itself. Irregular times suit neither; nlme::corCAR1(form = ~ time | id) is the R form of sp(pow).</span></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>VISIT <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: for &quot;slope&quot;, the time term the random slope is on, written as it appears in TIME_TERMS, or NULL for the first.</span></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># A SAS job&#39;s RANDOM int iv_echo, with iv_echo = 1/(t+1) in its DATA step, is &quot;I(1/(time + 1))&quot;. A patient measured</span></span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># at a single time has no trajectory of their own, though their measurement still informs the variances; the report</span></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># counts them.</span></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># Where SAS reports a slope variance of zero (G matrix not positive definite), nlme gives a tiny positive value or</span></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># fails to converge; a port read against a .lst should expect that.</span></span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>SLOPE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: &quot;REML&quot;, as SAS&#39;s default, unless models with different fixed effects are to be</span></span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co"># compared by likelihood, which needs &quot;ML&quot;.</span></span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>METHOD <span class="ot">&lt;-</span> <span class="st">&quot;REML&quot;</span></span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the covariate profiles the predicted course is drawn for, as a list of named</span></span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># lists, e.g. list(list(age = 60, female = 0), list(age = 60, female = 1)). NULL draws</span></span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co"># one profile: the median of each numeric predictor and the first level of the others.</span></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>PREDICT_AT <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="at">age =</span> <span class="dv">60</span>, <span class="at">female =</span> <span class="dv">0</span>, <span class="at">hx_chf =</span> <span class="dv">0</span>), <span class="fu">list</span>(<span class="at">age =</span> <span class="dv">60</span>, <span class="at">female =</span> <span class="dv">0</span>, <span class="at">hx_chf =</span> <span class="dv">1</span>))</span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the times to predict at, or NULL for 50 points over the observed range.</span></span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>PREDICT_TIMES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>IMPUTATION <span class="ot">&lt;-</span> <span class="cn">NULL</span>                          <span class="co"># Demo: must stay NULL; this job does not pool imputations yet.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># A file name, such as &quot;match_set.rds&quot;, reads an unregistered file in the datasets folder, as a draft.</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>DATASET <span class="ot">&lt;-</span> <span class="st">&quot;echo&quot;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: a named analysis set, or NULL for every row WHERE keeps.</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>ANALYSIS_SET <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: a filter on the rows, e.g. WHERE &lt;- quote(echo_type == &quot;TTE&quot;), or NULL.</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># name another column, such as &quot;randid&quot;, if the study uses one.</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the column giving each measurement&#39;s time since the reference event, in the units</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># the time terms below expect. Every row needs one; a missing or negative time stops the job.</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>TIME <span class="ot">&lt;-</span> <span class="st">&quot;iv_echo&quot;</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: what makes a row unique. A repeated measurement is one row per patient and time;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># add a sequence column if a patient can have two measurements at the same time. AR(1) and UN</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># need one measurement per visit, so a sequence column suits &quot;cs&quot; or &quot;random&quot; only.</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>KEY <span class="ot">&lt;-</span> <span class="fu">c</span>(ID, TIME)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the repeated continuous response, named as the column.</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>OUTCOME <span class="ot">&lt;-</span> <span class="st">&quot;lvef&quot;</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the scale the response is modeled on. &quot;identity&quot; models it as measured; &quot;log&quot;</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co"># models log(OUTCOME), what most corpus jobs did, writing ln_ in a DATA step. A</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co"># coefficient is then a change in the log, and the predictions are back-transformed.</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>RESPONSE_SCALE <span class="ot">&lt;-</span> <span class="st">&quot;identity&quot;</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the time terms, as R expressions in TIME. A SAS job&#39;s DATA-step transforms</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co"># carry over line for line: in_t = 1/(t+1) is &quot;I(1/(time + 1))&quot;, ln_t = log(t+1) is</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;log(time + 1)&quot;. The +1 keeps a measurement at time zero finite.</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>TIME_TERMS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;iv_echo&quot;</span>)</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>PREDICTORS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>, <span class="st">&quot;female&quot;</span>, <span class="st">&quot;hx_chf&quot;</span>, <span class="st">&quot;iv_echo:age&quot;</span>, <span class="st">&quot;iv_echo:female&quot;</span>, <span class="st">&quot;iv_echo:hx_chf&quot;</span>)</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the within-patient correlation, first listed is reported; list several to compare them.</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;cs&quot;         REPEATED / type=cs sub=id: one correlation between any two of a patient&#39;s</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co">#                measurements. The corpus&#39;s main form, in 27 studies or more.</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;ar1&quot;        REPEATED visit / type=ar(1): correlation falls with the number of visits</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co">#                apart. Needs shared, ordered visits, not free times; more than 20 distinct</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co">#                visits stops the job.</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;un&quot;         REPEATED visit / type=un: a correlation and a variance per visit pair.</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co">#                Same visit requirement; costs many parameters.</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;random&quot;     RANDOM intercept / subject=id.</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;slope&quot;      RANDOM int &lt;time term&gt; / subject=id: a random intercept and a random slope in</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co">#                time, independent as SAS&#39;s RANDOM default type=vc. SLOPE names the term.</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># RANDOM and REPEATED in one fit are not offered: one corpus study wrote them so.</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># A spatial structure (type=sp(pow)) is not offered; nlme::corExp(form = ~ time | id)</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co"># is its R form if a study needs one.</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>STRUCTURE <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;cs&quot;</span>, <span class="st">&quot;slope&quot;</span>)</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: for &quot;ar1&quot; or &quot;un&quot;, the column holding each measurement&#39;s scheduled visit number (1, 2, 3, ...), or NULL.</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="co"># NULL ranks the observed TIME values, as SAS numbers the levels of a CLASS visit, so a visit no patient attended</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="co"># closes up and AR(1) reads visits 1 and 3 as neighbors. Name the column when the schedule has such a gap or TIME</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co"># is not the visit itself. Irregular times suit neither; nlme::corCAR1(form = ~ time | id) is the R form of sp(pow).</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>VISIT <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: for &quot;slope&quot;, the time term the random slope is on, written as it appears in TIME_TERMS, or NULL for the first.</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># A SAS job&#39;s RANDOM int iv_echo, with iv_echo = 1/(t+1) in its DATA step, is &quot;I(1/(time + 1))&quot;. A patient measured</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># at a single time has no trajectory of their own, though their measurement still informs the variances; the report</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># counts them.</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># Where SAS reports a slope variance of zero (G matrix not positive definite), nlme gives a tiny positive value or</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># fails to converge; a port read against a .lst should expect that.</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>SLOPE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: &quot;REML&quot;, as SAS&#39;s default, unless models with different fixed effects are to be</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># compared by likelihood, which needs &quot;ML&quot;.</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>METHOD <span class="ot">&lt;-</span> <span class="st">&quot;REML&quot;</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the covariate profiles the predicted course is drawn for, as a list of named</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co"># lists, e.g. list(list(age = 60, female = 0), list(age = 60, female = 1)). NULL draws</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co"># one profile: the median of each numeric predictor and the first level of the others.</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>PREDICT_AT <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="at">age =</span> <span class="dv">60</span>, <span class="at">female =</span> <span class="dv">0</span>, <span class="at">hx_chf =</span> <span class="dv">0</span>), <span class="fu">list</span>(<span class="at">age =</span> <span class="dv">60</span>, <span class="at">female =</span> <span class="dv">0</span>, <span class="at">hx_chf =</span> <span class="dv">1</span>))</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the times to predict at, or NULL for 50 points over the observed range.</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>PREDICT_TIMES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>IMPUTATION <span class="ot">&lt;-</span> <span class="cn">NULL</span>                          <span class="co"># Demo: must stay NULL; this job does not pool imputations yet.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
@@ -2396,7 +2397,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>echo</code> (echo_20261120.parquet)</td>
+<td style="text-align: left;">dataset <code>echo</code> (echo_20261125.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2998,12 +2999,12 @@ Table 6: Population-average course of the response, first and last times of eac
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-20 17:29:17 EST</td>
+<td style="text-align: left;">2026-11-25 13:11:24 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-20 17:29:17 EST</td>
+<td style="text-align: left;">2026-11-25 13:11:25 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3048,17 +3049,17 @@ Table 6: Population-average course of the response, first and last times of eac
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.2</td>
+<td style="text-align: left;">1.6.3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>echo</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">echo_20261120.parquet</td>
+<td style="text-align: left;">echo_20261125.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-20</td>
+<td style="text-align: left;">2026-11-25</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3093,7 +3094,7 @@ Table 6: Population-average course of the response, first and last times of eac
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"mm.lvef.mixed","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:29:17","job":"mm.lvef.mixed","rendered":"2026-11-20T22:29:17Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.6.2","source":null},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stats4","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"echo","path":"00_datasets/echo_20261120.parquet","role":"training","bytes":20990,"mtime":"2026-11-20T22:29:15Z","sha256":"96a19e865571b9f7460854417d3b394c8d7d7a63ff2064d75ea6d0656c8c7080"}],"artifacts":[],"subject":"lvef","type":"mixed","analysis":{"outcome":{"variable":"lvef","scale":"identity"},"model":{"engine":"nlme","structure":"cs","method":"REML","formula":"lvef ~ iv_echo + age + female + hx_chf + iv_echo:age + iv_echo:female +      iv_echo:hx_chf"}},"cohort":{"patients":300,"measurements":1180},"source_sha256":"144259332911f6cfd774ed7c5401c163d485913a3f92b03e37f9c502acb4936a","run":{"start":"2026-11-20T17:29:17-0500","end":"2026-11-20T17:29:17-0500","time_zone":"EST","duration_seconds":0.7,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"mm.lvef.mixed.qmd","template":"mm","prefix":"mm","subject":"lvef","type":"mixed","hvtiRtemplates":"1.6.2"},"datasets":[{"name":"echo","version_file":"echo_20261120.parquet","registered":"2026-11-20","source_file":"echo.rds","rows":1180,"patients":300,"where":[],"sha256":"96a19e865571","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.2","sha":null,"method":"mm","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:29:17"}},"source":"30_analyses/mm.lvef.mixed.qmd",".hvti_render_id":"cc1c6df48bfdfc7db50803655b914f8e856f9cecd2801904f7a22cb5c32e6969",".hvti_source_sha256":"144259332911f6cfd774ed7c5401c163d485913a3f92b03e37f9c502acb4936a"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.29","sha":null,"method":"mm.lvef.mixed","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-25 13:11:25","job":"mm.lvef.mixed","rendered":"2026-11-25T18:11:25Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.6.3","source":null},{"package":"hvtiRutilities","version":"1.5.29","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stats4","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":null,"data":[{"dataset":"echo","path":"00_datasets/echo_20261125.parquet","role":"training","bytes":20990,"mtime":"2026-11-25T18:11:23Z","sha256":"96a19e865571b9f7460854417d3b394c8d7d7a63ff2064d75ea6d0656c8c7080"}],"artifacts":[],"subject":"lvef","type":"mixed","analysis":{"outcome":{"variable":"lvef","scale":"identity"},"model":{"engine":"nlme","structure":"cs","method":"REML","formula":"lvef ~ iv_echo + age + female + hx_chf + iv_echo:age + iv_echo:female +      iv_echo:hx_chf"}},"cohort":{"patients":300,"measurements":1180},"source_sha256":"18eeb62a8085b79bf5b74d567eec830e6784037510d9bd85d6860c77b8021484","run":{"start":"2026-11-25T13:11:24-0500","end":"2026-11-25T13:11:25-0500","time_zone":"EST","duration_seconds":0.7,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"mm.lvef.mixed.qmd","template":"mm","prefix":"mm","subject":"lvef","type":"mixed","hvtiRtemplates":"1.6.3"},"datasets":[{"name":"echo","version_file":"echo_20261125.parquet","registered":"2026-11-25","source_file":"echo.rds","rows":1180,"patients":300,"where":[],"sha256":"96a19e865571","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.3","sha":null,"method":"mm","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-25 13:11:24"}},"source":"30_analyses/mm.lvef.mixed.qmd",".hvti_render_id":"0ad6738704eea14880fa2f3edbd9506e7acbdb5a31fdc3aeaa5e1b8835924eb6",".hvti_source_sha256":"18eeb62a8085b79bf5b74d567eec830e6784037510d9bd85d6860c77b8021484"}</script>
 </section>
 
 </main>

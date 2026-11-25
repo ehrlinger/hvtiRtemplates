@@ -57,10 +57,10 @@ root <- file.path(tempdir(), "hooks-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L, renv = FALSE
 ))
-#> Study: /tmp/RtmpyNyaRT/hooks-example
+#> Study: /tmp/RtmpdxPGmD/hooks-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpyNyaRT/hooks-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpdxPGmD/hooks-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars

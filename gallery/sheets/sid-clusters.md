@@ -21,12 +21,17 @@ on the gallery's synthetic study.
   `_study.yml`. [Start a new
   study](https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html)
   shows how.
+- **The study's data.** Its choices name the registered dataset it
+  reads. A draft can read a build that is not registered yet, so you can
+  start before the build is final, and the report then says it is a
+  draft. A final render reads registered data only: register the build
+  with `hvtiRutilities::update_manifest()` first.
 - **The job it reads from.** Render **sid-fit** first, in this same set:
   the same `subject` and `type` as this job, which is how it finds what
   that job saved (`sid.rds`). For a final render, render it final too: a
   final render refuses a hand-off saved from unregistered data.
 - **Packages:** `cluster` (\>= 2.1.8), `hvtiPlotR` (\>= 2.8.9),
-  `hvtiRutilities` (\>= 1.5.24). The job checks each floor when it
+  `hvtiRutilities` (\>= 1.5.27). The job checks each floor when it
   starts, so an older library stops it at the top rather than partway
   through.
 
@@ -38,11 +43,11 @@ and [Work a
 job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-what-you-have-to-change)
 shows three ways to find them.
 
-1.  **Study choices**: 6 choices marked `EDIT:`.
+1.  **Study choices**: 9 choices marked `EDIT:`.
 2.  **The dissimilarity**: reads what **sid-fit** saved (`sid.rds`).
-3.  **PAM over K**
+3.  **Clustering over K**
 4.  **Choosing K**
-5.  **Letters across K**
+5.  **Letters across K**: reads the study data.
 6.  **The solution at K**
 7.  **Reading the result**
 8.  **Save**: saves `sid-clusters.rds`, which **sid-stability** reads
@@ -72,5 +77,5 @@ and it records the job's provenance beside the report.
   `EDIT:` name the file and its set. Add it with
   `add_job("vt.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.6.2 · built 2026-11-20.
+Generated from the template by hvtiRtemplates, 1.6.3 · built 2026-11-25.
 The template holds the details; this sheet is its outline.

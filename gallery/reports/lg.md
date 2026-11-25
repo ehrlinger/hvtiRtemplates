@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:22
+2026-11-25 13:07
 
 An `lg` job decides which scale a covariate should enter a model on,
 before it goes into `PREDICTORS` in an `lm` job. A model of an event
@@ -60,8 +60,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -71,6 +71,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -102,7 +103,7 @@ KEY <- ID
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
 #     breaks it. This job needs one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
@@ -186,7 +187,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -540,9 +541,9 @@ PREDICTORS <- c("age", "nyha_pr")
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-20 17:22:16 EST  |
-|                 | Ended          | 2026-11-20 17:22:25 EST  |
-|                 | Duration       | 9 s                      |
+| Run             | Started        | 2026-11-25 13:07:36 EST  |
+|                 | Ended          | 2026-11-25 13:07:39 EST  |
+|                 | Duration       | 3 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -551,9 +552,9 @@ PREDICTORS <- c("age", "nyha_pr")
 |                 | Template       | lg                       |
 |                 | Subject        | dead                     |
 |                 | Type           | calibration              |
-|                 | hvtiRtemplates | 1.6.2                    |
-| Dataset `built` | Version file   | built_20261120.parquet   |
-|                 | Version date   | 2026-11-20               |
+|                 | hvtiRtemplates | 1.6.3                    |
+| Dataset `built` | Version file   | built_20261125.parquet   |
+|                 | Version date   | 2026-11-25               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |

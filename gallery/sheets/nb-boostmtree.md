@@ -11,7 +11,12 @@ Run sheet
 
 Fits boosted multivariate trees to a response measured repeatedly over
 follow-up, and reports its error path, fit over time, importance,
-partial effects and patient trajectories. [See the report it
+partial effects and patient trajectories. Its fit moved to
+nb-boostmtree_fit, and its importance, partial effects and trajectories
+to nb-boostmtree_explain, which reads the fit nb-boostmtree_fit saves;
+scaffold both with add_job(). Moving a job to nb-boostmtree_fit refits,
+because the cache name and the shadow covariates differ. [See the report
+it
 produces](https://ehrlinger.github.io/hvtiRtemplates/gallery/reports/nb-boostmtree.md)
 on the gallery's synthetic study.
 
@@ -83,5 +88,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.6.2 · built 2026-11-20.
+Generated from the template by hvtiRtemplates, 1.6.3 · built 2026-11-25.
 The template holds the details; this sheet is its outline.

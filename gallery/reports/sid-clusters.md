@@ -4,15 +4,16 @@
 
 Published
 
-2026-11-20 17:37
+2026-11-25 13:22
 
 This job turns a `sid-fit` dissimilarity into clusters. It runs PAM
 (partitioning around medoids) on the SID distance for each K in a range,
-reports what the elbow and the silhouette say about K, and gives every
-solution letters that keep their identity as K grows, so cluster A at K
-= 4 is recognisably cluster A at K = 5. It never fits the forest: it
-reads `sid.rds`, so choosing K and pinning letters cost seconds and can
-be repeated freely.
+or, by choice, cuts one complete-linkage tree of that distance at each
+K. It reports what the elbow and the silhouette say about K, and gives
+every solution letters that keep their identity as K grows, so cluster A
+at K = 4 is recognisably cluster A at K = 5. It never fits the forest:
+it reads `sid.rds`, so choosing K and pinning letters cost seconds and
+can be repeated freely.
 
 The assignments are written to the study’s datasets folder and
 registered, so a later job reads them with `JOIN`: a `dc-tables` job to
@@ -45,10 +46,11 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.9") {
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
 # register_data() takes file = from 1.5.20 (built = before) and key_cols = from
-# 1.5.24 (key = before). Checked here, before
+# 1.5.24 (key = before), and update_manifest() reads the .rds this job registers from
+# 1.5.27. Checked here, before
 # the save chunk writes sid-clusters.rds, so an older library leaves nothing behind.
-if (utils::packageVersion("hvtiRutilities") < "1.5.24") {
-  stop("This job needs hvtiRutilities >= 1.5.24 for register_data(file =, key_cols =); ",
+if (utils::packageVersion("hvtiRutilities") < "1.5.27") {
+  stop("This job needs hvtiRutilities >= 1.5.27 for register_data(file =, key_cols =) and an .rds update_manifest(); ",
        utils::packageVersion("hvtiRutilities"), " is installed.\nUpdate it, then re-render.",
        call. = FALSE)
 }
@@ -72,7 +74,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.2
+hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -97,15 +99,31 @@ K <- 3
 #   OVERRIDES <- list(pm4 = c("1" = "B", "2" = "D", "3" = "C", "4" = "A"))
 # PAM numbers its clusters arbitrarily, so an override is a domain decision
 # written down (which cluster a paper calls A), not a fix. Read the cluster
-# numbers from the sizes table. list() lets the lineage rule choose. Overrides
-# are keyed on PAM numbers, which sid-fit's forest decides: after a refit they go
-# stale, so read the sizes table again before reusing them.
+# numbers from the sizes table's pam column, or from the last render with
+#   readRDS(set_path("estimates", "sid-clusters.rds"))$letters$pm4
+# list() lets the lineage rule choose. Overrides are keyed on PAM numbers, which
+# sid-fit's forest decides: after a refit they go stale, so read them again
+# before reusing them. To match an earlier analysis, REFERENCE below does this
+# for you.
 OVERRIDES <- list()
+
+# Demo: optionally, an earlier assignment of these patients, such as a
+# published one, registered as a dataset keyed by the patient ID:
+#   REFERENCE <- list(dataset = "published_clusters", col = "C7")
+# The clusters at K take its letters, each matched to the reference group it
+# shares most patients with (best Jaccard, one to one), and a table reports
+# how well each matched. A cluster left over keeps the lineage rule's letter.
+# It replaces OVERRIDES at K, so set one or the other. NULL matches nothing.
+REFERENCE <- NULL
 
 # Demo: optionally, groups made of clusters at K, such as
 #   COLLAPSE <- list(Z = c("C", "D", "E"))
 # written as an extra column G<K>. Letters not named keep their own letter.
-# NULL writes no group column.
+# NULL writes no group column. The letters are this render's: the lineage rule
+# chose them, so they need not be the clusters another analysis called C, D
+# and E. A COLLAPSE copied from one needs REFERENCE (or OVERRIDES at K) to
+# give the clusters that analysis's letters first; without either it warns.
+# With REFERENCE it may name only letters a cluster matched, and stops otherwise.
 COLLAPSE <- NULL
 
 # Demo: a cluster smaller than this at K is flagged. Later per-cluster tables
@@ -115,6 +133,26 @@ MIN_SIZE <- 20
 # Demo: how far the K metrics run. They are drawn beyond K_RANGE on purpose: an
 # elbow is only visible with points on both sides of it.
 K_METRICS_MAX <- 15
+
+# Demo: what PAM clusters on. "sid", the default, runs PAM on the SID distance
+# itself, pam(as.dist(D), k). "profile" runs pam(D, k) on the matrix, which
+# treats each patient's row of distances as a point and clusters on the
+# Euclidean distance between rows, a different metric that gives different
+# clusters. Some earlier SID analyses ran that, so "profile" is kept for
+# reproducing them, not as a better choice. sid-stability reads this from the
+# saved result, so its refits always use the metric used here.
+PAM_ON <- "sid"
+
+# Demo: how the distance is cut into K clusters. "pam", the default, is PAM as
+# above. "hclust" is complete-linkage hierarchical clustering of the SID
+# distance, cut at each K, cutree(hclust(as.dist(D)), k): the $clustering that
+# randomForestSRC's sidClustering returns when given k. It is kept for
+# reproducing an analysis that reported those clusters, not as a better choice.
+# "hclust" needs PAM_ON = "sid": the profile distance reproduces a PAM analysis,
+# and sidClustering cuts the SID distance itself, so the pair would reproduce
+# nothing and the job stops on it. sid-stability reads this from the saved
+# result, so its refits always use the method used here.
+CLUSTER_METHOD <- "pam"
 
 # Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
@@ -192,6 +230,86 @@ sid_align_labels <- function(mat, overrides = list(), pool = LETTERS) {
   out
 }
 
+# An identifier as text, a whole number without exponent or decimals, so an
+# ID stored as a number in one dataset and as text in another still matches.
+sid_id_text <- function(x) {
+  out <- if (is.numeric(x)) format(x, scientific = FALSE, trim = TRUE, drop0trailing = TRUE) else trimws(as.character(x))
+  out[is.na(x)] <- NA_character_
+  out
+}
+
+# Where each clustered patient sits in the reference, matched on the IDs as
+# text. Two reference IDs that differ as stored, "1" and " 1" say, pass a key
+# check and become one ID here; match() would then take the first silently, so
+# that stops instead.
+sid_reference_at <- function(ids, ref_ids) {
+  ref <- sid_id_text(ref_ids)
+  twice <- unique(ref[!is.na(ref) & duplicated(ref)])
+  if (length(twice)) {
+    stop("REFERENCE lists ID ", paste(utils::head(twice, 5L), collapse = ", "),
+         " more than once when its IDs are read as text, so its reference group is ambiguous.", call. = FALSE)
+  }
+  match(sid_id_text(ids), ref, incomparables = NA)
+}
+
+# REFERENCE names a registered dataset and the column of its assignment.
+sid_check_reference <- function(reference) {
+  if (is.null(reference)) return(invisible(NULL))
+  ok <- is.list(reference) && setequal(names(reference), c("dataset", "col")) && length(reference) == 2L &&
+    all(vapply(reference, function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x), logical(1)))
+  if (!ok) {
+    stop("REFERENCE must be NULL or list(dataset = \"<registered dataset>\", col = \"<its cluster column>\").",
+         call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+# The letters a reference assignment gives the PAM clusters at K. Every pair
+# of a cluster and a reference group is scored by Jaccard, the patients in both
+# over the patients in either, among the patients the reference assigns. Pairs
+# are taken best first, each cluster and each group once, so the match is one
+# to one; a cluster left over, when the reference has fewer groups, gets no
+# letter here and keeps the lineage rule's. Never keyed on PAM's own numbers,
+# which change with every refit, only on the patients.
+sid_match_reference <- function(pam, reference) {
+  pam <- as.character(pam)
+  reference <- as.character(reference)
+  known <- !is.na(reference)
+  if (!any(known)) {
+    stop("REFERENCE assigns none of the patients clustered here: check that it holds the same patient IDs, ",
+         "stored the same way.", call. = FALSE)
+  }
+  ids <- sort(unique(pam))
+  groups <- sort(unique(reference[known]))
+  jaccard <- matrix(0, length(ids), length(groups), dimnames = list(ids, groups))
+  for (i in ids) {
+    for (g in groups) {
+      a <- known & pam == i
+      b <- known & reference == g
+      jaccard[i, g] <- sum(a & b) / sum(a | b)
+    }
+  }
+  letter <- stats::setNames(rep(NA_character_, length(ids)), ids)
+  score <- stats::setNames(rep(NA_real_, length(ids)), ids)
+  left <- jaccard
+  # A tie goes to the cluster whose first patient comes first, then to the
+  # earlier group, so PAM's numbering never decides it.
+  first <- stats::setNames(match(ids, pam), ids)
+  while (length(left) && max(left) > 0) {
+    tied <- which(left == max(left), arr.ind = TRUE)
+    at <- tied[order(first[rownames(left)[tied[, 1L]]], tied[, 2L])[1L], ]
+    i <- rownames(left)[at[[1L]]]
+    g <- colnames(left)[at[[2L]]]
+    letter[[i]] <- g
+    score[[i]] <- left[at[[1L]], at[[2L]]]
+    left <- left[-at[[1L]], -at[[2L]], drop = FALSE]
+  }
+  list(overrides = letter[!is.na(letter)],
+       table = data.frame(pam = ids, letter = unname(letter), patients = as.integer(table(factor(pam, ids))),
+                          jaccard = unname(score)),
+       unassigned = sum(!known))
+}
+
 # Groups made of clusters. A letter not in the map keeps its own letter.
 sid_collapse <- function(letters, map) {
   if (!is.list(map) || is.null(names(map)) || any(is.na(names(map)) | !nzchar(names(map)))) {
@@ -233,6 +351,23 @@ sid_mds_signs <- function(xy) {
 # Names that differ only in case still meet, which the save chunk refuses.
 sid_dataset_name <- function(subject, type) {
   paste0("clusters_", nchar(subject), "_", tolower(subject), "_", tolower(type))
+}
+
+# One K of a hierarchical tree, in the shape of the pam() fit the rest of the
+# job reads: each patient's cluster, the silhouette widths named by patient,
+# and as the elbow's criterion the height at which the tree has K clusters,
+# which under complete linkage is the widest cluster's diameter. pam() gives no
+# widths at K = 1, and neither does this.
+sid_hclust_cut <- function(tree, d, k) {
+  cl <- stats::cutree(tree, k = k)
+  fit <- list(clustering = cl, objective = c(swap = sort(tree$height, decreasing = TRUE)[k]))
+  if (k > 1L) {
+    s <- cluster::silhouette(cl, d)
+    w <- cbind(cluster = s[, "cluster"], neighbor = s[, "neighbor"], sil_width = s[, "sil_width"])
+    rownames(w) <- attr(d, "Labels")
+    fit$silinfo <- list(widths = w, avg.width = mean(w[, "sil_width"]))
+  }
+  fit
 }
 ```
 
@@ -295,10 +430,12 @@ cat("Patients:", attr(D, "Size"), " Clustering variables:", toString(sid$vars), 
 
     Patients: 800  Clustering variables: lvedd, lvesd, la_diam, rvsp, e_e, lvef 
 
-## PAM over K
+## Clustering over K
 
-PAM (partitioning around medoids) chooses K patients as centers and
-assigns everyone to the nearest one, here by the SID distance itself. It
+PAM (partitioning around medoids), the default, chooses K patients as
+centers and assigns everyone to the nearest one, here by the SID
+distance itself. With `CLUSTER_METHOD = "hclust"` the job instead builds
+one complete-linkage tree of the distance and cuts it at each K. Either
 is deterministic given the distance, so this job needs no seed.
 
 Code
@@ -306,7 +443,38 @@ Code
 ``` r
 .ks <- seq_len(min(max(K_RANGE, K_METRICS_MAX), attr(D, "Size") - 1L))
 sid_mds <- NULL  # set by fig-mds when K is chosen; defined here so a skipped chunk leaves it NULL
-sid_pam <- lapply(.ks, function(k) cluster::pam(D, k))
+if (!identical(PAM_ON, "sid") && !identical(PAM_ON, "profile")) {
+  stop("PAM_ON must be \"sid\" or \"profile\".", call. = FALSE)
+}
+if (!identical(CLUSTER_METHOD, "pam") && !identical(CLUSTER_METHOD, "hclust")) {
+  stop("CLUSTER_METHOD must be \"pam\" or \"hclust\".", call. = FALSE)
+}
+if (CLUSTER_METHOD == "hclust" && PAM_ON != "sid") {
+  stop("CLUSTER_METHOD = \"hclust\" cuts the SID distance itself, as sidClustering does, and PAM_ON = \"profile\" ",
+       "reproduces a PAM analysis. Set PAM_ON <- \"sid\" with \"hclust\".", call. = FALSE)
+}
+# The elbow and the silhouette below come from these fits, so they use the same metric and method as the clusters.
+# The captions below name the method's elbow and its cluster numbers.
+.elbow <- if (CLUSTER_METHOD == "pam") "PAM objective" else "Tree height"
+.sizes_cap <- paste("Patients per cluster at each K, by letter; pam is the", if (CLUSTER_METHOD == "pam") "PAM" else "tree",
+                    "cluster number the letter was given to")
+if (CLUSTER_METHOD == "pam") {
+  # The profile distance is what pam(D, k) computes from the matrix, the Euclidean distance between rows,
+  # computed once here: pam() on the matrix would recompute it for every K and keep a copy of the matrix in each fit.
+  .pam_x <- if (PAM_ON == "profile") stats::dist(sid$dist) else D
+  if (PAM_ON == "profile") {
+    cat("PAM runs on the profile distance: the Euclidean distance between patients' rows of SID distances, kept",
+        "for reproducing an earlier analysis that clustered this way.\n")
+  }
+  sid_pam <- lapply(.ks, function(k) cluster::pam(.pam_x, k))
+} else {
+  cat("Clusters come from one complete-linkage tree of the SID distance, cut at each K, as",
+      "randomForestSRC's sidClustering gives them when given k, kept for reproducing an analysis that reported those.\n")
+  # Named sid_pam still, and saved as the handoff's `pam`, so sid-stability and later jobs read either method's
+  # fits the same way.
+  .tree <- stats::hclust(D, method = "complete")
+  sid_pam <- lapply(.ks, function(k) sid_hclust_cut(.tree, D, k))
+}
 names(sid_pam) <- paste0("pm", .ks)
 sid_metrics <- data.frame(
   k = .ks,
@@ -319,6 +487,8 @@ sid_metrics$objective <- sid_metrics$objective / sid_metrics$objective[1]
 ## Choosing K
 
 The elbow is the PAM objective, each patient’s distance to its medoid,
+relative to one cluster. With `CLUSTER_METHOD = "hclust"` it is the
+tree’s height at K clusters instead, the widest cluster’s diameter,
 relative to one cluster. It always falls as K grows; K is chosen where
 the fall levels off, which is read by eye and stated as a judgment. The
 average silhouette compares each patient’s distance to its own cluster
@@ -329,7 +499,7 @@ Neither says whether the clusters mean anything clinically.
 Code
 
 ``` r
-.long <- rbind(data.frame(k = sid_metrics$k, value = sid_metrics$objective, metric = "PAM objective"),
+.long <- rbind(data.frame(k = sid_metrics$k, value = sid_metrics$objective, metric = .elbow),
                data.frame(k = sid_metrics$k, value = sid_metrics$silhouette, metric = "Average silhouette"))
 .long <- .long[!is.na(.long$value), ]
 .plt_metrics <- ggplot2::ggplot(.long, ggplot2::aes(k, value)) +
@@ -386,6 +556,34 @@ if (length(.unknown)) {
        ". Name them pm<K>, such as pm4, for a K in ", toString(K_RANGE), ".", call. = FALSE)
 }
 .pm <- as.data.frame(lapply(sid_pam[paste0("pm", K_RANGE)], function(p) p$clustering))
+# A REFERENCE gives the clusters at K its letters, by the patients they share,
+# so a COLLAPSE copied from that analysis merges the groups it named (#611).
+sid_check_reference(REFERENCE)
+.reference <- NULL
+.ref_letters <- NULL
+.overrides_given <- OVERRIDES
+if (!is.null(REFERENCE) && !is.null(K)) {
+  .pmk <- paste0("pm", K)
+  if (!is.null(OVERRIDES[[.pmk]])) {
+    stop("REFERENCE and OVERRIDES$", .pmk, " both set the letters at K = ", K, ". Keep one.", call. = FALSE)
+  }
+  .ref_read <- hvtiRtemplates::read_job_data(.cfg, dataset = REFERENCE$dataset, id_col = .id, key_cols = .id)
+  # Matched ignoring case, as every column setting is.
+  .ref_col <- names(.ref_read$data)[tolower(names(.ref_read$data)) == tolower(REFERENCE$col)][1L]
+  if (is.na(.ref_col)) {
+    stop("REFERENCE's col, ", REFERENCE$col, ", is not a column of `", REFERENCE$dataset, "`.", call. = FALSE)
+  }
+  # Its values become the letters the tables and the Sankey print, so an identifier column is refused, as TRACK is.
+  hvtiRtemplates:::.refuse_display(.ref_col, hvtiRtemplates:::.no_values(.ref_read$data, .id), "REFERENCE's col")
+  .ref_at <- sid_reference_at(sid_ids, .ref_read$data[[.id]])
+  # Each clustered patient's group in the reference, NA where it has none. Saved for sid-stability, which
+  # measures its refits against these groups as well as against this render's.
+  .ref_letters <- as.character(.ref_read$data[[.ref_col]][.ref_at])
+  .reference <- sid_match_reference(.pm[[.pmk]], .ref_letters)
+  .overrides_given <- OVERRIDES
+  OVERRIDES[[.pmk]] <- .reference$overrides
+  .provenance_data <- c(.provenance_data, list(.ref_read$provenance))
+}
 .letters <- sid_align_labels(.pm, OVERRIDES)
 sid_letters <- data.frame(sid_ids, .letters, check.names = FALSE)
 names(sid_letters) <- c(.id, paste0("C", K_RANGE))
@@ -516,7 +714,7 @@ Code
 ``` r
 if (!is.null(K)) {
   .at <- sid_letters[[paste0("C", K)]]
-  # pam() already computed the widths; they come back ordered by cluster, so put them in the patients' order.
+  # The fit already holds the widths; pam() returns them ordered by cluster, so put them in the patients' order.
   .w <- sid_pam[[K]]$silinfo$widths
   .sil_d <- data.frame(letter = .at, width = .w[match(rownames(sid$dist), rownames(.w)), "sil_width"])
   .sil_d <- .sil_d[order(.sil_d$letter, -.sil_d$width), ]
@@ -602,41 +800,56 @@ Code
 ``` r
 # The letters, for any later job to JOIN by the patient ID. Only the ID and
 # letters are written: no clustering variable leaves this job.
-.csv_name <- paste0(SUBJECT, "-", TYPE, "-clusters.csv")
+# Written as .rds, which keeps the ID's type: a CSV read back without column types
+# turns "0012345" into 12345, which matches no patient (#618). A set registered as
+# CSV before then keeps its CSV, whose IDs passed the check below when it was written.
 .dataset <- sid_dataset_name(SUBJECT, TYPE)
+.reg <- .cfg$additional_datasets[[.dataset]]
+.csv_name <- paste0(SUBJECT, "-", TYPE, "-clusters.csv")
+.as_csv <- !is.null(.reg) && identical(.reg$built, .csv_name)
+.out_name <- if (.as_csv) .csv_name else paste0(SUBJECT, "-", TYPE, "-clusters.rds")
 # A name already registered to another file or key is not this set's: two sets
 # whose names differ only in case meet here. update_manifest() would follow
 # that other file and report success on stale letters, so stop instead.
-.reg <- .cfg$additional_datasets[[.dataset]]
-if (!is.null(.reg) && !identical(.reg$built, .csv_name)) {
-  stop("The dataset name `", .dataset, "` is already registered to ", .reg$built, ", not this set's ", .csv_name,
+if (!is.null(.reg) && !identical(.reg$built, .out_name)) {
+  stop("The dataset name `", .dataset, "` is already registered to ", .reg$built, ", not this set's ", .out_name,
        ". Give this set a subject or type that differs by more than case.", call. = FALSE)
 }
 if (!is.null(.reg) && !identical(.reg$key, .id)) {
   stop("The dataset `", .dataset, "` is already registered with key ", .reg$key, ", not this set's ID ", .id,
        ". Register it again under the ID, or remove the old entry.", call. = FALSE)
 }
-.csv_path <- file.path(hvtiRutilities::study_dir("datasets", .root), .csv_name)
+.out_path <- file.path(hvtiRutilities::study_dir("datasets", .root), .out_name)
 # Write to a temporary file in the same folder first, so a failed check below
-# never touches a CSV an earlier render already registered. Same folder, so the
+# never touches a file an earlier render already registered. Same folder, so the
 # final move is a rename on one file system.
-.csv_tmp <- tempfile("sid-clusters-", tmpdir = dirname(.csv_path), fileext = ".csv")
-utils::write.csv(sid_letters, .csv_tmp, row.names = FALSE)
-# Later jobs read this file back from CSV without column types, so an ID such as
-# "0012345" would return as 12345 and match no patient. Read the temporary file
-# back as they do and stop, removing only it, if the ID changed.
-.reread <- utils::read.csv(.csv_tmp)
-if (!identical(as.character(.reread[[.id]]), as.character(sid_letters[[.id]]))) {
-  file.remove(.csv_tmp)
-  stop("The ID `", .id, "` would not survive as CSV: read back, its values differ (a leading zero or a long number ",
-       "is read as a number). No new file was kept and any earlier one is unchanged. Cluster on an ID that reads back ",
-       "unchanged, or ask for the ID to be stored without leading zeros.", call. = FALSE)
+.out_tmp <- tempfile("sid-clusters-", tmpdir = dirname(.out_path), fileext = paste0(".", tools::file_ext(.out_name)))
+if (.as_csv) {
+  utils::write.csv(sid_letters, .out_tmp, row.names = FALSE)
+  # A CSV is read back without column types, so an ID such as "0012345" would
+  # return as 12345 and match no patient. Read the temporary file back as later
+  # jobs do and stop, removing only it, if the ID changed.
+  .reread <- utils::read.csv(.out_tmp)
+  if (!identical(as.character(.reread[[.id]]), as.character(sid_letters[[.id]]))) {
+    file.remove(.out_tmp)
+    stop("The ID `", .id, "` would not survive as CSV: read back, its values differ (a leading zero or a long number ",
+         "is read as a number). No new file was kept and any earlier one is unchanged. This set's clusters were ",
+         "registered as ", .csv_name, " before 1.6.3; remove that entry and render again to register them as .rds, ",
+         "which keeps the ID as it is.", call. = FALSE)
+  }
+} else {
+  saveRDS(sid_letters, .out_tmp)
 }
 # The solution at K for jobs that read this file rather than the dataset, such
 # as vt-explain's stratifier: patients by ID digest, as in sid.rds, never by ID.
 sid_clusters <- if (!is.null(K)) {
   out <- data.frame(id = rownames(sid$dist), cluster = as.character(sid_letters[[paste0("C", K)]]))
   if (!is.null(COLLAPSE)) out$group <- as.character(sid_letters[[paste0("G", K)]])
+  # Each patient's group in REFERENCE, and the group COLLAPSE makes of it, for sid-stability.
+  if (!is.null(.ref_letters)) {
+    out$reference <- .ref_letters
+    if (!is.null(COLLAPSE)) out$reference_group <- sid_collapse(.ref_letters, COLLAPSE)
+  }
   out
 }
 .cohort <- list(n = as.integer(attr(D, "Size")))
@@ -646,19 +859,21 @@ sid_clusters_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
          tab <- table(.pm[[col]], .letters[, col])
          stats::setNames(colnames(tab)[apply(tab, 1, which.max)], rownames(tab))
        }),
-       k = K, overrides = OVERRIDES, collapse = COLLAPSE),
+       # The overrides as written, so they can be copied back beside REFERENCE.
+       k = K, overrides = .overrides_given, reference = REFERENCE, collapse = COLLAPSE, pam_on = PAM_ON,
+       cluster_method = CLUSTER_METHOD),
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   cohort = .cohort
 )
 saveRDS(sid_clusters_handoff, set_path("estimates", "sid-clusters.rds"))
-# Only now is the CSV replaced. Order: the .rds first, so a failure there leaves the
-# registered CSV as it was; then the move; then the manifest, which records the
+# Only now is the registered file replaced. Order: the handoff first, so a failure there
+# leaves the registered file as it was; then the move; then the manifest, which records the
 # file that is on disk.
-if (!isTRUE(file.rename(.csv_tmp, .csv_path))) {
+if (!isTRUE(file.rename(.out_tmp, .out_path))) {
   # rename() fails across file systems or onto a locked file; copy then remove.
-  if (!file.copy(.csv_tmp, .csv_path, overwrite = TRUE)) stop("Could not write ", .csv_path, call. = FALSE)
-  unlink(.csv_tmp)
+  if (!file.copy(.out_tmp, .out_path, overwrite = TRUE)) stop("Could not write ", .out_path, call. = FALSE)
+  unlink(.out_tmp)
 }
 # register_data() registers a dataset once and stops on a second call. A later
 # render records the rewritten file as a new dated version instead, so later
@@ -671,7 +886,7 @@ if (!is.null(.reg)) {
   )))
 } else {
   invisible(utils::capture.output(suppressMessages(
-    hvtiRutilities::register_data(file = .csv_name, dataset = .dataset, role = "named",
+    hvtiRutilities::register_data(file = .out_name, dataset = .dataset, role = "named",
                                   population = "SID cluster assignments", kind = "ancillary", key_cols = .id,
                                   root = .root)
   )))
@@ -688,8 +903,8 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-20 17:37:00 EST |
-|  | Ended | 2026-11-20 17:37:05 EST |
+| Run | Started | 2026-11-25 13:21:58 EST |
+|  | Ended | 2026-11-25 13:22:03 EST |
 |  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -701,13 +916,13 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 |  | Template | sid.clusters |
 |  | Subject | echo |
 |  | Type | sid |
-|  | hvtiRtemplates | 1.6.2 |
-| Dataset `built` | Version file | built_20261120.parquet |
-|  | Version date | 2026-11-20 |
+|  | hvtiRtemplates | 1.6.3 |
+| Dataset `built` | Version file | built_20261125.parquet |
+|  | Version date | 2026-11-25 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-20 17:36:50 -0500, data built_20261120.parquet |
+| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-25 13:21:48 -0500, data built_20261125.parquet |
 | Reproducibility | renv | not active |

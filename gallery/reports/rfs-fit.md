@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:31
+2026-11-25 13:13
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
@@ -88,8 +88,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -99,6 +99,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -130,7 +131,7 @@ KEY <- ID
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
 #     breaks it. This job models one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
@@ -204,6 +205,15 @@ LEARNING_FRACTIONS <- c(0.125, 0.25, 0.5)
 LEARNING_B         <- 20
 LEARNING_TOP_K     <- 5
 LEARNING_NTREE     <- 250
+
+# Demo: the recommendation printed under the learning curve. LEARNING_AGREEMENT is
+# the agreement, Jaccard and Kendall tau both, that the top variables must reach at
+# the rightmost point to call the cohort large enough. 0.8 is a cautious start, not
+# evidence: with the top 5, a mean Jaccard of 0.8 needs most refits to share all
+# five. MIN_PREDICTORS is the fewest candidate predictors for which a forest is
+# worth fitting over a regression model. Both are advice; the job never stops on them.
+LEARNING_AGREEMENT <- 0.8
+MIN_PREDICTORS     <- 10
 
 # Demo: "na.omit" drops a patient missing any predictor; "na.impute" keeps them
 # and imputes inside the forest. The classification and regression exemplars
@@ -295,7 +305,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -497,6 +507,89 @@ save_figure(.fig, "rfs-fit-diagnostics-brier")
 Figure 3: Brier score over follow-up. The black solid line is the
 out-of-bag Brier score at each time, lower being better.
 
+Code
+
+``` r
+# The survival counterpart of variance explained. A patient no tree left out
+# has no out-of-bag prediction, and randomForestSRC leaves them out.
+.oob <- stats::complete.cases(forest$survival.oob)
+.brier <- randomForestSRC::get.brier.survival(forest, cens.model = "km")
+# The baseline: the cohort's Kaplan-Meier survival given to every patient,
+# scored by the same function, so it has the same censoring weights, times and
+# patients as the forest. It is swapped into a copy of the forest only for the
+# rows that have an out-of-bag prediction, so the patients stay the same.
+.km <- survival::survfit(survival::Surv(forest$yvar[, 1], forest$yvar[, 2]) ~ 1)
+.km_surv <- summary(.km, times = forest$time.interest, extend = TRUE)$surv
+.reference <- forest
+.reference$survival.oob[.oob, ] <- matrix(.km_surv, sum(.oob), length(.km_surv), byrow = TRUE)
+.brier_ref <- randomForestSRC::get.brier.survival(.reference, cens.model = "km")
+# Harrell's C from the out-of-bag mortality, on the same patients. get.cindex()
+# returns the concordance error, one minus C. The error curve's last point is
+# not used: randomForestSRC 3.10.0 records a value there that differs from
+# get.cindex() and survival::concordance() by about 0.007 on the veteran data.
+.cindex <- 1 - randomForestSRC::get.cindex(forest$yvar[.oob, 1], forest$yvar[.oob, 2], forest$predicted.oob[.oob])
+knitr::kable(data.frame(
+  measure = c("Patients with an out-of-bag prediction", "Integrated out-of-bag Brier score",
+              "Integrated Brier score of Kaplan-Meier", "Integrated Brier skill score", "Harrell's C"),
+  value = c(paste(sum(.oob), "of", length(.oob)),
+            format(signif(c(.brier$crps.std, .brier_ref$crps.std, 1 - .brier$crps.std / .brier_ref$crps.std, .cindex), 3)))
+))
+```
+
+| measure                                | value      |
+|:---------------------------------------|:-----------|
+| Patients with an out-of-bag prediction | 725 of 725 |
+| Integrated out-of-bag Brier score      | 0.175      |
+| Integrated Brier score of Kaplan-Meier | 0.210      |
+| Integrated Brier skill score           | 0.165      |
+| Harrell’s C                            | 0.671      |
+
+Table 3: Integrated Brier skill score. How many patients have an
+out-of-bag prediction, the forest’s out-of-bag Brier score averaged over
+follow-up, the same for the Kaplan-Meier curve given to every patient,
+and the forest’s skill, one minus their ratio, then the forest’s
+out-of-bag Harrell’s C.
+
+The five rows, in order:
+
+- **Patients with an out-of-bag prediction.** A patient gets one only
+  from a tree grown without them. Each tree leaves out about a third of
+  the patients, so after *b* trees a patient has none with a chance of
+  roughly 0.63 to the power *b*. Both scores below rest on these
+  patients alone. When this row is short of the whole cohort, the forest
+  has too few trees; raise `NTREE`.
+- **Integrated out-of-bag Brier score.** The curve in the Brier figure
+  above, averaged over follow-up: the area under it divided by the
+  length of follow-up. At each time the Brier score is the mean squared
+  difference between a patient’s predicted survival and whether they
+  were still alive, with censored patients handled by weighting the
+  others by the chance of still being under observation (the
+  Kaplan-Meier estimate of censoring). 0 is perfect.
+- **Integrated Brier score of Kaplan-Meier.** The same score for the
+  simplest prediction there is: every patient given the cohort’s
+  Kaplan-Meier curve. It needs no predictors, so it is the baseline the
+  forest must beat. It is computed with the same function, censoring
+  weights, times and patients as the forest’s, so the two differ only in
+  the predictions.
+- **Integrated Brier skill score.** One minus the second row over the
+  third: the share of the Kaplan-Meier curve’s error the forest removes,
+  sometimes called R squared for survival. It reads like variance
+  explained, 1 perfect and 0 no better than Kaplan-Meier, and it is out
+  of bag, so it is not inflated by scoring the patients the forest was
+  fit to. It can fall below 0, and when it does the forest predicts
+  survival worse than the cohort’s curve. Late in follow-up few patients
+  remain at risk and the censoring weights grow large, so a long thin
+  tail can move this score; read it with the Brier figure.
+- **Harrell’s C.** Over every pair of patients whose order of events is
+  known, the share in which the forest gave the patient with the earlier
+  event the higher risk. 0.5 is a coin flip and 1 a perfect ordering. It
+  is computed from the out-of-bag predictions and is close to, though
+  not exactly, one minus the last point of the error curve above, which
+  randomForestSRC records its own way. C measures discrimination, the
+  order, and the rows above measure accuracy, the probabilities: a
+  forest whose predicted survival is off by the same amount for everyone
+  keeps its C and loses Brier skill. Read the two together.
+
 ### Is the cohort large enough?
 
 Code
@@ -588,14 +681,36 @@ if (.learning_filled) {
                                    "rightmost point means the importance ranking would change with more ",
                                    "patients. Open markers have fewer than 50 events; triangles are ",
                                    "fractions above one half, where agreement is optimistic."), .learning_right),
+                    paste0("Jaccard runs from 0, no top variable shared, to 1, the same set; Kendall tau ",
+                           "from -1, the order reversed, through 0, no relation, to 1, the same order. The dashed line marks 0."),
                     .learning_note),
   error = paste(sprintf(paste0("Out-of-bag error (1 - C-index) by the number of events in each refit%s. Gray",
                                " points are single refits and the black line their mean, each mean drawn in ",
-                               "its fraction's marker. Open markers have fewer than 50 events, too few for ",
+                               "its fraction's marker. Boxes span the 15th to 85th percentile of the refits, ",
+                               "with a line at the median. Open markers have fewer than 50 events, too few for ",
                                "their error to be trusted."), .learning_right),
                 .learning_note)
 )
 ```
+
+**What the agreement measures.** Every refit ranks the predictors by
+importance, and each pair of refits at a fraction is compared on its top
+5 variables. The table and figure show the mean over all pairs. Both
+measures are 1 when two refits agree exactly and share the figure’s
+axis, but they do not share a floor.
+
+- **Jaccard** asks whether two refits pick the same top variables, in
+  any order: the number they share divided by the number in either. It
+  runs from 0, no variable in common, to 1, the same set. With the top
+  5, a pair sharing 4 of them scores 0.67, 3 scores 0.43, 2 scores 0.25,
+  1 scores 0.11.
+- **Kendall tau** asks whether two refits put those variables in the
+  same order. It is taken over every variable in either top set, ranked
+  by each refit’s full importance, so a variable in one top set and not
+  the other counts against it. It runs from -1, the order reversed,
+  through 0, no relation, to 1, the same order. A tau of 0.6 means about
+  80% of pairs of variables fall in the same order in both refits; at or
+  below 0 the order is no better than chance.
 
 Code
 
@@ -623,7 +738,7 @@ knitr::kable(
 | 0.500 | 362 | 203 | 20 | 0.333 (SD 0.016) | 0.64 | 0.61 |  |
 | 1.000 | 725 | 406 (expected) | 20 | 0.339 (SD 0.014) | 0.77 | 0.72 |  |
 
-Table 3: Learning curve. Error is the mean out-of-bag error (1 -
+Table 4: Learning curve. Error is the mean out-of-bag error (1 -
 C-index) of the refits at each fraction; agreement is between the
 refits’ top variables by importance. Fraction 1 is a bootstrap of the
 whole cohort: its events are the cohort’s, the number expected in each
@@ -632,13 +747,16 @@ draw, which varies because the bootstrap draws with replacement.
 Code
 
 ``` r
+# The dashed line marks 0, Kendall tau's no relation between two orders, and the floor of Jaccard.
 .fig <- plot(learning) +
-  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
+  ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+  # Two legends, the measures and the markers: side by side they run past a 6.5 inch figure, so they stack.
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.box = "vertical")
 save_figure(.fig, "rfs-fit-learning-stability")
 .fig
 ```
 
-![](assets/436f1f5337852799ef48a703816fbdd7.png)
+![](assets/62beac31b8b211c68ae8b661218fa6c8.png)
 
 Figure 4: Agreement of the top variables by importance between refits,
 by the number of events in each refit (for the rightmost point, the
@@ -646,25 +764,31 @@ whole-cohort bootstrap, drawn as a square, the cohort’s events: the
 expected number in each draw). A line that is still rising at the
 rightmost point means the importance ranking would change with more
 patients. Open markers have fewer than 50 events; triangles are
-fractions above one half, where agreement is optimistic.
+fractions above one half, where agreement is optimistic. Jaccard runs
+from 0, no top variable shared, to 1, the same set; Kendall tau from -1,
+the order reversed, through 0, no relation, to 1, the same order. The
+dashed line marks 0.
 
 Code
 
 ``` r
+# A box per fraction, from the 15th to the 85th percentile of its refits, with a line at the median.
 .fig <- plot(learning, panel = "error") +
+  hvtiRtemplates:::.learning_error_box(learning) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
 save_figure(.fig, "rfs-fit-learning-error")
 .fig
 ```
 
-![](assets/169a8d6571849468ef6fb15f368daa9e.png)
+![](assets/1a92cda21bd90f7a2e7657c91f1702fc.png)
 
 Figure 5: Out-of-bag error (1 - C-index) by the number of events in each
 refit (for the rightmost point, the whole-cohort bootstrap, drawn as a
 square, the cohort’s events: the expected number in each draw). Gray
 points are single refits and the black line their mean, each mean drawn
-in its fraction’s marker. Open markers have fewer than 50 events, too
-few for their error to be trusted.
+in its fraction’s marker. Boxes span the 15th to 85th percentile of the
+refits, with a line at the median. Open markers have fewer than 50
+events, too few for their error to be trusted.
 
 **Reading the curve.** The error usually levels off long before the
 importance ranking does. A cohort whose error has flattened can still
@@ -680,6 +804,21 @@ cohort’s: a bootstrap draws with replacement, so each draw has about
 that many, some more and some fewer. The agreement is between the top
 variables, so it needs predictors left out: with 5 or fewer predictors
 the job compares the top one fewer than there are.
+
+WarningRecommendation
+
+**Cohort size: not yet.** At the rightmost point, 406 events, the top-5
+Jaccard is 0.77 and Kendall tau 0.72, against 0.80 (LEARNING_AGREEMENT),
+and agreement was still rising, by 0.13 since the previous point. The
+top variables change from refit to refit at this cohort size. The forest
+may still predict (see the error curve), but its importance ranking and
+the partial plots drawn from it are not yet reproducible.
+
+**Predictors: few.** 9 predictors, under 10 (MIN_PREDICTORS). With this
+few, a Cox model on the same predictors is likely as informative and
+simpler to report; fit one alongside before relying on the forest.
+
+Both thresholds are study choices, set under `EDIT:`, not rules.
 
 Code
 
@@ -712,9 +851,9 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-20 17:30:58 EST  |
-|                 | Ended          | 2026-11-20 17:31:25 EST  |
-|                 | Duration       | 27 s                     |
+| Run             | Started        | 2026-11-25 13:13:02 EST  |
+|                 | Ended          | 2026-11-25 13:13:29 EST  |
+|                 | Duration       | 26 s                     |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -722,9 +861,9 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 |                 | Template       | rfs.fit                  |
 |                 | Subject        | dead                     |
 |                 | Type           | rf                       |
-|                 | hvtiRtemplates | 1.6.2                    |
-| Dataset `built` | Version file   | built_20261120.parquet   |
-|                 | Version date   | 2026-11-20               |
+|                 | hvtiRtemplates | 1.6.3                    |
+| Dataset `built` | Version file   | built_20261125.parquet   |
+|                 | Version date   | 2026-11-25               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |

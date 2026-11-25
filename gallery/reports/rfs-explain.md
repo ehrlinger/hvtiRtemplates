@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:31
+2026-11-25 13:13
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -80,7 +80,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.2
+hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -357,7 +357,7 @@ Code
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/0a1844801b764ecb9225173349361991.png)
+![](assets/a188195bc11baf2f95d61c26394895e1.png)
 
 Figure 2: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -438,9 +438,9 @@ each level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-20 17:31:31 EST |
-|  | Ended | 2026-11-20 17:31:40 EST |
-|  | Duration | 9 s |
+| Run | Started | 2026-11-25 13:13:34 EST |
+|  | Ended | 2026-11-25 13:13:42 EST |
+|  | Duration | 8 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -448,12 +448,12 @@ each level of a categorical one.
 |  | Template | rfs.explain |
 |  | Subject | dead |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.6.2 |
-| Dataset `built` | Version file | built_20261120.parquet |
-|  | Version date | 2026-11-20 |
+|  | hvtiRtemplates | 1.6.3 |
+| Dataset `built` | Version file | built_20261125.parquet |
+|  | Version date | 2026-11-25 |
 |  | Source file | built.rds |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-11-20 17:30:58 -0500, data built_20261120.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-11-25 13:13:02 -0500, data built_20261125.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

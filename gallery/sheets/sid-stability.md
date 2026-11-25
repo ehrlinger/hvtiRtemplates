@@ -53,11 +53,12 @@ shows three ways to find them.
     in the background; fits and caches its results, so a later render
     reloads them (`REFIT <- TRUE` recomputes them).
 5.  **Agreement with the reported groups**
-6.  **Label-free agreement**
-7.  **When a group is not found**
-8.  **Co-association**
-9.  **Without the dropped variables**
-10. **Save**
+6.  **Agreement with the reference**
+7.  **Label-free agreement**
+8.  **When a group is not found**
+9.  **Co-association**
+10. **Without the dropped variables**
+11. **Save**
 
 ## Run it
 
@@ -83,5 +84,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.6.2 · built 2026-11-20.
+Generated from the template by hvtiRtemplates, 1.6.3 · built 2026-11-25.
 The template holds the details; this sheet is its outline.

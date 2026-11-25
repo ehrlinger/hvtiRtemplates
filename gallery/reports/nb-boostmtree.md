@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:30
+2026-11-25 13:12
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -78,8 +78,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `echo` `echo_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `echo` `echo_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -89,6 +89,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "echo"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -120,6 +121,7 @@ KEY <- c(ID, TIME)
 #   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
 #     and a column both datasets have stops, so list only those the job needs.
 #   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     a cohort patient with no record is left out, and counted in the text;
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
 #     or "nearest" with to = a cohort date column). WHERE on a joined column
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
@@ -324,7 +326,7 @@ if (length(.chr)) {
 
 | Data                |                                        |
 |:--------------------|:---------------------------------------|
-| Source              | dataset `echo` (echo_20261120.parquet) |
+| Source              | dataset `echo` (echo_20261125.parquet) |
 | Rows read           | 1,180                                  |
 | ID                  | `patient_id`                           |
 | Identifiers dropped | none                                   |
@@ -468,7 +470,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 160 | 0.8858179 |
+| l2 | lvef | 156 | 0.889189 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -518,7 +520,7 @@ save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/a1eb1f66f947e0283cd68da97363b673.png)
+![](assets/db6bbdc0786b553d7ae8111e6e0f7495.png)
 
 Figure 1: Cross-validated error by boosting iteration. The black solid
 line is the error after each iteration, and the black dashed vertical
@@ -533,7 +535,7 @@ save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/25e4d8919fdffa68c35962e81e6fd506.png)
+![](assets/ca509741dd62fa3675298cdfc5cd8809.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
 per parameter. Each black solid line is the parameter’s fitted value
@@ -550,7 +552,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/4a2fb3ed22d00b01d2db69b49237671d.png)
+![](assets/c3f5b2edd589f80c9912dcc9793ec588.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins.
 Each gray horizontal segment spans a time bin at its observed mean, with
@@ -573,7 +575,7 @@ save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
-![](assets/1ac4a29b3ab8c650e888659f6597f1b0.png)
+![](assets/d561301023cdb6909951cbba9596f11e.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time, one panel for each. Horizontal dark gray bars
@@ -679,12 +681,12 @@ Code
 .p
 ```
 
-![](assets/01b60d6c93efc5da80404e44ad5f676d.png)
+![](assets/387fdde54bb0cc036a0476c1d42721f1.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-1 of 2: nyha_pr, hx_chf, bmi, age.
+1 of 2: nyha_pr, hx_chf, age, female.
 
 Code
 
@@ -692,12 +694,12 @@ Code
 .p
 ```
 
-![](assets/f0b7f00903dfeddc54a91f706ee7fe90.png)
+![](assets/eed8496ad4271d52b9872a3742f252e6.png)
 
 Figure 6: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-2 of 2: female, hx_dm.
+2 of 2: hx_dm, bmi.
 
 Code
 
@@ -742,7 +744,7 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/9a85d16d046e3712c105d1509ae4ddad.png)
+![](assets/3c207b3c2b43111cceaab7f63a912717.png)
 
 Figure 7: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time. Thin translucent black lines trace
@@ -846,9 +848,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 | Group           | Item           | Value                        |
 |:----------------|:---------------|:-----------------------------|
-| Run             | Started        | 2026-11-20 17:29:22 EST      |
-|                 | Ended          | 2026-11-20 17:30:52 EST      |
-|                 | Duration       | 1 min 30 s                   |
+| Run             | Started        | 2026-11-25 13:11:30 EST      |
+|                 | Ended          | 2026-11-25 13:12:50 EST      |
+|                 | Duration       | 1 min 20 s                   |
 |                 | Status         | final                        |
 |                 | Rendered by    | gallery                      |
 |                 | Host           | gallery                      |
@@ -856,9 +858,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 |                 | Template       | nb.boostmtree                |
 |                 | Subject        | lvef                         |
 |                 | Type           | boost                        |
-|                 | hvtiRtemplates | 1.6.2                        |
-| Dataset `echo`  | Version file   | echo_20261120.parquet        |
-|                 | Version date   | 2026-11-20                   |
+|                 | hvtiRtemplates | 1.6.3                        |
+| Dataset `echo`  | Version file   | echo_20261125.parquet        |
+|                 | Version date   | 2026-11-25                   |
 |                 | Source file    | echo.rds                     |
 |                 | Rows kept      | 1,180 rows on 300 patients   |
 |                 | WHERE          | none                         |

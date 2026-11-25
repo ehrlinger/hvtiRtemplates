@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:12
+2026-11-25 13:03
 
 This job cuts the study’s dataset from a master snapshot, records who
 was excluded and why, and writes the study’s working dataset with its
@@ -22,7 +22,7 @@ belong to the master’s corrections, in hvtiRdatabuild, so every study
 sees them); imputation, propensity scores and variables for one model (a
 `vars` job).
 
-**final** · rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -48,7 +48,7 @@ never from chunks run by hand.
 
 A comparison build: study_cohort.rds is not the study dataset. It is
 compared against the study dataset built.rds, registered as
-built_20261120.parquet, which this build leaves unchanged.
+built_20261125.parquet, which this build leaves unchanged.
 
 | Item                           | Value |
 |:-------------------------------|------:|
@@ -165,8 +165,8 @@ console
 | Rows in the dataset | 683 |
 | Patients | 683 |
 | Columns | 14 |
-| Study dataset before | built_20261120.parquet |
-| Study dataset after | built_20261120.parquet |
+| Study dataset before | built_20261125.parquet |
+| Study dataset after | built_20261125.parquet |
 | Registration | Working file only: the study’s dataset is still built.rds, so this build was not declared or registered |
 | Build reviewed (sha256) | 6596c1a4a83541cce8b973dd2a75fa6c5ceec316516dea1f1bbbe3ae4b21f7f8 |
 
@@ -209,9 +209,9 @@ Table 10: Type, missing count and range of each column
 
 | Group           | Item           | Value                   |
 |:----------------|:---------------|:------------------------|
-| Run             | Started        | 2026-11-20 17:12:44 EST |
-|                 | Ended          | 2026-11-20 17:12:45 EST |
-|                 | Duration       | 2 s                     |
+| Run             | Started        | 2026-11-25 13:03:47 EST |
+|                 | Ended          | 2026-11-25 13:03:48 EST |
+|                 | Duration       | 0 s                     |
 |                 | Status         | final                   |
 |                 | Rendered by    | gallery                 |
 |                 | Host           | gallery                 |
@@ -219,5 +219,5 @@ Table 10: Type, missing count and range of each column
 |                 | Template       | bd                      |
 |                 | Subject        | study                   |
 |                 | Type           | build                   |
-|                 | hvtiRtemplates | 1.6.2                   |
+|                 | hvtiRtemplates | 1.6.3                   |
 | Reproducibility | renv           | not active              |

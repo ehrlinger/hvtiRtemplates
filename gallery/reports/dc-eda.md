@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:21
+2026-11-25 13:07
 
 Replaces an older EDA report.
 
@@ -81,8 +81,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -100,6 +100,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 # MIGRATE-BEGIN: dc-eda-data
 DATASET <- "built"
 # MIGRATE-END: dc-eda-data
@@ -128,6 +129,8 @@ KEY <- ID
 #   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
 #     and a column both datasets have stops, so list only those the job needs.
 #   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     a cohort patient with no record is left out, and counted in the text,
+#     unless the join is keyed on the ID alone, which keeps them;
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
 #     or "nearest" with to = a cohort date column). WHERE on a joined column
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
@@ -193,8 +196,14 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", dea
 # X_UNIT below. In years it is a decimal calendar year: whole years for the
 # percent and count bars, the point in the year for the continuous panels. In
 # months the bars are calendar months and the continuous panels a date axis.
-# Any other column is drawn as it is. Set both when time 0 is not an
-# operation, such as an enrollment date.
+# Any other column is drawn as it is, so an age or an interval from an index
+# event works too, and JOIN above can bring one in from an ancillary dataset.
+# Set both when time 0 is not an operation, such as an enrollment date.
+# X_VAR <- NULL is for a build with no date and no such column: each
+# continuous variable is drawn as the spread of its values over the whole
+# cohort, each categorical one as a single bar, and the follow-up section,
+# which draws follow-up against the operation date, is left out with a note,
+# even if OPYRS and OPDATE are columns of the data.
 # VARIABLES is NULL to draw the VARIABLE_SET below, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
@@ -331,7 +340,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -360,7 +369,9 @@ Code
 # The follow-up choices are checked by hv_followup_panels() below; these
 # check the variable choices.
 column_names <- function(x) is.character(x) && !anyNA(x) && all(nzchar(x)) && !anyDuplicated(x)
-if (!column_names(X_VAR) || length(X_VAR) != 1L) stop("X_VAR must name one column.", call. = FALSE)
+if (!is.null(X_VAR) && (!column_names(X_VAR) || length(X_VAR) != 1L)) {
+  stop("X_VAR must name one column, or be NULL for a build with no reference date.", call. = FALSE)
+}
 if (!is.character(X_LABEL) || length(X_LABEL) != 1L || is.na(X_LABEL) || !nzchar(X_LABEL)) {
   stop("X_LABEL must be one piece of text, the x-axis label.", call. = FALSE)
 }
@@ -405,7 +416,7 @@ if (!is.null(ABBREVIATIONS) && (!(is.character(ABBREVIATIONS) || is.list(ABBREVI
 unknown <- setdiff(c(X_VAR, VARIABLES, EXCLUDE), names(d))
 if (length(unknown)) {
   stop("Unknown EDA column(s): ", paste(unknown, collapse = ", "), ".",
-       if (X_VAR %in% unknown) " Set X_VAR in the study choices to the study's reference date or year column.",
+       if (isTRUE(X_VAR %in% unknown)) " Set X_VAR in the study choices to the study's reference date or year column.",
        call. = FALSE)
 }
 # No identifier is drawn or summarized: the job's ID and KEY columns, which are the
@@ -421,7 +432,7 @@ if (length(unknown)) {
 # ten or more of them.
 .job_selection <- attr(job_data$record, "selection")
 .no_values <- hvtiRtemplates:::.no_values(d, .job_selection$id, .job_selection$key)
-hvtiRtemplates:::.refuse_display(X_VAR, .no_values, "X_VAR")
+if (!is.null(X_VAR)) hvtiRtemplates:::.refuse_display(X_VAR, .no_values, "X_VAR")
 looks_like_id <- function(v) {
   !(v %in% hvtiRtemplates:::.displayable(v, .no_values)$keep) |
     grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
@@ -529,7 +540,12 @@ if (!length(VARIABLES)) stop("No EDA variables remain after exclusions.", call. 
 # bars, and the continuous panels keep the decimal. A date drawn in months is
 # a date for the continuous panels, and its calendar month, in order, for the
 # bars, which .d_eda_bars carries. Any other column is drawn as it is.
-.x <- d[[X_VAR]]
+# With no X_VAR, every patient shares one reference value, "All patients", so a
+# continuous panel is the spread of a variable's values and a categorical panel
+# a single bar. The template's default label is about operations, so it becomes
+# "Cohort"; a label the study chose is kept.
+.x <- if (is.null(X_VAR)) rep("All patients", nrow(d)) else d[[X_VAR]]
+if (is.null(X_VAR) && identical(X_LABEL, "Year of operation")) X_LABEL <- "Cohort"
 .x_bars <- NULL
 .is_date <- inherits(.x, c("Date", "POSIXt"))
 # A date-time is read as the day it fell on where it was recorded: as.Date()
@@ -690,6 +706,14 @@ if (length(id_cols)) cat("Identifier columns, not described:", paste(id_cols, co
 ```
 
 Identifier columns, not described: patient_id
+
+Code
+
+``` r
+cat("\n::: {.callout-note}\nX_VAR is NULL, so the goodness of follow-up section is left out: X_VAR <- NULL marks a",
+    "build with no operation date to draw follow-up against. If this build has one, set X_VAR to it to draw the",
+    "section; otherwise leave \"followup\" out of SECTIONS to drop this note.\n:::\n")
+```
 
 Code
 
@@ -976,6 +1000,15 @@ titles <- c(continuous = "Continuous variables", percent = "Categorical variable
               count = paste("Stacked bars give the number of patients at each reference value, one house color per",
                             "category. The categories are told apart by color alone; the categorical frequency",
                             "table above names them."))
+# With no X_VAR there is no reference value and nothing to smooth over: one column of points, one bar.
+if (is.null(X_VAR)) {
+  .eda_key[] <- c(paste("Black filled circles mark each patient's value, all patients in one column, and gray ticks",
+                        "along the bottom the patients missing the variable."),
+                  paste("Stacked bars give the share of patients in each category, one house color per category.",
+                        "The categories are told apart by color alone; the categorical frequency table above names them."),
+                  paste("Stacked bars give the number of patients in each category, one house color per category.",
+                        "The categories are told apart by color alone; the categorical frequency table above names them."))
+}
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
 draw_section <- function(section) {
   sec <- hvtiPlotR::hv_eda_pages(if (section == "continuous") .d_eda else .d_eda_bars, x_col = X_LABEL,
@@ -1150,9 +1183,9 @@ apart by color alone; the categorical frequency table above names them.
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-20 17:21:21 EST  |
-|                 | Ended          | 2026-11-20 17:21:38 EST  |
-|                 | Duration       | 17 s                     |
+| Run             | Started        | 2026-11-25 13:07:10 EST  |
+|                 | Ended          | 2026-11-25 13:07:18 EST  |
+|                 | Duration       | 8 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -1160,9 +1193,9 @@ apart by color alone; the categorical frequency table above names them.
 |                 | Template       | dc.eda                   |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.6.2                    |
-| Dataset `built` | Version file   | built_20261120.parquet   |
-|                 | Version date   | 2026-11-20               |
+|                 | hvtiRtemplates | 1.6.3                    |
+| Dataset `built` | Version file   | built_20261125.parquet   |
+|                 | Version date   | 2026-11-25               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |

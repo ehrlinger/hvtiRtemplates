@@ -4,21 +4,24 @@
 
 Published
 
-2026-11-20 17:37
+2026-11-25 13:22
 
 This job asks which of the reported clusters the data fix and which they
 leave open. The forest behind SID clustering makes random choices, so
 the clusters a `sid-clusters` job reports are one draw from the method.
 This job grows the SID forest again `REPEATS` times on the same patients
-and the same imputed values, changing only the random seed, runs PAM
-exactly as `sid-clusters` does, and compares every refit with the
-reported solution.
+and the same imputed values, changing only the random seed, clusters
+exactly as `sid-clusters` does (PAM, or the hierarchical cut when it ran
+that), and compares every refit with the reported solution.
 
 It reports agreement (adjusted Rand index), how often each reported
 group is found again and how much it overlaps (Jaccard index), where a
 group’s patients go when no refit cluster matches it, a co-association
 matrix that needs no labels at all, and, if `TRACK` names one, the share
-of a binary characteristic in each group across the refits. With
+of a binary characteristic, or of one level of a coded one, in each
+group across the refits. When `sid-clusters` matched its clusters to a
+`REFERENCE`, such as a published assignment, the refits are also
+measured against the reference’s groups, beside this rerun’s own. With
 `DROP_VARS` set it repeats the refits without the named clustering
 variables, the check a reviewer asks for when a variable might build the
 groups it is then used to describe.
@@ -73,7 +76,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.2
+hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -95,8 +98,10 @@ SEED_OFFSET <- 100
 
 # Demo: optionally, a binary cohort column (0/1 or TRUE/FALSE) whose share is
 # tracked in each reported group across the refits, such as the repair
-# pathway when a group is known for it. It need not be a clustering variable.
-# NULL tracks nothing.
+# pathway when a group is known for it, or one level of a coded column:
+#   TRACK <- list(var = "<coded column>", level = 2)
+# which tracks the share of patients at that level. It need not be a
+# clustering variable. NULL tracks nothing.
 TRACK <- NULL
 
 # Demo: optionally, clustering variables to leave out in a second set of
@@ -244,13 +249,44 @@ ref_letter <- sid_cl$clusters$cluster
 ref_group <- if (is.null(sid_cl$clusters$group)) ref_letter else sid_cl$clusters$group
 .k_range <- as.integer(sub("^pm", "", names(sid_cl$letters)))
 ref_pam <- lapply(stats::setNames(.k_range, .k_range), function(k) sid_cl$pam[[k]]$clustering)
+# What PAM clustered on in sid-clusters, so the refits use the same metric. A sid-clusters.rds from before
+# PAM_ON existed ran PAM on the SID distance.
+pam_on <- if (is.null(sid_cl$pam_on)) "sid" else sid_cl$pam_on
+# How sid-clusters cut the distance, so the refits cut it the same way. A sid-clusters.rds from before
+# CLUSTER_METHOD existed ran PAM.
+cluster_method <- if (is.null(sid_cl$cluster_method)) "pam" else sid_cl$cluster_method
+if (!cluster_method %in% c("pam", "hclust")) {
+  stop("sid-clusters.rds names CLUSTER_METHOD \"", cluster_method, "\", which this job cannot refit. Render sid-clusters again.",
+       call. = FALSE)
+}
+# Each patient's group in sid-clusters' REFERENCE, NA where it has none, and the group COLLAPSE makes of it.
+# NULL when sid-clusters set no REFERENCE. sid-clusters read the reference and checked its IDs, so this job
+# measures against exactly the groups that job matched its letters to.
+ref_pub_letter <- sid_cl$clusters$reference
+ref_pub_group <- if (is.null(sid_cl$clusters$reference_group)) ref_pub_letter else sid_cl$clusters$reference_group
+ref_assigned <- if (!is.null(ref_pub_letter)) sum(!is.na(ref_pub_letter))
+if (!is.null(ref_pub_letter)) {
+  # The reference dataset sid-clusters read joins this job's lineage.
+  .sha_sid <- vapply(.provenance_data, function(p) p$sha256, "")
+  .provenance_data <- c(.provenance_data, Filter(function(p) !p$sha256 %in% .sha_sid, .cl_read$lineage$data))
+}
 .s <- sid$settings
 cat("Patients:", length(.ids), " K:", K, " Reported groups:", toString(sort(unique(ref_group))), "\n",
-    "SID settings from sid-fit: ntree ", .s$ntree, ", reduce ", .s$sid_reduce, ", seed ", .s$seed, "\n", sep = "")
+    "SID settings from sid-fit: ntree ", .s$ntree, ", reduce ", .s$sid_reduce, ", seed ", .s$seed, "\n",
+    if (cluster_method == "hclust") {
+      "Clusters by: complete-linkage hierarchical clustering of the SID distance, as sid-clusters ran it\n"
+    } else {
+      paste0("PAM on: ", if (pam_on == "profile") "the profile distance, as sid-clusters ran it" else "the SID distance", "\n")
+    },
+    if (!is.null(ref_pub_letter)) {
+      paste0("Reference: `", sid_cl$reference$dataset, "`, ", ref_assigned, " of ", length(.ids),
+             " patients assigned, groups ", toString(sort(unique(stats::na.omit(ref_pub_group)))), "\n")
+    }, sep = "")
 ```
 
     Patients:800 K:3 Reported groups:A, B, C
     SID settings from sid-fit: ntree 1000, reduce TRUE, seed 1024
+    PAM on: the SID distance
 
 ## The data the refits use
 
@@ -289,9 +325,12 @@ if (length(setdiff(.sha_now, .sha_fit))) {
 if (anyNA(.rows)) stop("The rebuilt cohort lacks patients the SID fit clustered; rerun sid-fit.", call. = FALSE)
 cohort <- job_data$data[.rows, , drop = FALSE]
 x <- cohort[sid$vars]
-# As sid-fit does: text variables become factors before the forest.
+# As sid-fit does: text variables, and the variables its FACTORS declared, become factors before the forest.
+# A sid.rds from before FACTORS records none.
 .chr <- names(x)[vapply(x, is.character, logical(1))]
 x[.chr] <- lapply(x[.chr], factor)
+.fac <- intersect(sid$settings$factors, names(x))
+x[.fac] <- lapply(x[.fac], factor)
 CACHE_DIR <- dirname(set_path("estimates", "sid.rds"))
 M <- as.integer(.s$m)
 # The observed values can agree while the imputed ones differ: an interrupted sid-fit rerun
@@ -337,15 +376,41 @@ cat("Values filled from each of sid-fit's ", M, " imputation(s): ", sum(is.na(x)
 Code
 
 ``` r
+# The name TRACK is shown under in the tables and figure: the column, or the column and its level.
+.track_label <- NULL
 if (!is.null(TRACK)) {
-  TRACK <- tolower(TRACK)
+  .one <- function(v) length(v) == 1L && !is.na(v)
+  .level_form <- is.list(TRACK) && length(TRACK) == 2L && setequal(names(TRACK), c("var", "level")) &&
+    is.character(TRACK$var) && .one(TRACK$var) && .one(TRACK$level)
+  if (!.level_form && !(is.character(TRACK) && .one(TRACK))) {
+    stop("TRACK must be NULL, a 0/1 column name, or list(var = \"<coded column>\", level = <one of its values>).",
+         call. = FALSE)
+  }
+  .track_var <- tolower(if (.level_form) TRACK$var else TRACK)
   if (!requireNamespace("patchwork", quietly = TRUE)) {
     stop("TRACK draws a second panel, which needs the patchwork package. Install it, then re-render.", call. = FALSE)
   }
-  if (!TRACK %in% names(cohort)) stop("TRACK names a column the cohort does not have: ", TRACK, call. = FALSE)
-  track <- cohort[[TRACK]]
-  if (is.logical(track)) track <- as.integer(track)
-  if (!all(stats::na.omit(track) %in% c(0, 1))) stop("TRACK must be a 0/1 or TRUE/FALSE column.", call. = FALSE)
+  if (!.track_var %in% names(cohort)) stop("TRACK names a column the cohort does not have: ", .track_var, call. = FALSE)
+  # TRACK's name and level print in the table headings and the figure, so an identifier column is refused
+  # before its values are read: the cohort keeps the ID, which a level check alone would let through.
+  .no_show <- hvtiRtemplates:::.no_values(cohort, .up$selection$id, attr(job_data$record, "selection")$key)
+  hvtiRtemplates:::.refuse_display(.track_var, .no_show, "TRACK")
+  track <- cohort[[.track_var]]
+  if (.level_form) {
+    # Compared as text, so a level written 2 matches a column stored as 2, "2" or a factor level "2".
+    if (!as.character(TRACK$level) %in% as.character(stats::na.omit(track))) {
+      stop("TRACK's level, ", TRACK$level, ", is not a value of ", .track_var, ".", call. = FALSE)
+    }
+    track <- as.integer(as.character(track) == as.character(TRACK$level))
+    .track_label <- paste0(.track_var, " = ", TRACK$level)
+  } else {
+    if (is.logical(track)) track <- as.integer(track)
+    if (!all(stats::na.omit(track) %in% c(0, 1))) {
+      stop("TRACK must be a 0/1 or TRUE/FALSE column; for a coded column, name one level: ",
+           "TRACK <- list(var = \"", .track_var, "\", level = <one of its values>).", call. = FALSE)
+    }
+    .track_label <- .track_var
+  }
 }
 if (!is.null(DROP_VARS)) {
   DROP_VARS <- tolower(DROP_VARS)
@@ -359,10 +424,10 @@ if (!is.null(DROP_VARS)) {
 
 Each refit grows sid-fit’s M forests again, one per completed dataset,
 with sid-fit’s settings and new seeds, averages their distances as
-sid-fit does, then runs PAM at every K that sid-clusters drew. Only the
-cluster labels are cached, one file per refit, so an interrupted run
-resumes where it stopped and raising `REPEATS` later reuses the refits
-already made.
+sid-fit does, then clusters at every K that sid-clusters drew, by the
+method it used. Only the cluster labels are cached, one file per refit,
+so an interrupted run resumes where it stopped and raising `REPEATS`
+later reuses the refits already made.
 
 Code
 
@@ -382,44 +447,94 @@ if (length(.clash)) {
 # completed datasets, sid-fit's settings, the K range and the refit's base seed.
 # Each forest is grown as sid-fit grows forest m: R's generator set to its seed,
 # and the same seed handed to the forest. With refit_seed = sid-fit's SEED this
-# rebuilds sid-fit's distance exactly.
-.refit_code <- quote({
+# rebuilds sid-fit's distance exactly. sid-fit's SID_ARGS, the other sidClustering() arguments its forests were
+# grown with, are spliced into every call, so a refit differs from the reported forest only by its seed. A sid.rds
+# from before SID_ARGS records none; with none the calls, and so the refit cache keys, are as they were.
+.sid_args <- if (is.null(.s$sid_args)) list() else .s$sid_args
+.refit_code <- bquote({
   dists <- lapply(seq_along(refit_x), function(m) {
     s <- refit_seed + m - 1L
     set.seed(s)
-    o <- sidClustering(refit_x[[m]], method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(s))
+    o <- sidClustering(refit_x[[m]], method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(s), ..(.sid_args))
     if (is.null(o$dist)) stop("sidClustering() failed on imputation ", m, " (it returned no distance).", call. = FALSE)
     o$dist
   })
   d <- stats::as.dist(Reduce(`+`, dists) / length(dists))
   # PAM on the SID distance itself, exactly as sid-clusters runs it.
   vapply(refit_k, function(k) cluster::pam(d, k, cluster.only = TRUE), integer(nrow(refit_x[[1L]])))
-})
-run_refits <- function(refit_x, tag) {
+}, splice = TRUE)
+# The same refit for a sid-clusters run with PAM_ON = "profile": each patient's row of distances is a point, and
+# PAM runs on the Euclidean distance between rows, as pam(D, k) on the matrix does. Kept as a second call rather
+# than a switch inside the first, because cache_fit() keys on the code's text and a change to the first would
+# make every refit cached under it stale.
+.refit_code_profile <- bquote({
+  dists <- lapply(seq_along(refit_x), function(m) {
+    s <- refit_seed + m - 1L
+    set.seed(s)
+    o <- sidClustering(refit_x[[m]], method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(s), ..(.sid_args))
+    if (is.null(o$dist)) stop("sidClustering() failed on imputation ", m, " (it returned no distance).", call. = FALSE)
+    o$dist
+  })
+  # The Euclidean distance between rows, which is what pam() computes from a matrix, computed once for every K.
+  d <- stats::dist(Reduce(`+`, dists) / length(dists))
+  vapply(refit_k, function(k) cluster::pam(d, k, cluster.only = TRUE), integer(nrow(refit_x[[1L]])))
+}, splice = TRUE)
+.refit_code_hclust <- bquote({
+  dists <- lapply(seq_along(refit_x), function(m) {
+    s <- refit_seed + m - 1L
+    set.seed(s)
+    o <- sidClustering(refit_x[[m]], method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(s), ..(.sid_args))
+    if (is.null(o$dist)) stop("sidClustering() failed on imputation ", m, " (it returned no distance).", call. = FALSE)
+    o$dist
+  })
+  # One complete-linkage tree of the SID distance, cut at each K, as sid-clusters runs it with
+  # CLUSTER_METHOD = "hclust". A third call, for the reason the profile refit is a second.
+  tree <- stats::hclust(stats::as.dist(Reduce(`+`, dists) / length(dists)), method = "complete")
+  vapply(refit_k, function(k) unname(stats::cutree(tree, k = k)), integer(nrow(refit_x[[1L]])))
+}, splice = TRUE)
+.refit_pam <- if (cluster_method == "hclust") {
+  .refit_code_hclust
+} else if (pam_on == "profile") {
+  .refit_code_profile
+} else {
+  .refit_code
+}
+run_refits <- function(refit_x, tag, unit) {
   refit_ntree <- .s$ntree
   refit_reduce <- .s$sid_reduce
   refit_k <- .k_range
-  names <- sprintf("sid-stability-%s-%d", tag, seeds)
+  # Profile and hclust refits are cached under names of their own, so switching PAM_ON or CLUSTER_METHOD in
+  # sid-clusters and back reuses each.
+  .variant <- if (cluster_method == "hclust") "hclust-" else if (pam_on == "profile") "profile-" else ""
+  names <- sprintf("sid-stability-%s%s-%d", .variant, tag, seeds)
   todo <- vapply(seq_along(seeds), function(i) {
     refit_seed <- seeds[i]
-    hvtiRutilities::cache_would_fit(names[i], .refit_code, seed = refit_seed, dir = CACHE_DIR, refit = REFIT,
+    hvtiRutilities::cache_would_fit(names[i], .refit_pam, seed = refit_seed, dir = CACHE_DIR, refit = REFIT,
                                     packages = c("randomForestSRC", "cluster"))
   }, logical(1))
   if (any(todo)) {
     hvtiRtemplates::guard_long_fit(names[todo], dir = CACHE_DIR, refit = REFIT,
                                    why = sprintf("%d refits each grow %d %d-tree SID forest(s)", sum(todo), M, refit_ntree))
   }
-  lab <- lapply(seq_along(seeds), function(i) {
+  # Each refit that fits is reported to job_status() and the render log as done of total, with an estimate of
+  # what is left. Refits read from the cache are not counted, so they do not make the estimate look fast.
+  # Outside a render the reporter is NULL.
+  tick <- .job$progress(unit)
+  lab <- vector("list", length(seeds))
+  for (i in seq_along(seeds)) {
     refit_seed <- seeds[i]
-    m <- cache_fit(names[i], .refit_code, seed = refit_seed, dir = CACHE_DIR, refit = REFIT,
+    m <- cache_fit(names[i], .refit_pam, seed = refit_seed, dir = CACHE_DIR, refit = REFIT,
                    packages = c("randomForestSRC", "cluster"))
     colnames(m) <- paste0("pm", refit_k)
-    m
-  })
+    lab[[i]] <- m
+    if (todo[i] && !is.null(tick)) tick(sum(todo[seq_len(i)]), sum(todo))
+  }
   stats::setNames(lab, seeds)
 }
-refits <- run_refits(x_m, "all")
-refits_drop <- if (!is.null(DROP_VARS)) run_refits(lapply(x_m, function(d) d[setdiff(sid$vars, DROP_VARS)]), "drop")
+refits <- run_refits(x_m, "all", "refit")
+refits_drop <- if (!is.null(DROP_VARS)) {
+  run_refits(lapply(x_m, function(d) d[setdiff(sid$vars, DROP_VARS)]), "drop", "refit without DROP_VARS")
+}
 .drop_note <- if (!is.null(DROP_VARS)) paste0(" and ", length(refits_drop), " without ", toString(DROP_VARS))
 cat("Refits: ", length(refits), .drop_note, "\n", sep = "")
 ```
@@ -430,22 +545,27 @@ Code
 
 ``` r
 groups <- sort(unique(ref_group))
-# The letter -> reported group map, so a refit's letters collapse as the reference did.
-.to_group <- tapply(ref_group, ref_letter, unique)
-summarize_refits <- function(lab) {
+# Each refit measured against `group`, the reported groups by default, or the reference's. A refit's
+# clusters take the `letter` they overlap most, then collapse as `letter` collapsed to `group`. Patients
+# with no group (a reference that leaves some unassigned) are left out of the match and the measures.
+summarize_refits <- function(lab, letter = ref_letter, group = ref_group) {
+  keep <- !is.na(group)
+  grps <- sort(unique(group[keep]))
+  to_group <- tapply(group[keep], letter[keep], unique)
   per <- lapply(names(lab), function(s) {
     draw <- lab[[s]][, paste0("pm", K)]
-    mapped <- unname(.to_group[stab_best_match(draw, ref_letter)])
-    by_group <- do.call(rbind, lapply(groups, function(g) {
-      inn <- mapped == g
+    mapped <- rep(NA_character_, length(draw))
+    mapped[keep] <- unname(to_group[stab_best_match(draw[keep], letter[keep])])
+    by_group <- do.call(rbind, lapply(grps, function(g) {
+      inn <- keep & mapped == g
       data.frame(seed = as.integer(s), group = g, matched = any(inn), n = sum(inn),
-                 jaccard = stab_jaccard(mapped, ref_group, g),
+                 jaccard = stab_jaccard(mapped[keep], group[keep], g),
                  track = if (!is.null(TRACK) && any(inn)) mean(track[inn], na.rm = TRUE) else NA_real_)
     }))
     ari_k <- vapply(.k_range, function(k) stab_ari(ref_pam[[as.character(k)]], lab[[s]][, paste0("pm", k)]),
                     numeric(1))
     list(by_group = by_group, mapped = mapped,
-         by_refit = data.frame(seed = as.integer(s), ari_groups = stab_ari(ref_group, mapped),
+         by_refit = data.frame(seed = as.integer(s), ari_groups = stab_ari(group[keep], mapped[keep]),
                                t(stats::setNames(ari_k, paste0("ari_k", .k_range)))))
   })
   list(by_group = do.call(rbind, lapply(per, `[[`, "by_group")),
@@ -455,6 +575,7 @@ summarize_refits <- function(lab) {
 }
 stab <- summarize_refits(refits)
 stab_drop <- if (!is.null(refits_drop)) summarize_refits(refits_drop)
+stab_ref <- if (!is.null(ref_pub_letter)) summarize_refits(refits, ref_pub_letter, ref_pub_group)
 ```
 
 ## Agreement with the reported groups
@@ -486,17 +607,20 @@ if (.gap >= 0.15) {
 Code
 
 ``` r
-tbl_stability <- function(st) {
-  do.call(rbind, lapply(groups, function(g) {
+# `group` and `with` name what the refits were measured against: the reported groups, or the reference's.
+tbl_stability <- function(st, group = ref_group, with = "reported") {
+  do.call(rbind, lapply(sort(unique(stats::na.omit(group))), function(g) {
     s <- st$by_group[st$by_group$group == g, ]
-    out <- data.frame(Group = g, Patients = sum(ref_group == g),
-                      `Jaccard with reported, median (range)` = stab_q(s$jaccard),
+    at <- which(group == g)
+    out <- data.frame(Group = g, Patients = length(at),
+                      Jaccard = stab_q(s$jaccard),
                       `Refits with a matching group` = sprintf("%d of %d", sum(s$matched), nrow(s)),
                       check.names = FALSE)
+    names(out)[3L] <- paste0("Jaccard with ", with, ", median (range)")
     if (!is.null(TRACK)) {
       u <- s$track[s$matched]
-      out[[paste0(TRACK, ", reported")]] <- stab_pct(mean(track[ref_group == g], na.rm = TRUE))
-      out[[paste0(TRACK, " across refits, range")]] <- if (length(u)) {
+      out[[paste0(.track_label, ", ", with)]] <- stab_pct(mean(track[at], na.rm = TRUE))
+      out[[paste0(.track_label, " across refits, range")]] <- if (length(u)) {
         sprintf("%s to %s", stab_pct(min(u)), stab_pct(max(u)))
       } else {
         "-"
@@ -540,7 +664,7 @@ Code
     ggplot2::geom_point(position = ggplot2::position_jitter(width = 0.15, height = 0, seed = 1)) +
     ggplot2::geom_point(data = .ref_t, shape = 23, size = 3, fill = "white") +
     ggplot2::scale_y_continuous(labels = function(v) paste0(100 * v, "%")) +
-    ggplot2::labs(x = NULL, y = paste0(TRACK, ", share")) +
+    ggplot2::labs(x = NULL, y = paste0(.track_label, ", share")) +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   patchwork::wrap_plots(.p1, .p2, nrow = 1)
 } else {
@@ -555,9 +679,11 @@ print(.plt_agree)
 Figure 1: Overlap of each refit’s group with the reported one (left) and
 the TRACK share, if set (right); open circles: no match
 
+## Agreement with the reference
+
 ## Label-free agreement
 
-The adjusted Rand index of each refit’s raw PAM labels with
+The adjusted Rand index of each refit’s raw cluster labels with
 sid-clusters’ at every K, with no matching of labels. If a low-agreement
 refit is low here too, it clustered the patients differently; if it is
 high here, the matching relabeled a small change.
@@ -577,7 +703,7 @@ knitr::kable(data.frame(K = .k_range, ARI = .lf), row.names = FALSE)
 |   5 | 0.93 (0.89 to 0.95) |
 |   6 | 0.73 (0.70 to 0.90) |
 
-Table 2: Adjusted Rand index of the raw PAM labels at each K, median
+Table 2: Adjusted Rand index of the raw cluster labels at each K, median
 (range) over refits
 
 ## When a group is not found
@@ -685,7 +811,10 @@ sid_stability_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
        coassoc = co, pac = pac, stays = stats::setNames(.stays, .ids),
        drop = if (!is.null(DROP_VARS)) list(vars = DROP_VARS, by_refit = stab_drop$by_refit,
                                             by_group = stab_drop$by_group),
-       settings = list(repeats = REPEATS, seed_offset = SEED_OFFSET, track = TRACK, pac_band = PAC_BAND)),
+       reference = if (!is.null(stab_ref)) list(dataset = sid_cl$reference$dataset, assigned = ref_assigned,
+                                                by_refit = stab_ref$by_refit, by_group = stab_ref$by_group),
+       settings = list(repeats = REPEATS, seed_offset = SEED_OFFSET, track = TRACK, pac_band = PAC_BAND,
+                       pam_on = pam_on, cluster_method = cluster_method)),
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   cohort = .cohort
@@ -697,9 +826,9 @@ saveRDS(sid_stability_handoff, set_path("estimates", "sid-stability.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-20 17:37:10 EST |
-|  | Ended | 2026-11-20 17:37:50 EST |
-|  | Duration | 39 s |
+| Run | Started | 2026-11-25 13:22:09 EST |
+|  | Ended | 2026-11-25 13:22:47 EST |
+|  | Duration | 38 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -707,14 +836,14 @@ saveRDS(sid_stability_handoff, set_path("estimates", "sid-stability.rds"))
 |  | Template | sid.stability |
 |  | Subject | echo |
 |  | Type | sid |
-|  | hvtiRtemplates | 1.6.2 |
-| Dataset `built` | Version file | built_20261120.parquet |
-|  | Version date | 2026-11-20 |
+|  | hvtiRtemplates | 1.6.3 |
+| Dataset `built` | Version file | built_20261125.parquet |
+|  | Version date | 2026-11-25 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-20 17:36:50 -0500, data built_20261120.parquet |
-|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-20 17:37:00 -0500, data built_20261120.parquet |
+| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-25 13:21:48 -0500, data built_20261125.parquet |
+|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-25 13:21:58 -0500, data built_20261125.parquet |
 | Reproducibility | renv | not active |

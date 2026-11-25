@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:13
+2026-11-25 13:04
 
 This job reports a bootstrap variable selection screen over a
 **logistic** model: how often each candidate survived stepwise selection
@@ -100,7 +100,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.2
+hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -897,9 +897,9 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-20 17:13:37 EST |
-|  | Ended | 2026-11-20 17:13:44 EST |
-|  | Duration | 7 s |
+| Run | Started | 2026-11-25 13:04:01 EST |
+|  | Ended | 2026-11-25 13:04:03 EST |
+|  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -907,13 +907,13 @@ saveRDS(report, report_file)
 |  | Template | bl |
 |  | Subject | vent |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.6.2 |
-| Dataset `built` | Version file | built_20261120.parquet |
-|  | Version date | 2026-11-20 |
+|  | hvtiRtemplates | 1.6.3 |
+| Dataset `built` | Version file | built_20261125.parquet |
+|  | Version date | 2026-11-25 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `vent-boot/bl.rds` (bootstrap-bag), rendered not recorded, data built_20261120.parquet |
+| Upstream | Handoff | `vent-boot/bl.rds` (bootstrap-bag), rendered not recorded, data built_20261125.parquet |
 | Reproducibility | renv | not active |

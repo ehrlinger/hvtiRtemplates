@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-20 17:21
+2026-11-25 13:07
 
 Replaces `descriptive/dc.general`.
 
@@ -42,8 +42,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.2
+**final** · data `built` `built_20261125.parquet`, dated 2026-11-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.3
 
 ## Study choices
 
@@ -53,6 +53,7 @@ Code
 
 ``` r
 # Demo: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 
 # Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -78,6 +79,8 @@ KEY <- ID
 #   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
 #     and a column both datasets have stops, so list only those the job needs.
 #   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     a cohort patient with no record is left out, and counted in the text,
+#     unless the join is keyed on the ID alone, which keeps them;
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
 #     or "nearest" with to = a cohort date column). WHERE on a joined column
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
@@ -135,7 +138,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261120.parquet) |
+| Source              | dataset `built` (built_20261125.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -807,9 +810,9 @@ console, never in this report.
 
 | Group           | Item           | Value                     |
 |:----------------|:---------------|:--------------------------|
-| Run             | Started        | 2026-11-20 17:21:49 EST   |
-|                 | Ended          | 2026-11-20 17:21:50 EST   |
-|                 | Duration       | 1 s                       |
+| Run             | Started        | 2026-11-25 13:07:24 EST   |
+|                 | Ended          | 2026-11-25 13:07:25 EST   |
+|                 | Duration       | 0 s                       |
 |                 | Status         | final                     |
 |                 | Rendered by    | gallery                   |
 |                 | Host           | gallery                   |
@@ -817,9 +820,9 @@ console, never in this report.
 |                 | Template       | dc.general                |
 |                 | Subject        | cohort                    |
 |                 | Type           | eda                       |
-|                 | hvtiRtemplates | 1.6.2                     |
-| Dataset `built` | Version file   | built_20261120.parquet    |
-|                 | Version date   | 2026-11-20                |
+|                 | hvtiRtemplates | 1.6.3                     |
+| Dataset `built` | Version file   | built_20261125.parquet    |
+|                 | Version date   | 2026-11-25                |
 |                 | Source file    | built.rds                 |
 |                 | Rows kept      | 800 rows on 800 patients  |
 |                 | WHERE          | none                      |
