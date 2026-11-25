@@ -320,7 +320,7 @@
 - If the render lock that `render_job()` takes to move a held `execute-results` folder aside cannot be released,
   it warns, naming the lock folder. The lock belonged to the R session, so every render of the study was refused
   until the session ended, the rerun that follows included, and nothing said why.
-- `render_job()` recognises a Quarto crash under R-devel too, where an object
+- `render_job()` recognizes a Quarto crash under R-devel too, where an object
   not found is an `objectNotFoundError` rather than a `simpleError`; it had
   passed the crash through as Quarto's raw error there.
 - `run_job()` names a fix that works for each package it finds out of step.
