@@ -28,7 +28,8 @@ format:
     embed-resources: true
 ---
 This job turns a `sid-fit` dissimilarity into clusters. It runs PAM
-(partitioning around medoids) on the SID distance for each K in a range,
+(partitioning around medoids) on the SID distance for each K in a range, or,
+by choice, cuts one complete-linkage tree of that distance at each K. It
 reports what the elbow and the silhouette say about K, and gives every
 solution letters that keep their identity as K grows, so cluster A at K = 4
 is recognisably cluster A at K = 5. It never fits the forest: it reads
@@ -167,6 +168,17 @@ K_METRICS_MAX <- 15
 # reproducing them, not as a better choice. sid-stability reads this from the
 # saved result, so its refits always use the metric used here.
 PAM_ON <- "sid"
+
+# EDIT: how the distance is cut into K clusters. "pam", the default, is PAM as
+# above. "hclust" is complete-linkage hierarchical clustering of the SID
+# distance, cut at each K, cutree(hclust(as.dist(D)), k): the $clustering that
+# randomForestSRC's sidClustering returns when given k. It is kept for
+# reproducing an analysis that reported those clusters, not as a better choice.
+# "hclust" needs PAM_ON = "sid": the profile distance reproduces a PAM analysis,
+# and sidClustering cuts the SID distance itself, so the pair would reproduce
+# nothing and the job stops on it. sid-stability reads this from the saved
+# result, so its refits always use the method used here.
+CLUSTER_METHOD <- "pam"
 
 # Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
@@ -365,6 +377,23 @@ sid_mds_signs <- function(xy) {
 sid_dataset_name <- function(subject, type) {
   paste0("clusters_", nchar(subject), "_", tolower(subject), "_", tolower(type))
 }
+
+# One K of a hierarchical tree, in the shape of the pam() fit the rest of the
+# job reads: each patient's cluster, the silhouette widths named by patient,
+# and as the elbow's criterion the height at which the tree has K clusters,
+# which under complete linkage is the widest cluster's diameter. pam() gives no
+# widths at K = 1, and neither does this.
+sid_hclust_cut <- function(tree, d, k) {
+  cl <- stats::cutree(tree, k = k)
+  fit <- list(clustering = cl, objective = c(swap = sort(tree$height, decreasing = TRUE)[k]))
+  if (k > 1L) {
+    s <- cluster::silhouette(cl, d)
+    w <- cbind(cluster = s[, "cluster"], neighbor = s[, "neighbor"], sil_width = s[, "sil_width"])
+    rownames(w) <- attr(d, "Labels")
+    fit$silinfo <- list(widths = w, avg.width = mean(w[, "sil_width"]))
+  }
+  fit
+}
 ```
 
 ## The dissimilarity
@@ -423,11 +452,13 @@ if (is.null(K) && hvtiRtemplates:::.strict_render()) {
 cat("Patients:", attr(D, "Size"), " Clustering variables:", toString(sid$vars), "\n")
 ```
 
-## PAM over K
+## Clustering over K
 
-PAM (partitioning around medoids) chooses K patients as centers and assigns
-everyone to the nearest one, here by the SID distance itself. It is
-deterministic given the distance, so this job needs no seed.
+PAM (partitioning around medoids), the default, chooses K patients as centers
+and assigns everyone to the nearest one, here by the SID distance itself. With
+`CLUSTER_METHOD = "hclust"` the job instead builds one complete-linkage tree of
+the distance and cuts it at each K. Either is deterministic given the
+distance, so this job needs no seed.
 
 ```{r}
 #| label: pam
@@ -436,15 +467,35 @@ sid_mds <- NULL  # set by fig-mds when K is chosen; defined here so a skipped ch
 if (!identical(PAM_ON, "sid") && !identical(PAM_ON, "profile")) {
   stop("PAM_ON must be \"sid\" or \"profile\".", call. = FALSE)
 }
-# The elbow and the silhouette below come from these fits, so they use the same metric as the clusters.
-# The profile distance is what pam(D, k) computes from the matrix, the Euclidean distance between rows,
-# computed once here: pam() on the matrix would recompute it for every K and keep a copy of the matrix in each fit.
-.pam_x <- if (PAM_ON == "profile") stats::dist(sid$dist) else D
-if (PAM_ON == "profile") {
-  cat("PAM runs on the profile distance: the Euclidean distance between patients' rows of SID distances, kept",
-      "for reproducing an earlier analysis that clustered this way.\n")
+if (!identical(CLUSTER_METHOD, "pam") && !identical(CLUSTER_METHOD, "hclust")) {
+  stop("CLUSTER_METHOD must be \"pam\" or \"hclust\".", call. = FALSE)
 }
-sid_pam <- lapply(.ks, function(k) cluster::pam(.pam_x, k))
+if (CLUSTER_METHOD == "hclust" && PAM_ON != "sid") {
+  stop("CLUSTER_METHOD = \"hclust\" cuts the SID distance itself, as sidClustering does, and PAM_ON = \"profile\" ",
+       "reproduces a PAM analysis. Set PAM_ON <- \"sid\" with \"hclust\".", call. = FALSE)
+}
+# The elbow and the silhouette below come from these fits, so they use the same metric and method as the clusters.
+# The captions below name the method's elbow and its cluster numbers.
+.elbow <- if (CLUSTER_METHOD == "pam") "PAM objective" else "Tree height"
+.sizes_cap <- paste("Patients per cluster at each K, by letter; pam is the", if (CLUSTER_METHOD == "pam") "PAM" else "tree",
+                    "cluster number the letter was given to")
+if (CLUSTER_METHOD == "pam") {
+  # The profile distance is what pam(D, k) computes from the matrix, the Euclidean distance between rows,
+  # computed once here: pam() on the matrix would recompute it for every K and keep a copy of the matrix in each fit.
+  .pam_x <- if (PAM_ON == "profile") stats::dist(sid$dist) else D
+  if (PAM_ON == "profile") {
+    cat("PAM runs on the profile distance: the Euclidean distance between patients' rows of SID distances, kept",
+        "for reproducing an earlier analysis that clustered this way.\n")
+  }
+  sid_pam <- lapply(.ks, function(k) cluster::pam(.pam_x, k))
+} else {
+  cat("Clusters come from one complete-linkage tree of the SID distance, cut at each K, as",
+      "randomForestSRC's sidClustering gives them when given k, kept for reproducing an analysis that reported those.\n")
+  # Named sid_pam still, and saved as the handoff's `pam`, so sid-stability and later jobs read either method's
+  # fits the same way.
+  .tree <- stats::hclust(D, method = "complete")
+  sid_pam <- lapply(.ks, function(k) sid_hclust_cut(.tree, D, k))
+}
 names(sid_pam) <- paste0("pm", .ks)
 sid_metrics <- data.frame(
   k = .ks,
@@ -457,7 +508,9 @@ sid_metrics$objective <- sid_metrics$objective / sid_metrics$objective[1]
 ## Choosing K
 
 The elbow is the PAM objective, each patient's distance to its medoid,
-relative to one cluster. It always falls as K grows; K is chosen where the
+relative to one cluster. With `CLUSTER_METHOD = "hclust"` it is the tree's
+height at K clusters instead, the widest cluster's diameter, relative to one
+cluster. It always falls as K grows; K is chosen where the
 fall levels off, which is read by eye and stated as a judgment. The average
 silhouette compares each patient's distance to its own cluster with its
 distance to the nearest other one: near 1 is well separated, near 0 is on a
@@ -466,8 +519,8 @@ the clusters mean anything clinically.
 
 ```{r}
 #| label: fig-metrics
-#| fig-cap: "PAM objective (normalized to K = 1) and average silhouette by K"
-.long <- rbind(data.frame(k = sid_metrics$k, value = sid_metrics$objective, metric = "PAM objective"),
+#| fig-cap: !expr 'paste(.elbow, "(normalized to K = 1) and average silhouette by K")'
+.long <- rbind(data.frame(k = sid_metrics$k, value = sid_metrics$objective, metric = .elbow),
                data.frame(k = sid_metrics$k, value = sid_metrics$silhouette, metric = "Average silhouette"))
 .long <- .long[!is.na(.long$value), ]
 .plt_metrics <- ggplot2::ggplot(.long, ggplot2::aes(k, value)) +
@@ -492,7 +545,7 @@ knitr::kable(transform(sid_metrics, objective = round(objective, 3), silhouette 
 
 ```{r}
 #| label: tbl-sizes
-#| tbl-cap: "Patients per cluster at each K, by letter; pam is the PAM cluster number the letter was given to"
+#| tbl-cap: !expr .sizes_cap
 .unknown <- setdiff(names(OVERRIDES), paste0("pm", K_RANGE))
 if (length(.unknown)) {
   stop("OVERRIDES names solution(s) that are not in K_RANGE: ", toString(.unknown),
@@ -633,7 +686,7 @@ if (is.null(K)) {
 #| include: !expr '!is.null(K)'
 if (!is.null(K)) {
   .at <- sid_letters[[paste0("C", K)]]
-  # pam() already computed the widths; they come back ordered by cluster, so put them in the patients' order.
+  # The fit already holds the widths; pam() returns them ordered by cluster, so put them in the patients' order.
   .w <- sid_pam[[K]]$silinfo$widths
   .sil_d <- data.frame(letter = .at, width = .w[match(rownames(sid$dist), rownames(.w)), "sil_width"])
   .sil_d <- .sil_d[order(.sil_d$letter, -.sil_d$width), ]
@@ -782,7 +835,8 @@ sid_clusters_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
          stats::setNames(colnames(tab)[apply(tab, 1, which.max)], rownames(tab))
        }),
        # The overrides as written, so they can be copied back beside REFERENCE.
-       k = K, overrides = .overrides_given, reference = REFERENCE, collapse = COLLAPSE, pam_on = PAM_ON),
+       k = K, overrides = .overrides_given, reference = REFERENCE, collapse = COLLAPSE, pam_on = PAM_ON,
+       cluster_method = CLUSTER_METHOD),
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   cohort = .cohort
@@ -826,6 +880,6 @@ cat(hvtiRtemplates:::.embed_provenance(
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   run = .job$run,
-  extra = list(subject = SUBJECT, type = TYPE, cohort = .cohort, pam_on = PAM_ON)
+  extra = list(subject = SUBJECT, type = TYPE, cohort = .cohort, pam_on = PAM_ON, cluster_method = CLUSTER_METHOD)
 ))
 ```
