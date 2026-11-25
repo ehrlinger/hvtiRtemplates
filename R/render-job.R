@@ -313,7 +313,8 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
 # A lock this R process took and could not release is owned by a live process, the session, so every render of the
 # study, the rerun that follows this included, would be refused until the session exits. Say so, and name the folder.
 .release_settled_lock <- function(root, me) {
-  .release_provenance_lock(root, me)
+  # A release that fails, as a write into the takeover sentinel can on a share, leaves the lock held all the same.
+  tryCatch(.release_provenance_lock(root, me), error = function(e) NULL)
   lock <- .provenance_lock_path(root)
   if (!identical(.read_provenance_owner(file.path(lock, "owner.json")), me)) return(invisible(NULL))
   warning("render_job(): the study's render lock, taken while the execute-results folder was moved, could not be ",

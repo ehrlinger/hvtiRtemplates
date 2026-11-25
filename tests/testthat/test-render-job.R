@@ -496,6 +496,9 @@ test_that("a render lock the move could not release is named, since this session
   w <- tryCatch(.release_settled_lock(root, .provenance_self_owner()), warning = conditionMessage)
   expect_match(w, paste0("delete ", lock, "."), fixed = TRUE)
   expect_match(w, .provenance_takeover_path(lock), fixed = TRUE)
+  # A release that errors leaves the lock held as surely, and says so the same way.
+  local_mocked_bindings(.release_provenance_lock = function(root, me) stop("write failed"))
+  expect_warning(.release_settled_lock(root, .provenance_self_owner()), "could not be released", fixed = TRUE)
 })
 
 test_that("a folder is left in place while another render holds the study's render lock", {

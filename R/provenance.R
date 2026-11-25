@@ -210,7 +210,7 @@
   hook_sources <- file.path(system.file("hooks", package = "hvtiRtemplates"), basename(hook_files))
   missing_source <- !nzchar(hook_sources) | !file.exists(hook_sources)
   if (any(missing_source)) {
-    stop("add_job(): installed provenance hook is missing: ",
+    stop("Installing the provenance hooks: the installed hook is missing: ",
          basename(hook_files[missing_source][[1L]]), ".", call. = FALSE)
   }
   hook_dir <- file.path(root, dirname(hook_files[[1L]]))
@@ -264,12 +264,12 @@
   if (!dir.exists(hook_dir)) dir.create(hook_dir, recursive = TRUE)
   for (i in seq_along(hook_files)) {
     if (!.copy_provenance_file(hook_sources[[i]], file.path(root, hook_files[[i]]), overwrite = TRUE)) {
-      stop("add_job(): could not install provenance hook: ", hook_files[[i]], ".", call. = FALSE)
+      stop("Installing the provenance hooks: could not install ", hook_files[[i]], ".", call. = FALSE)
     }
   }
 
   if (!.copy_provenance_file(temporary, config_path, overwrite = TRUE)) {
-    stop("add_job(): could not update _quarto.yml.", call. = FALSE)
+    stop("Installing the provenance hooks: could not update _quarto.yml.", call. = FALSE)
   }
   ok <- TRUE
   invisible(config_path)

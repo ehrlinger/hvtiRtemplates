@@ -156,7 +156,7 @@ test_that("install_provenance_hooks() installs the hooks from anywhere inside th
 })
 
 test_that("install_provenance_hooks() refuses a folder outside a study", {
-  expect_error(install_provenance_hooks(withr::local_tempdir()))
+  expect_error(install_provenance_hooks(withr::local_tempdir()), "no _study.yml found", fixed = TRUE)
   withr::local_dir(withr::local_tempdir())
   expect_error(install_provenance_hooks(), "not inside a study")
 })
