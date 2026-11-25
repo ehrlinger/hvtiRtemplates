@@ -136,6 +136,7 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
     stop("render_job(): the quarto package is required; install.packages(\"quarto\").", call. = FALSE)
   }
   path <- normalizePath(path, winslash = "/")
+  .require_provenance_hooks(path, "render_job")
   if (final) {
     old <- Sys.getenv("HVTI_TEMPLATE_STRICT", unset = NA)
     on.exit(if (is.na(old)) Sys.unsetenv("HVTI_TEMPLATE_STRICT") else Sys.setenv(HVTI_TEMPLATE_STRICT = old),

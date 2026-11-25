@@ -274,6 +274,14 @@
 }
 
 # Quarto holds one render lock per study, so another job rendering there fails minutes in. This names it up front.
+# The provenance hooks a job that records provenance needs, checked here so the
+# job is refused in seconds rather than failing after its last chunk.
+.check_provenance_hooks <- function(path) {
+  problem <- .provenance_hooks_problem(path)
+  if (is.null(problem)) return(.check("provenance", TRUE))
+  .check("provenance", FALSE, problem$message, problem$fix)
+}
+
 .check_study_render <- function(path, root) {
   jobs <- .jobs_with_run_files(root)
   jobs <- jobs[vapply(jobs, .norm_path, "") != .norm_path(path)]
