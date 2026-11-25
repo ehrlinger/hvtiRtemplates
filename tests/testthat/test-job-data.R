@@ -579,7 +579,8 @@ test_that("a KEY that repeats in an unregistered file says the file holds it, an
   # The file's columns are upper case and the job's KEY lower case, as the job reads them; the call still runs.
   call <- sub("^.*List the repeated rows with (.*) and correct them in the file\\.$", "\\1", err)
   expect_match(call, "^hvtiRutilities::duplicate_keys\\(")
-  dk <- suppressMessages(eval(str2lang(call), baseenv()))
+  # It reads the file as the job does, so it runs without read_clinical_data()'s convert_types warning.
+  dk <- expect_no_warning(suppressMessages(eval(str2lang(call), baseenv())))
   expect_identical(dk$summary$repeated_keys, 1L)
 })
 

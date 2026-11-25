@@ -499,7 +499,7 @@
     # The job lowercases a file's column names, and duplicate_keys() matches them exactly, so the call does too.
     path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), dataset)
     paste0("local({d <- hvtiRutilities::read_clinical_data(", encodeString(path, quote = "\""),
-           "); names(d) <- tolower(names(d)); d})")
+           ", convert_types = FALSE); names(d) <- tolower(names(d)); d})")
   } else {
     paste0("hvtiRutilities::read_built(", study, ", dataset = ", encodeString(dataset, quote = "\""), ")")
   }
