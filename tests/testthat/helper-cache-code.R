@@ -23,13 +23,14 @@ cached_code <- function(prefix, qualifier, label, name) {
   }
   for (e in exprs) walk(e)
   if (!length(calls)) stop("no cache_fit() call named like ", name, " in chunk ", label, call. = FALSE)
-  unlist(lapply(calls, function(call) {
+  # A call written twice with the same code, as a check and then the fit, keys alike: each text once.
+  unique(unlist(lapply(calls, function(call) {
     code <- call[[3L]]
     codes <- if (is.name(code)) quoted[[as.character(code)]] else list(code)
     if (is.null(codes)) stop("cache_fit() reads ", as.character(code), ", which no quote() in chunk ", label, " assigns",
                              call. = FALSE)
     vapply(codes, hvtiRutilities:::.cache_code_text, character(1L))
-  }))
+  })))
 }
 
 # Every quote() in an expression, such as both branches of `if (...) quote(a) else quote(b)`.

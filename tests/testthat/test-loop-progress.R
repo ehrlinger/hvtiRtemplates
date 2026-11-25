@@ -45,6 +45,22 @@ test_that("vp-dependence's stability refits report done/total, counting only ref
   rf_run("vp", "dependence", "tbl-stability", env)
   expect_identical(steps_of(steps()), "refit/1/1")
   expect_length(env$.runs, 3L)
+  # A refit whose forest is cached but whose entropy betas are not still counts.
+  beta <- function(r) file.path(env$CACHE_DIR, sprintf("vp-dependence-repeat-%02d-beta.rds", r))
+  unlink(beta(1L))
+  rf_run("vp", "dependence", "tbl-stability", env)
+  expect_identical(steps_of(steps()), "refit/1/1")
+  # Under REFIT a file whose key still matches loads, so nothing counts; betas made stale while their forest
+  # is not, as a glmnet upgrade would leave them, are refitted and counted.
+  env$REFIT <- TRUE
+  rf_run("vp", "dependence", "tbl-stability", env)
+  expect_identical(steps_of(steps()), character())
+  rec <- readRDS(beta(2L))
+  rec$key$packages$glmnet <- "0.0.1"
+  saveRDS(rec, beta(2L))
+  rf_run("vp", "dependence", "tbl-stability", env)
+  expect_identical(steps_of(steps()), "refit/1/1")
+  expect_identical(readRDS(beta(2L))$key$packages$glmnet, format(utils::packageVersion("glmnet")))
 })
 
 test_that("sid-fit's imputations and SID forests report done/total, counting only those that fit (#631)", {

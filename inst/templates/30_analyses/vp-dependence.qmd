@@ -725,13 +725,22 @@ if (REPEATS > 0) {
   .repeat_code <- quote(
     uvarpro(dr, ntree = NTREE, max.tree = min(MAX_TREE, NTREE), max.rules.tree = MAX_RULES_TREE, seed = -abs(SEED + r))
   )
-  # A refit whose forest is cached but whose entropy betas are not still has work to do. The betas' key
-  # reads the forest, so that half is only asked once the forest is in the cache.
+  .beta_code <- quote(get.beta.entropy(fr, pre.filter = FALSE, papply = lapply))
+  # A refit whose forest is cached but whose entropy betas are not still has work to do. Under REFIT the
+  # betas can be stale while the forest is not, as after a glmnet upgrade; their key reads the forest, so
+  # the forest is loaded to ask.
   .todo <- vapply(seq_len(REPEATS), function(r) {
     dr <- .repeat_data(r)
-    fits <- hvtiRutilities::cache_would_fit(sprintf("vp-dependence-repeat-%02d", r), .repeat_code, seed = SEED + r,
-                                            dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
-    fits || !file.exists(file.path(CACHE_DIR, sprintf("vp-dependence-repeat-%02d-beta.rds", r)))
+    if (hvtiRutilities::cache_would_fit(sprintf("vp-dependence-repeat-%02d", r), .repeat_code, seed = SEED + r,
+                                        dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")) {
+      return(TRUE)
+    }
+    if (!file.exists(file.path(CACHE_DIR, sprintf("vp-dependence-repeat-%02d-beta.rds", r)))) return(TRUE)
+    if (!isTRUE(REFIT)) return(FALSE)
+    fr <- cache_fit(sprintf("vp-dependence-repeat-%02d", r), .repeat_code,
+                    seed = SEED + r, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
+    hvtiRutilities::cache_would_fit(sprintf("vp-dependence-repeat-%02d-beta", r), .beta_code, seed = SEED + r,
+                                    dir = CACHE_DIR, refit = REFIT, packages = "glmnet")
   }, logical(1L))
   # Each refit that fits is reported to job_status() and the render log as done of total, with an estimate of
   # what is left. Refits read from the cache are not counted. Outside a render the reporter is NULL.
@@ -742,8 +751,7 @@ if (REPEATS > 0) {
     fr <- cache_fit(sprintf("vp-dependence-repeat-%02d", r), .repeat_code,
                     seed = SEED + r, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
     set.seed(abs(SEED) + r)
-    br <- cache_fit(sprintf("vp-dependence-repeat-%02d-beta", r),
-                    get.beta.entropy(fr, pre.filter = FALSE, papply = lapply),
+    br <- cache_fit(sprintf("vp-dependence-repeat-%02d-beta", r), .beta_code,
                     seed = SEED + r, dir = CACHE_DIR, refit = REFIT, packages = "glmnet")
     if (.todo[r] && !is.null(.tick)) .tick(sum(.todo[seq_len(r)]), sum(.todo))
     pr <- vpd_parent(fr)
