@@ -26,8 +26,9 @@ This job asks which of the reported clusters the data fix and which they
 leave open. The forest behind SID clustering makes random choices, so the
 clusters a `sid-clusters` job reports are one draw from the method. This job
 grows the SID forest again `REPEATS` times on the same patients and the same
-imputed values, changing only the random seed, runs PAM exactly as
-`sid-clusters` does, and compares every refit with the reported solution.
+imputed values, changing only the random seed, clusters exactly as
+`sid-clusters` does (PAM, or the hierarchical cut when it ran that), and
+compares every refit with the reported solution.
 
 It reports agreement (adjusted Rand index), how often each reported group is
 found again and how much it overlaps (Jaccard index), where a group's
@@ -270,6 +271,13 @@ ref_pam <- lapply(stats::setNames(.k_range, .k_range), function(k) sid_cl$pam[[k
 # What PAM clustered on in sid-clusters, so the refits use the same metric. A sid-clusters.rds from before
 # PAM_ON existed ran PAM on the SID distance.
 pam_on <- if (is.null(sid_cl$pam_on)) "sid" else sid_cl$pam_on
+# How sid-clusters cut the distance, so the refits cut it the same way. A sid-clusters.rds from before
+# CLUSTER_METHOD existed ran PAM.
+cluster_method <- if (is.null(sid_cl$cluster_method)) "pam" else sid_cl$cluster_method
+if (!cluster_method %in% c("pam", "hclust")) {
+  stop("sid-clusters.rds names CLUSTER_METHOD \"", cluster_method, "\", which this job cannot refit. Render sid-clusters again.",
+       call. = FALSE)
+}
 # Each patient's group in sid-clusters' REFERENCE, NA where it has none, and the group COLLAPSE makes of it.
 # NULL when sid-clusters set no REFERENCE. sid-clusters read the reference and checked its IDs, so this job
 # measures against exactly the groups that job matched its letters to.
@@ -284,7 +292,11 @@ if (!is.null(ref_pub_letter)) {
 .s <- sid$settings
 cat("Patients:", length(.ids), " K:", K, " Reported groups:", toString(sort(unique(ref_group))), "\n",
     "SID settings from sid-fit: ntree ", .s$ntree, ", reduce ", .s$sid_reduce, ", seed ", .s$seed, "\n",
-    "PAM on: ", if (pam_on == "profile") "the profile distance, as sid-clusters ran it" else "the SID distance", "\n",
+    if (cluster_method == "hclust") {
+      "Clusters by: complete-linkage hierarchical clustering of the SID distance, as sid-clusters ran it\n"
+    } else {
+      paste0("PAM on: ", if (pam_on == "profile") "the profile distance, as sid-clusters ran it" else "the SID distance", "\n")
+    },
     if (!is.null(ref_pub_letter)) {
       paste0("Reference: `", sid_cl$reference$dataset, "`, ", ref_assigned, " of ", length(.ids),
              " patients assigned, groups ", toString(sort(unique(stats::na.omit(ref_pub_group)))), "\n")
@@ -419,9 +431,10 @@ if (!is.null(DROP_VARS)) {
 
 Each refit grows sid-fit's M forests again, one per completed dataset, with
 sid-fit's settings and new seeds, averages their distances as sid-fit does,
-then runs PAM at every K that sid-clusters drew. Only the cluster labels are
-cached, one file per refit, so an interrupted run resumes where it stopped
-and raising `REPEATS` later reuses the refits already made.
+then clusters at every K that sid-clusters drew, by the method it used.
+Only the cluster labels are cached, one file per refit, so an interrupted
+run resumes where it stopped and raising `REPEATS` later reuses the refits
+already made.
 
 ```{r}
 #| label: refits
@@ -441,7 +454,7 @@ if (length(.clash)) {
 # Each forest is grown as sid-fit grows forest m: R's generator set to its seed,
 # and the same seed handed to the forest. With refit_seed = sid-fit's SEED this
 # rebuilds sid-fit's distance exactly. sid-fit's SID_ARGS, the other sidClustering() arguments its forests were
-# grown with, are spliced into both calls, so a refit differs from the reported forest only by its seed. A sid.rds
+# grown with, are spliced into every call, so a refit differs from the reported forest only by its seed. A sid.rds
 # from before SID_ARGS records none; with none the calls, and so the refit cache keys, are as they were.
 .sid_args <- if (is.null(.s$sid_args)) list() else .s$sid_args
 .refit_code <- bquote({
@@ -472,13 +485,34 @@ if (length(.clash)) {
   d <- stats::dist(Reduce(`+`, dists) / length(dists))
   vapply(refit_k, function(k) cluster::pam(d, k, cluster.only = TRUE), integer(nrow(refit_x[[1L]])))
 }, splice = TRUE)
-.refit_pam <- if (pam_on == "profile") .refit_code_profile else .refit_code
+.refit_code_hclust <- bquote({
+  dists <- lapply(seq_along(refit_x), function(m) {
+    s <- refit_seed + m - 1L
+    set.seed(s)
+    o <- sidClustering(refit_x[[m]], method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(s), ..(.sid_args))
+    if (is.null(o$dist)) stop("sidClustering() failed on imputation ", m, " (it returned no distance).", call. = FALSE)
+    o$dist
+  })
+  # One complete-linkage tree of the SID distance, cut at each K, as sid-clusters runs it with
+  # CLUSTER_METHOD = "hclust". A third call, for the reason the profile refit is a second.
+  tree <- stats::hclust(stats::as.dist(Reduce(`+`, dists) / length(dists)), method = "complete")
+  vapply(refit_k, function(k) unname(stats::cutree(tree, k = k)), integer(nrow(refit_x[[1L]])))
+}, splice = TRUE)
+.refit_pam <- if (cluster_method == "hclust") {
+  .refit_code_hclust
+} else if (pam_on == "profile") {
+  .refit_code_profile
+} else {
+  .refit_code
+}
 run_refits <- function(refit_x, tag, unit) {
   refit_ntree <- .s$ntree
   refit_reduce <- .s$sid_reduce
   refit_k <- .k_range
-  # Profile refits are cached under names of their own, so switching PAM_ON in sid-clusters and back reuses both.
-  names <- sprintf("sid-stability-%s%s-%d", if (pam_on == "profile") "profile-" else "", tag, seeds)
+  # Profile and hclust refits are cached under names of their own, so switching PAM_ON or CLUSTER_METHOD in
+  # sid-clusters and back reuses each.
+  .variant <- if (cluster_method == "hclust") "hclust-" else if (pam_on == "profile") "profile-" else ""
+  names <- sprintf("sid-stability-%s%s-%d", .variant, tag, seeds)
   todo <- vapply(seq_along(seeds), function(i) {
     refit_seed <- seeds[i]
     hvtiRutilities::cache_would_fit(names[i], .refit_pam, seed = refit_seed, dir = CACHE_DIR, refit = REFIT,
@@ -653,14 +687,14 @@ if (!is.null(stab_ref)) knitr::kable(tbl_stability(stab_ref, ref_pub_group, "ref
 
 ## Label-free agreement
 
-The adjusted Rand index of each refit's raw PAM labels with sid-clusters' at
+The adjusted Rand index of each refit's raw cluster labels with sid-clusters' at
 every K, with no matching of labels. If a low-agreement refit is low here
 too, it clustered the patients differently; if it is high here, the matching
 relabeled a small change.
 
 ```{r}
 #| label: tbl-label-free
-#| tbl-cap: "Adjusted Rand index of the raw PAM labels at each K, median (range) over refits"
+#| tbl-cap: "Adjusted Rand index of the raw cluster labels at each K, median (range) over refits"
 .lf <- vapply(paste0("ari_k", .k_range), function(v) stab_q(stab$by_refit[[v]]), character(1))
 knitr::kable(data.frame(K = .k_range, ARI = .lf), row.names = FALSE)
 ```
@@ -767,7 +801,7 @@ sid_stability_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
        reference = if (!is.null(stab_ref)) list(dataset = sid_cl$reference$dataset, assigned = ref_assigned,
                                                 by_refit = stab_ref$by_refit, by_group = stab_ref$by_group),
        settings = list(repeats = REPEATS, seed_offset = SEED_OFFSET, track = TRACK, pac_band = PAC_BAND,
-                       pam_on = pam_on)),
+                       pam_on = pam_on, cluster_method = cluster_method)),
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   cohort = .cohort
@@ -784,6 +818,6 @@ cat(hvtiRtemplates:::.embed_provenance(
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   run = .job$run,
-  extra = list(subject = SUBJECT, type = TYPE, cohort = .cohort, pam_on = pam_on)
+  extra = list(subject = SUBJECT, type = TYPE, cohort = .cohort, pam_on = pam_on, cluster_method = cluster_method)
 ))
 ```

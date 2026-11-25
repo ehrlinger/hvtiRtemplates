@@ -30,7 +30,8 @@ test_that("packages refuses a needed package missing from the lock (failure 3)",
   ck <- .check_packages(job, root)
   expect_false(ck$ok)
   expect_match(ck$message, "^packages: .*quarto.*not recorded in renv.lock")
-  expect_match(ck$fix, "hvtiR::update()", fixed = TRUE)
+  # quarto is not in the family, so hvtiR::update() would leave it alone (#612).
+  expect_match(ck$fix, 'renv::record("quarto@1.4.4")', fixed = TRUE)
 })
 
 test_that("packages refuses a locked package missing from the library", {
@@ -127,15 +128,47 @@ test_that("packages: neither installed nor recorded", {
   ck <- .check_packages(job, root)
   expect_false(ck$ok)
   expect_match(ck$message, "quarto is neither installed nor recorded", fixed = TRUE)
-  expect_match(ck$fix, "hvtiR::update()", fixed = TRUE)
+  # renv::restore() installs only what the lock records, so the fix installs, then records (#612).
+  expect_match(ck$fix, 'renv::install("quarto"); renv::record(paste0("quarto@", packageVersion("quarto")))', fixed = TRUE)
+  expect_no_match(ck$fix, "restore|hvtiR::update")
 })
 
-test_that("packages: installed newer than locked updates, older restores", {
+test_that("packages: hvtiR::update() is named for a family member only", {
+  root <- lock_study(pkgs = list(knitr = "1.48", hvtiRtables = "1.0.13"))
+  job <- job_with_setup(root)
+  testthat::local_mocked_bindings(
+    .installed_version = function(p) c(knitr = "1.48", hvtiRtables = "1.0.14", hvtiRplots = NA_character_)[[p]],
+    .always_needed = function() c("knitr", "hvtiRtables", "hvtiRplots")
+  )
+  ck <- .check_packages(job, root)
+  expect_false(ck$ok)
+  expect_identical(ck$fix, "hvtiR::update()")
+})
+
+test_that(".package_fix gives each state its own command", {
+  expect_identical(.package_fix("sf", NA_character_, "1.0"), 'renv::restore(packages = "sf")')
+  expect_identical(.package_fix("sf", "0.9", "1.0"), 'renv::restore(packages = "sf")')
+  expect_identical(.package_fix("sf", "1.1", "1.0"), 'renv::record("sf@1.1")')
+  expect_identical(.package_fix("sf", "1.1", NA_character_), 'renv::record("sf@1.1")')
+  expect_match(.package_fix("sf", NA_character_, NA_character_), 'renv::install("sf")', fixed = TRUE)
+  expect_identical(.package_fix("hvtiPlotR", "2.0", "1.0"), "hvtiR::update()")
+  expect_identical(.package_fix("ggRandomForests", NA_character_, NA_character_), "hvtiR::update()")
+  expect_identical(.package_fix("TemporalHazard", NA_character_, "1.3.1"), 'renv::restore(packages = "TemporalHazard")')
+})
+
+test_that("quarto's own check names the fix that fits the lock (#612)", {
+  testthat::local_mocked_bindings(.quarto_pkg = function() FALSE)
+  expect_match(.check_quarto(lock_study())$fix, 'renv::restore(packages = "quarto")', fixed = TRUE)
+  expect_match(.check_quarto(lock_study(pkgs = list(knitr = "1.48")))$fix, 'renv::install("quarto")', fixed = TRUE)
+  expect_match(.check_quarto()$fix, 'renv::install("quarto")', fixed = TRUE)
+})
+
+test_that("packages: installed newer than locked records, older restores", {
   root <- lock_study(pkgs = list(quarto = "1.4.4", knitr = "1.48"))
   job <- job_with_setup(root)
   testthat::local_mocked_bindings(.installed_version = function(p) if (p == "knitr") "1.50" else "1.4.4",
                                   .always_needed = function() c("quarto", "knitr"))
-  expect_match(.check_packages(job, root)$fix, "hvtiR::update()", fixed = TRUE)
+  expect_match(.check_packages(job, root)$fix, 'renv::record("knitr@1.50")', fixed = TRUE)
   testthat::local_mocked_bindings(.installed_version = function(p) if (p == "knitr") "1.40" else "1.4.4",
                                   .always_needed = function() c("quarto", "knitr"))
   expect_match(.check_packages(job, root)$fix, 'renv::restore(packages = "knitr")', fixed = TRUE)
@@ -547,7 +580,8 @@ test_that("quarto says when the quarto R package is not installed", {
   ck <- .check_quarto()
   expect_false(ck$ok)
   expect_match(ck$message, "the quarto R package is not installed", fixed = TRUE)
-  expect_identical(ck$fix, 'renv::restore(packages = "quarto")')
+  # No lock to read, so quarto is unrecorded: install it, then record it (#612).
+  expect_match(ck$fix, 'renv::install("quarto")', fixed = TRUE)
   expect_no_match(ck$fix, "administrator", fixed = TRUE)
 })
 

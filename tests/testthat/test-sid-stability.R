@@ -240,11 +240,13 @@ test_that("an older sid-clusters.rds, with no reference or PAM metric, refits as
   path <- env$set_path("estimates", "sid-clusters.rds")
   old <- readRDS(path)
   old$pam_on <- NULL
+  old$cluster_method <- NULL
   old$clusters$reference <- NULL
   saveRDS(old, path)
   sid_stability_after(env)
   expect_null(env$stab_ref)
   expect_identical(env$pam_on, "sid")
+  expect_identical(env$cluster_method, "pam")
   expect_true(all(env$stab$by_refit$ari_groups > 0.9))
   expect_null(readRDS(env$set_path("estimates", "sid-stability.rds"))$reference)
 })
@@ -332,9 +334,38 @@ test_that("the default refit code is unchanged, so refits cached before PAM_ON e
   src <- readLines(template_path("sid", "stability"), warn = FALSE)
   env <- new.env(parent = globalenv())
   env$pam_on <- "sid"
-  # No SID_ARGS, as every sid.rds from before them: the refit code must be byte for byte the old one (#644).
-  env$.sid_args <- list()
+  env$cluster_method <- "pam"
+  # sid-fit's settings as a sid.rds from before SID_ARGS records them, with no sid_args: the refit code must
+  # be byte for byte the old one (#644).
+  env$.s <- list(ntree = 500, sid_reduce = FALSE, seed = 1)
   chunk <- rf_chunk(src, "refits")
-  eval(parse(text = chunk[grep("^\\.refit_code <- ", chunk):(grep("^run_refits <- ", chunk) - 1L)]), envir = env)
+  eval(parse(text = chunk[grep("^\\.sid_args <- ", chunk):(grep("^run_refits <- ", chunk) - 1L)]), envir = env)
+  expect_identical(env$.sid_args, list())
   expect_snapshot(cat(deparse(env$.refit_code), sep = "\n"))
+})
+
+# ---- #642: hierarchical clustering, as sidClustering() cuts it -----------------------------------
+
+test_that("sid-stability refits with the hierarchical cut sid-clusters used, and it rebuilds that solution (#642)", {
+  skip_on_cran()
+  env <- sid_fit_first()
+  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(CLUSTER_METHOD = "hclust")))
+  sid_stability_after(env)
+  expect_identical(env$cluster_method, "hclust")
+  expect_identical(env$.refit_pam, env$.refit_code_hclust)
+  # The refit at sid-fit's own seed rebuilds sid-fit's distance, so its cut is the reported one, label for label.
+  e <- new.env(parent = env)
+  e$refit_x <- env$x_m
+  e$refit_ntree <- env$.s$ntree
+  e$refit_reduce <- env$.s$sid_reduce
+  e$refit_k <- env$.k_range
+  e$refit_seed <- as.integer(env$.s$seed)
+  lab <- eval(env$.refit_pam, e)
+  for (i in seq_along(env$.k_range)) {
+    expect_identical(lab[, i], unname(env$ref_pam[[as.character(env$.k_range[i])]]), info = paste("K =", env$.k_range[i]))
+  }
+  # Cached under names of their own, so the PAM refits of the same seeds are kept apart.
+  expect_true(all(file.exists(file.path(env$CACHE_DIR, sprintf("sid-stability-hclust-all-%d.rds", env$seeds)))))
+  s <- readRDS(env$set_path("estimates", "sid-stability.rds"))$settings
+  expect_identical(s$cluster_method, "hclust")
 })

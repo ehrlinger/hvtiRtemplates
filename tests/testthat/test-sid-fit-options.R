@@ -164,7 +164,7 @@ test_that("sid-fit renders with IMPUTE = \"none\" on complete data and a non-emp
   expect_identical(h$settings$sid_args, list(dist.sharpen = FALSE))
 })
 
-test_that("sid-stability refits with sid-fit's SID_ARGS, in both refit calls and in the refits it ran", {
+test_that("sid-stability refits with sid-fit's SID_ARGS, in every refit call and in the refits it ran", {
   skip_on_cran()
   rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "stability"))))
   args <- list(dist.sharpen = FALSE)
@@ -176,8 +176,8 @@ test_that("sid-stability refits with sid-fit's SID_ARGS, in both refit calls and
   refits <- list.files(env$CACHE_DIR, "^sid-stability-.*[.]rds$", full.names = TRUE)
   expect_gt(length(refits), 0L)
   for (f in refits) expect_match(readRDS(f)$key$code, "dist.sharpen = FALSE", fixed = TRUE, info = basename(f))
-  # Both refit calls, the SID metric's and the profile metric's, pass it to sidClustering().
-  for (code in list(env$.refit_code, env$.refit_code_profile)) {
+  # Every refit call, PAM on the SID distance, PAM on the profile and the hierarchical cut, passes it to sidClustering().
+  for (code in list(env$.refit_code, env$.refit_code_profile, env$.refit_code_hclust)) {
     seen <- new.env()
     seen$args <- list()
     e <- new.env(parent = env)
