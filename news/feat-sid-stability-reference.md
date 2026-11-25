@@ -22,3 +22,10 @@
 - Studies' existing copies of `sid-clusters` and `sid-stability` run
   unchanged. A `sid-clusters.rds` written before this release refits on the
   SID distance with no reference, and refits cached before it still load.
+- **Upgrade `sid-stability` with `sid-clusters`.** A study copy of
+  `sid-stability` from before this release reads none of the new choices, so
+  once an upgraded `sid-clusters` sets `PAM_ON <- "profile"` or
+  `CLUSTER_METHOD <- "hclust"`, the old copy refits with PAM on the SID
+  distance. Then it compares those refits with groups found another way, with
+  no error, and the mismatch reads as instability. It also ignores a
+  `REFERENCE`. Run `upgrade_job()` on both jobs together.
