@@ -128,6 +128,10 @@ if (!file.exists(.handoff)) {
 .cfg <- study_config(start = .root)
 .vt_read <- hvtiRtemplates:::.read_handoff(.handoff, "twins", .cfg, "the vt-fit job")
 .vt <- .vt_read$value
+if (isTRUE(.vt$settings$eligibility_only)) {
+  stop("The fit at ", .handoff, " is eligibility only (TIME <- NULL in vt-fit): it has no forests or twin curves ",
+       "to explain. Name the outcome in vt-fit and render it again.", call. = FALSE)
+}
 .provenance_data <- .vt_read$lineage$data
 .provenance_artifacts <- c(.vt_read$lineage$artifacts, list(.vt_read$record))
 ARMS <- .vt$settings$arms

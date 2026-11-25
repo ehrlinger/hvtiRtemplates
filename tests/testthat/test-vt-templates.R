@@ -91,6 +91,35 @@ test_that("vt_ood flags a patient beyond the arm's largest nearest-neighbor gap"
   expect_match(b$reason[b$ID == "b2"], "A")
 })
 
+test_that("a quantile rule sets the line at that quantile of the arm's gaps, so one isolated member cannot loosen it", {
+  h <- vt_helpers()
+  # Arm A's gaps are 1, 1, 1, 1 and 6 (a5 sits alone at 9): the largest gap is 6, the 75th percentile 1.
+  x <- c(a1 = 0, a2 = 1, a3 = 2, a4 = 3, a5 = 9, b1 = 3.5, b2 = 5.5)
+  dm <- as.matrix(stats::dist(x))
+  arm <- c(rep("A", 5L), "B", "B")
+  by_max <- h$vt_ood(dm, names(x), arm, c("A", "B"))
+  by_q <- h$vt_ood(dm, names(x), arm, c("A", "B"), rule = 0.75)
+  at_a <- function(r) r[r$arm == "A", ]
+  expect_equal(unique(at_a(by_max)$reference), 6)
+  expect_equal(unique(at_a(by_q)$reference), unname(stats::quantile(c(1, 1, 1, 1, 6), 0.75)))
+  expect_true(all(at_a(by_max)$in_distribution))
+  expect_identical(at_a(by_q)$in_distribution, c(TRUE, FALSE))
+  expect_match(at_a(by_q)$reason[2L], "75th-percentile gap", fixed = TRUE)
+  expect_identical(h$vt_ood(dm, names(x), arm, c("A", "B"), rule = "max"), by_max)
+})
+
+test_that("GOWER_REFERENCE reaches the Gower judgment and is saved, and a bad value stops", {
+  skip_on_cran()
+  env <- vt_fit_first(choices = utils::modifyList(vt_choices, list(GOWER_REFERENCE = 0.5)),
+                      labels = c(vt_fit_labels))
+  base <- vt_fit_first()
+  g <- function(e) e$.elig_rows[e$.elig_rows$method == "gower", ]
+  expect_gt(sum(!g(env)$in_distribution), sum(!g(base)$in_distribution))
+  expect_true(all(g(env)$reference < g(base)$reference))
+  expect_error(vt_fit_first(choices = utils::modifyList(vt_choices, list(GOWER_REFERENCE = 1)), labels = vt_fit_labels),
+               "GOWER_REFERENCE must be", fixed = TRUE)
+})
+
 test_that("a distance exactly at the reference is in distribution (strict >)", {
   h <- vt_helpers()
   x <- c(a1 = 0, a2 = 1, b1 = 2)  # b1's distance to arm A is 1, the reference is 1
@@ -822,6 +851,82 @@ test_that("vt-fit and vt-explain render end to end", {
   # nolint end
   out <- vt_render_fixture()
   expect_true(all(file.exists(out$outputs)))
+})
+
+test_that("TIME <- NULL judges eligibility on a cohort with no outcome and saves the flags alone", {
+  skip_on_cran()
+  d <- vt_data()
+  d$time <- NULL
+  d$event <- NULL
+  env <- vt_fit_first(data = d, choices = vt_elig_only_choices,
+                      labels = c(setdiff(vt_fit_labels, c("tbl-km", "fig-km")), "save"))
+  expect_true(env$.elig_only)
+  expect_false("Events" %in% names(env$.counts))
+  expect_false(exists(".epf", envir = env, inherits = FALSE))
+  vt <- readRDS(env$set_path("estimates", "vt.rds"))
+  expect_true(vt$settings$eligibility_only)
+  expect_null(vt$rmst)
+  expect_null(vt$forests)
+  expect_null(vt$curves)
+  expect_null(attr(vt, "hvti_provenance")$analysis)
+  expect_identical(vt$eligibility$rows, env$.elig_rows)
+  # Eligibility never reads the outcome: the same cohort with one is judged the same, patient by patient. Each
+  # fixture study digests the IDs under its own key, so the rows are compared without them.
+  with_outcome <- vt_fit_first()
+  judged <- function(x) x[setdiff(names(x), c("ID", "nn_id"))]
+  expect_identical(judged(env$.elig_rows), judged(with_outcome$.elig_rows))
+  expect_gt(sum(!env$.elig_rows$in_distribution), 0L)
+  expect_error(vt_explain(env), "eligibility only", fixed = TRUE)
+})
+
+test_that("TIME and STATUS are NULL together or not at all", {
+  skip_on_cran()
+  expect_error(vt_fit_first(choices = utils::modifyList(vt_choices, list(STATUS = NULL), keep.null = TRUE),
+                            labels = c("setup", "edit-study-choices", "tbl-data")),
+               "TIME and STATUS are set together", fixed = TRUE)
+})
+
+test_that("an eligibility-only arm needs two patients, not an event", {
+  skip_on_cran()
+  d <- vt_data()
+  d$time <- NULL
+  d$event <- NULL
+  d$arm[which(d$arm == "B")[-1L]] <- "A"
+  expect_error(vt_fit_first(data = d, choices = vt_elig_only_choices, labels = c("setup", "edit-study-choices", "tbl-data")),
+               "at least 2 treated patients; B has 1", fixed = TRUE)
+})
+
+test_that("the outcome gates switch the outcome chunks off for TIME <- NULL, and the next gate back on", {
+  src <- readLines(template_path("vt", "fit"), warn = FALSE)
+  old <- knitr::opts_chunk$get("eval")
+  withr::defer(knitr::opts_chunk$set(eval = old))
+  env <- new.env()
+  env$.elig_only <- TRUE
+  utils::capture.output(eval(parse(text = rf_chunk(src, "gate-forests")), envir = env))  # nolint: object_usage_linter.
+  expect_false(knitr::opts_chunk$get("eval"))
+  expect_identical(c(env$.cap_oe, env$.cap_oe_km, env$.cap_spaghetti), c("", "", ""))
+  eval(parse(text = rf_chunk(src, "gate-handoff")), envir = env)  # nolint: object_usage_linter.
+  expect_true(knitr::opts_chunk$get("eval"))
+  env$.elig_only <- FALSE
+  eval(parse(text = rf_chunk(src, "gate-outcome")), envir = env)  # nolint: object_usage_linter.
+  expect_true(knitr::opts_chunk$get("eval"))
+})
+
+test_that("vt-fit renders eligibility only with TIME <- NULL", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if(is.null(quarto::quarto_path()), "Quarto is not installed")
+  rf_skip_unless_stack(rf_template_packages("vt", "fit"))  # nolint: object_usage_linter.
+  out <- vt_render_fixture(fit_values = list(TIME = "NULL", STATUS = "NULL"), which = "fit")
+  expect_true(file.exists(out$outputs))
+  html <- paste(readLines(out$outputs, warn = FALSE), collapse = "\n")
+  expect_match(html, "no forest is grown", fixed = TRUE)
+  # The folded source echoes every chunk, so absent output is checked in vt.rds, not the HTML.
+  vt <- readRDS(file.path(hvtiRutilities::study_dir("estimates", out$root), "dead-vt", "vt.rds"))
+  expect_true(vt$settings$eligibility_only)
+  expect_null(vt$forests)
+  expect_null(vt$rmst)
+  expect_gt(nrow(vt$eligibility$rows), 0L)
 })
 
 test_that("a level carried only by the rest of the arm still shows, at 0% for the other group", {
