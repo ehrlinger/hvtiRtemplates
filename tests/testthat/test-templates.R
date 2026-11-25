@@ -359,7 +359,8 @@ test_that("a template calling register_data(file =) stops in setup below hvtiRut
     for (p in needs) skip_if_not_installed(p)
     withr::local_dir(withr::local_tempdir())
     expect_error(eval(parse(text = setup), envir = new.env(parent = globalenv())),
-                 "hvtiRutilities >= 1\\.5\\.24", info = basename(f))
+                 # 1.5.24 or later: sid-clusters needs 1.5.27 for the .rds it registers (#618).
+                 "hvtiRutilities >= 1\\.5\\.(2[4-9]|[3-9][0-9])", info = basename(f))
   }
 })
 

@@ -26,10 +26,11 @@ Depends:
     R (>= 4.4.0)
 Imports:
     digest,
-    hvtiRutilities (>= 1.5.24),
+    hvtiRutilities (>= 1.5.27),
     jsonlite,
     openssl,
     ps,
+    quarto,
     rlang,
     stats,
     yaml
@@ -74,7 +75,6 @@ Suggests:
     officer (>= 0.6.0),
     patchwork (>= 1.1.0),
     processx,
-    quarto,
     ragg (>= 1.2.1),
     randomForestRHF (>= 2.1.0),
     randomForestSRC (>= 3.7.0),

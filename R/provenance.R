@@ -297,6 +297,83 @@
   invisible(TRUE)
 }
 
+# A job that records provenance: the pre-render hook registers it, and a check
+# before the render requires the hooks for it. Other documents render as before.
+.provenance_managed <- function(path) {
+  any(grepl("hvtiRtemplates:::.embed_provenance(", readLines(path, warn = FALSE), fixed = TRUE))
+}
+
+# What .embed_provenance() needs of the study at the end of a render, and what
+# .provenance_hooks_problem() checks before one starts, in one place so the two
+# cannot drift: Quarto renders the job as part of the study root's project, and
+# that project's _quarto.yml runs the provenance hooks.
+.assert_provenance_project <- function(root, project) {
+  if (is.na(project) || !identical(normalizePath(project, winslash = "/", mustWork = TRUE), root)) {
+    stop("This managed job must be rendered through its configured Quarto study project. Run add_job() to install the hooks.",
+         call. = FALSE)
+  }
+  .assert_provenance_hooks(root)
+}
+
+# The project Quarto will render `path` in: the nearest folder at or above the
+# job's own that holds _quarto.yml or _quarto.yaml, as Quarto looks for it.
+# NA when there is none, as QUARTO_PROJECT_DIR is unset for such a render.
+.quarto_project_dir <- function(path) {
+  dir <- normalizePath(dirname(path), winslash = "/", mustWork = TRUE)
+  repeat {
+    if (any(file.exists(file.path(dir, c("_quarto.yml", "_quarto.yaml"))))) return(dir)
+    parent <- dirname(dir)
+    if (identical(parent, dir)) return(NA_character_)
+    dir <- parent
+  }
+}
+
+# Before a render: NULL when the job records no provenance or the study has the
+# hooks it needs, else the reason and the fix. Without this, a long job in a study
+# with no root _quarto.yml (one that predates the templates) fails only once its
+# last chunk reaches .embed_provenance().
+.provenance_hooks_problem <- function(path) {
+  if (!.provenance_managed(path)) return(NULL)
+  root <- normalizePath(.find_study_root(dirname(path)), winslash = "/", mustWork = TRUE)
+  project <- .quarto_project_dir(path)
+  reason <- tryCatch({
+    .assert_provenance_project(root, project)
+    NULL
+  }, error = conditionMessage)
+  if (is.null(reason)) return(NULL)
+  message <- paste0(basename(path), " records its provenance, which needs the study's Quarto provenance hooks: ", reason)
+  # A project file nearer the job makes its folder the project, and hooks at the root would not change that.
+  # Name the file found, _quarto.yml or _quarto.yaml, so the advice points at one that exists.
+  if (!is.na(project) && !identical(project, root)) {
+    found <- file.path(project, c("_quarto.yml", "_quarto.yaml"))
+    found <- found[file.exists(found)]
+    return(list(message = message, fix = paste0(
+      "Move ", paste(found, collapse = " and "), " aside: ", if (length(found) > 1L) "they make" else "it makes",
+      " that folder its own Quarto project, so the render never reaches the study root's hooks."
+    )))
+  }
+  created <- !file.exists(file.path(root, "_quarto.yml"))
+  list(
+    message = message,
+    fix = paste0(
+      "hvtiRtemplates:::.install_provenance_hooks(", deparse(root), ")",
+      if (created) {
+        paste0("\nThis creates _quarto.yml at the study root, which makes the study one Quarto project and can ",
+               "change how its other documents render. Once this job has rendered, delete that _quarto.yml to ",
+               "restore the study's own rendering.")
+      }
+    )
+  )
+}
+
+# Stops a render that would fail at its end for want of the hooks, before it starts.
+.require_provenance_hooks <- function(path, fn) {
+  problem <- .provenance_hooks_problem(path)
+  if (is.null(problem)) return(invisible(NULL))
+  .abort(fn, "(): stopped before rendering. ", problem$message, "\nInstall the hooks, then render again:\n  ",
+         problem$fix, class = "provenance_hooks_missing")
+}
+
 .provenance_source <- function(input, root) {
   if (!is.character(input) || length(input) != 1L || is.na(input) || !nzchar(input)) {
     stop("Cannot resolve the canonical render input without one path.", call. = FALSE)
@@ -794,9 +871,15 @@
 # The render's owner is the Quarto process that runs the hooks and the knitr
 # session alike. Its start time guards against a reused process id, and its host
 # against a study shared by sessions on several servers.
-.provenance_render_owner <- function() {
-  parent <- ps::ps_parent()
-  list(pid = ps::ps_pid(parent), created = sprintf("%.6f", as.numeric(ps::ps_create_time(parent))),
+.provenance_render_owner <- function() .provenance_owner_of(ps::ps_parent())
+
+# This R process as an owner, for a hold made by the process itself rather than by a Quarto render, as render_job()'s
+# between attempts: its lock must read as dead, here and through its heartbeat elsewhere, once this process is gone,
+# though the session's parent lives on.
+.provenance_self_owner <- function() .provenance_owner_of(ps::ps_handle())
+
+.provenance_owner_of <- function(handle) {
+  list(pid = ps::ps_pid(handle), created = sprintf("%.6f", as.numeric(ps::ps_create_time(handle))),
        host = Sys.info()[["nodename"]])
 }
 
@@ -1017,10 +1100,9 @@
   tryCatch(readLines(file.path(sentinel, "token"), warn = FALSE)[[1L]], error = function(e) NULL)
 }
 
-.acquire_provenance_lock <- function(root) {
+.acquire_provenance_lock <- function(root, owner = .provenance_render_owner()) {
   lock <- .provenance_lock_path(root)
   owner_path <- file.path(lock, "owner.json")
-  owner <- .provenance_render_owner()
   if (!dir.exists(dirname(lock))) dir.create(dirname(lock), recursive = TRUE)
   for (attempt in 1:2) {
     if (.create_provenance_lock(lock)) {
@@ -1056,10 +1138,9 @@
   stop("Could not take the provenance render lock: ", lock, ".", call. = FALSE)
 }
 
-.release_provenance_lock <- function(root) {
+.release_provenance_lock <- function(root, me = .provenance_render_owner()) {
   lock <- .provenance_lock_path(root)
   owner_path <- file.path(lock, "owner.json")
-  me <- .provenance_render_owner()
   if (!identical(.read_provenance_owner(owner_path), me)) return(invisible(NULL))
   # A render that judged this one stopped, as one on another host may after a stalled heartbeat, may be taking the
   # lock over. The lock is removed only under the takeover sentinel, so it never vanishes beneath a takeover, where a
@@ -1093,9 +1174,7 @@
   extensions <- tolower(tools::file_ext(inputs))
   candidates <- inputs[extensions %in% c("qmd", "rmarkdown")]
   sources <- unique(vapply(candidates, .provenance_source, character(1L), root = root))
-  managed <- sources[vapply(file.path(root, sources), function(path) {
-    any(grepl("hvtiRtemplates:::.embed_provenance(", readLines(path, warn = FALSE), fixed = TRUE))
-  }, logical(1L))]
+  managed <- sources[vapply(file.path(root, sources), .provenance_managed, logical(1L))]
 
   sidecars <- list.files(
     root, pattern = "[.]provenance[.]json$", recursive = TRUE, full.names = TRUE, all.files = TRUE
@@ -1174,12 +1253,7 @@
                               run = NULL, envir = parent.frame()) {
   if (is.null(input)) .not_rendered_abort()
   root <- normalizePath(cfg$root, winslash = "/", mustWork = TRUE)
-  project <- Sys.getenv("QUARTO_PROJECT_DIR", unset = NA_character_)
-  if (is.na(project) || !identical(normalizePath(project, winslash = "/", mustWork = TRUE), root)) {
-    stop("This managed job must be rendered through its configured Quarto study project. Run add_job() to install the hooks.",
-         call. = FALSE)
-  }
-  .assert_provenance_hooks(root)
+  .assert_provenance_project(root, Sys.getenv("QUARTO_PROJECT_DIR", unset = NA_character_))
   source <- .provenance_source(input, root)
   state <- .read_provenance_state(root)
   managed <- unlist(state$managed_sources, use.names = FALSE)
