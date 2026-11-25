@@ -96,7 +96,7 @@ test_that("a real execute-results folder is left alone, for the race path to set
   expect_true(file.exists(file.path(results, "html.json")))
 })
 
-test_that("a link that resolves is used as it is and left to its render", {
+test_that("a link that resolves is used as it is, and removed once no render holds the lock", {
   skip_if_not_installed("quarto")
   skip_on_os("windows")
   job <- project_job()
@@ -112,8 +112,44 @@ test_that("a link that resolves is used as it is and left to its render", {
 
   render_job(job)
   expect_identical(seen$link, other)
-  expect_identical(Sys.readlink(results), other)
-  expect_true(dir.exists(other))
+  expect_false(.is_symlink(results))
+  expect_false(dir.exists(other))
+})
+
+test_that("two renders that share a link: the one that loses the lock leaves it to the winner", {
+  # The #663 review's sequence. A places the link; B starts the same job and takes a share in it; B's Quarto takes the
+  # study's render lock first, so A's stops on it. A's clean-up must leave the link and its folder, which B is writing
+  # through; B's Quarto then removes the link, and B's clean-up the folder.
+  skip_on_os("windows")
+  job <- project_job()
+  project <- dirname(job)
+  results <- .execute_results_dir(job)
+
+  a <- .local_execute_results(results, project)
+  b <- .local_execute_results(results, project)
+  expect_false(is.null(a))
+  expect_identical(b$target, a$target)
+
+  # B's Quarto holds the lock: a live process that is not this one.
+  winner <- .provenance_render_owner()
+  expect_true(.acquire_provenance_lock(project, owner = winner))
+  withr::defer(.release_provenance_lock(project, winner))
+  expect_true(.study_render_running(project))
+
+  .drop_local_execute_results(a, project)
+  expect_identical(Sys.readlink(results), a$target)
+  writeLines("{}", file.path(results, "html.json"))
+  expect_true(file.exists(file.path(a$target, "html.json")))
+
+  # B's Quarto copies the results to the freezer, removes the link and releases the lock.
+  unlink(results)
+  .release_provenance_lock(project, winner)
+  .drop_local_execute_results(b, project)
+  expect_false(dir.exists(a$target))
+  # And no render places a link while one holds the lock.
+  expect_true(.acquire_provenance_lock(project, owner = winner))
+  expect_null(.local_execute_results(results, project))
+  expect_false(.is_symlink(results))
 })
 
 test_that("a dangling link is replaced, unless a live render holds the study's lock", {
@@ -155,11 +191,11 @@ test_that("Quarto writes the results through the link and removes only the link"
   # What render_job() placed, read just before it cleans up.
   seen <- new.env()
   real_drop <- .drop_local_execute_results
-  local_mocked_bindings(.drop_local_execute_results = function(local) {
+  local_mocked_bindings(.drop_local_execute_results = function(local, project) {
     seen$local <- local
     seen$link_left <- .is_symlink(local$link)
     seen$results <- list.files(local$target)
-    real_drop(local)
+    real_drop(local, project)
   })
 
   render_job(job, quiet = TRUE)

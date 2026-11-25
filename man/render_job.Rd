@@ -94,7 +94,9 @@ made a symbolic link to a temporary folder on local disk, and Quarto writes,
 reads and removes it there; the share sees only the link, which Quarto
 removes. Execution is not frozen: every chunk runs as before, and the job's
 caches stay beside it. A folder already there is left alone, and so is a
-link while another render in the study is running. On Windows, or where the
+link while another render in the study is running. A render that stops with
+the link still there removes it only holding the study's render lock, so it
+never removes one another render is writing through. On Windows, or where the
 link cannot be made, the render goes ahead without it.
 
 A render that still fails with that error, read from Quarto's own message or

@@ -58,7 +58,9 @@
 #' reads and removes it there; the share sees only the link, which Quarto
 #' removes. Execution is not frozen: every chunk runs as before, and the job's
 #' caches stay beside it. A folder already there is left alone, and so is a
-#' link while another render in the study is running. On Windows, or where the
+#' link while another render in the study is running. A render that stops with
+#' the link still there removes it only holding the study's render lock, so it
+#' never removes one another render is writing through. On Windows, or where the
 #' link cannot be made, the render goes ahead without it.
 #'
 #' A render that still fails with that error, read from Quarto's own message or
@@ -179,7 +181,7 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
   attempt <- function() {
     from <- .file_size(log)
     local <- .local_execute_results(.execute_results_dir(path), project)
-    on.exit(.drop_local_execute_results(local), add = TRUE)
+    on.exit(.drop_local_execute_results(local, project), add = TRUE)
     tryCatch(render(), error = function(e) {
       if (.quarto_crashed(e)) {
         .abort("render_job(): Quarto crashed before rendering ", basename(path), "; the job itself did not fail.\n",
@@ -239,15 +241,25 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
 # unlinked, and a link is never held open, so nothing is left to race. Nothing else in the job moves: its chunks, its
 # caches and the study root it finds from its own path stay on the share.
 #
-# Placed only where nothing is in the way. A real folder is left alone, for the race path to settle. A link that
-# resolves is a render's on this node and is used as it is. A dangling link is a killed session's on this node, or a
-# live render's on another, whose local folder this node cannot see; it is replaced only while no live render holds
-# the study's render lock. Not on Windows, where a link needs a privilege. If the link cannot be made, as on a share
-# that refuses symbolic links, the render goes ahead as before. Returns what to clean up, or NULL.
+# Who removes the link is decided under the study's render lock (#663 review). The lock is taken in Quarto's pre-render
+# hook, after the link is placed, so two renders of one job on this node can both start before either holds it: the
+# second finds the first's link and uses it, and whichever loses the lock stops at once. Had the loser removed the link
+# and its folder as it stopped, it would have done so under the winner, which writes its results through them. So no
+# render places a link while a live render holds the lock, a render that finds a link that resolves takes a share in
+# it, and a render that ends with the link still there removes it, and its folder, only once it holds the lock itself.
+# If another render holds the lock, both are left to that render: its Quarto removes the link, and its own clean-up
+# the folder. The folder is made beside this session's temporary folder, not in it, so it outlives this session.
+#
+# Placed only where nothing is in the way. A real folder is left alone, for the race path to settle. A dangling link
+# is a killed session's on this node, or a live render's on another, whose local folder this node cannot see; it is
+# replaced only while no live render holds the study's render lock. Not on Windows, where a link needs a privilege. If
+# the link cannot be made, as on a share that refuses symbolic links, the render goes ahead as before. Returns what to
+# clean up, or NULL.
 .local_execute_results <- function(results, project) {
   if (is.null(project) || .Platform$OS.type == "windows") return(NULL)
+  if (.study_render_running(project)) return(NULL)
   if (.is_symlink(results)) {
-    if (dir.exists(results) || .study_render_running(project)) return(NULL)
+    if (dir.exists(results)) return(list(link = results, target = Sys.readlink(results), files = NULL))
     unlink(results)
   } else if (file.exists(results)) {
     return(NULL)
@@ -255,19 +267,28 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
   files <- dirname(results)
   made <- !dir.exists(files)
   if (made && !dir.create(files, showWarnings = FALSE)) return(NULL)
-  target <- tempfile("execute-results-")
-  if (dir.create(target) && suppressWarnings(file.symlink(target, results))) {
-    return(list(link = results, target = target, files = if (made) files))
-  }
-  .drop_local_execute_results(list(link = results, target = target, files = if (made) files))
+  target <- tempfile("hvti-execute-results-", tmpdir = dirname(tempdir()))
+  local <- list(link = results, target = target, files = if (made) files)
+  if (dir.create(target) && suppressWarnings(file.symlink(target, results))) return(local)
+  unlink(target, recursive = TRUE)
+  if (made) unlink(files, recursive = TRUE)
   NULL
 }
 
-# Quarto removes the link once the results are in the freezer; one still there is a render that stopped before that.
-# Only this render's own link is removed, and unlink() without `recursive` removes a link, not what it points to.
-.drop_local_execute_results <- function(local) {
+# Quarto removes the link once the results are in the freezer, and the folder is then this render's to remove. A link
+# still pointing at the folder is a render that stopped before that, or one another render is using: it is removed
+# only holding the study's render lock, and otherwise left with its folder to the render that holds it. unlink()
+# without `recursive` removes a link, not what it points to.
+.drop_local_execute_results <- function(local, project) {
   if (is.null(local)) return(invisible(NULL))
-  if (identical(Sys.readlink(local$link), local$target)) unlink(local$link)
+  if (identical(Sys.readlink(local$link), local$target)) {
+    me <- .provenance_self_owner()
+    locked <- tryCatch(.acquire_provenance_lock(project, owner = me), error = function(e) NULL)
+    # NULL: another render holds the lock. FALSE: this process already does, and that hold is not this call's.
+    if (is.null(locked)) return(invisible(NULL))
+    if (isTRUE(locked)) on.exit(.release_settled_lock(project, me, "the execute-results link was removed"), add = TRUE)
+    unlink(local$link)
+  }
   unlink(local$target, recursive = TRUE)
   if (!is.null(local$files) && dir.exists(local$files) &&
         !length(list.files(local$files, all.files = TRUE, no.. = TRUE))) {
@@ -420,12 +441,12 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
 
 # A lock this R process took and could not release is owned by a live process, the session, so every render of the
 # study, the rerun that follows this included, would be refused until the session exits. Say so, and name the folder.
-.release_settled_lock <- function(root, me) {
+.release_settled_lock <- function(root, me, while_doing = "the execute-results folder was moved") {
   # A release that fails, as a write into the takeover sentinel can on a share, leaves the lock held all the same.
   tryCatch(.release_provenance_lock(root, me), error = function(e) NULL)
   lock <- .provenance_lock_path(root)
   if (!identical(.read_provenance_owner(file.path(lock, "owner.json")), me)) return(invisible(NULL))
-  warning("render_job(): the study's render lock, taken while the execute-results folder was moved, could not be ",
+  warning("render_job(): the study's render lock, taken while ", while_doing, ", could not be ",
           "released, and this R session holds it until it exits. If ", .provenance_takeover_path(lock),
           " exists, a render on this or another host may be taking the lock over, or a failed release may have left ",
           "it behind. Once no render of the study is running on any host, delete ", lock, " and, if it is there, ",
