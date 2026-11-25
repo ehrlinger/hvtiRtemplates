@@ -78,6 +78,8 @@ test_that("SID_ARGS refuses the arguments the job sets, unknown ones and unnamed
     list(args = list(ntree = 10), msg = "sets itself: ntree"),
     list(args = list(seed = -1, k = 3), msg = "sets itself: seed, k"),
     list(args = list(na.action = "na.impute"), msg = "sets itself: na.action"),
+    list(args = list(case.wt = rep(1, 10)), msg = "patient-level data: case.wt"),
+    list(args = list(x.no.sid = data.frame(z = 1)), msg = "patient-level data: x.no.sid"),
     list(args = list(nodesise = 5), msg = "neither sidClustering\\(\\) nor rfsrc\\(\\) takes: nodesise"),
     list(args = list(TRUE), msg = "each named once"),
     list(args = list(fast = TRUE, fast = FALSE), msg = "each named once"),
@@ -124,7 +126,7 @@ test_that("sid-fit says why it needs randomForestSRC 3.7.0, next to the check", 
   expect_length(at, 1L)
   above <- paste(src[seq(max(1L, at - 8L), at - 1L)], collapse = " ")
   expect_match(above, "copied the floor")
-  expect_match(above, "3.7.0 changed only survival prediction", fixed = TRUE)
+  expect_match(above, "3.7.0 changed survival prediction", fixed = TRUE)
 })
 
 test_that("sid-fit renders with IMPUTE = \"none\" on complete data and a non-empty SID_ARGS", {

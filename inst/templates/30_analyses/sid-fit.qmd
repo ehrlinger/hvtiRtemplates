@@ -71,7 +71,8 @@ options(rf.cores = 1L, mc.cores = 1L)
 # randomForestSRC 3.7.0 is the release the random forest templates were written
 # and tested against (2026-09-19); this job copied the floor from them. It needs
 # nothing new in 3.7.0: sidClustering() has taken every argument used here since
-# 3.4.5 at least, and 3.7.0 changed only survival prediction. randomForestSRC is
+# 3.4.5 at least, and 3.7.0 changed survival prediction and added a hybrid
+# distance, neither used here. randomForestSRC is
 # in Suggests, so the floor gates this job, not installing hvtiRtemplates. To
 # reproduce an analysis, match its version: from 3.10.0 the same seed grows a
 # different forest (rfsrc.RNGversion() selects the old generator).
@@ -175,8 +176,9 @@ SID_REDUCE <- TRUE
 # sidClustering()'s own arguments are taken, and the rfsrc() arguments it hands
 # on to the forest (mtry, nodesize). Each changes the distance. The ones this
 # job sets above (data, method, ntree, reduce, seed, k), the formula and
-# na.action are refused. list() makes the call this job has always made, so
-# caches from before SID_ARGS still load.
+# na.action are refused, and so are x.no.sid, case.wt and samp: they hold
+# patient data, and SID_ARGS is recorded in the report. list() makes the call
+# this job has always made, so caches from before SID_ARGS still load.
 SID_ARGS <- list()
 
 # EDIT: how missing values are filled before the forest, which needs complete
@@ -368,8 +370,16 @@ if (length(.owned)) {
   stop("SID_ARGS names argument(s) this job sets itself: ", toString(.owned),
        ". Set NTREE, SID_REDUCE, SEED or IMPUTE above instead.", call. = FALSE)
 }
-.unknown <- setdiff(.sid_names, setdiff(union(names(formals(randomForestSRC::sidClustering)),
-                                              names(formals(randomForestSRC::rfsrc))), "..."))
+# These carry patient data, which SID_ARGS would write into the cache key, sid.rds and the report.
+.data_args <- intersect(.sid_names, c("x.no.sid", "case.wt", "samp"))
+if (length(.data_args)) {
+  stop("SID_ARGS cannot carry patient-level data: ", toString(.data_args), ". It is recorded in the report.",
+       call. = FALSE)
+}
+# The method's formals as well as the generic's, in case a release declares only (data, method, ...) on the generic.
+.takes <- unlist(lapply(list(randomForestSRC::sidClustering, randomForestSRC:::sidClustering.rfsrc, randomForestSRC::rfsrc),
+                        function(f) names(formals(f))))
+.unknown <- setdiff(.sid_names, setdiff(.takes, "..."))
 if (length(.unknown)) {
   stop("SID_ARGS names argument(s) neither sidClustering() nor rfsrc() takes: ", toString(.unknown), ".", call. = FALSE)
 }
