@@ -280,8 +280,9 @@ test_that("sid-clusters writes and registers the cluster letters, and nothing el
   # Nothing pins the letters at K here, so the COLLAPSE warns (#611).
   expect_warning(sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(COLLAPSE = list(Z = c("B", "C"))))),
                  "COLLAPSE merges this render's own letters")
-  csv <- file.path(hvtiRutilities::study_dir("datasets", env$.root), "morphology-sid-clusters.csv")
-  out <- utils::read.csv(csv)
+  # .rds, not CSV, so the ID keeps its type (#618).
+  expect_false(file.exists(file.path(hvtiRutilities::study_dir("datasets", env$.root), "morphology-sid-clusters.csv")))
+  out <- readRDS(file.path(hvtiRutilities::study_dir("datasets", env$.root), "morphology-sid-clusters.rds"))
   expect_identical(names(out), c("ccfid", "C2", "C3", "C4", "C5", "G3"))
   expect_identical(nrow(out), 150L)
   cfg <- hvtiRutilities::study_config(start = env$.root)
@@ -295,7 +296,7 @@ test_that("sid-clusters writes and registers the cluster letters, and nothing el
   again <- read_job_data(hvtiRutilities::study_config(start = env$.root), id_col = "ccfid", join = "clusters_10_morphology_sid")$data
   # The second render's letters are the flipped ones, patient by patient.
   expect_identical(again$c2[match(env$sid_letters$ccfid, again$ccfid)], as.character(env$sid_letters$C2))
-  expect_false(identical(again$c2[match(out$ccfid, again$ccfid)], out$C2))
+  expect_false(identical(again$c2[match(out$ccfid, again$ccfid)], as.character(out$C2)))
 })
 
 test_that("sid-clusters warns when COLLAPSE merges letters nothing pinned (#611)", {
@@ -375,13 +376,37 @@ test_that("sid-clusters stops on an OVERRIDES name that is no solution in K_RANG
   expect_error(sid_clusters_after(env, bad), "OVERRIDES.*pm7")
 })
 
-test_that("sid-clusters stops when the ID would not survive the CSV, zero-padded IDs being the case", {
+test_that("sid-clusters keeps a zero-padded ID: the handoff is written and a join finds every patient (#618)", {
   skip_on_cran()
   rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
   d <- sid_data()
   d$ccfid <- sprintf("%07d", seq_len(nrow(d)))
   env <- sid_fit_first(d)
-  expect_error(sid_clusters_after(env), "would not survive")
+  sid_clusters_after(env)
+  expect_true(file.exists(env$set_path("estimates", "sid-clusters.rds")))
+  out <- readRDS(file.path(hvtiRutilities::study_dir("datasets", env$.root), "morphology-sid-clusters.rds"))
+  expect_identical(out$ccfid, d$ccfid[match(out$ccfid, d$ccfid)])
+  expect_match(out$ccfid[1L], "^0")
+  joined <- read_job_data(hvtiRutilities::study_config(start = env$.root), id_col = "ccfid",
+                          join = "clusters_10_morphology_sid")$data
+  expect_setequal(joined$ccfid, d$ccfid)
+  expect_false(anyNA(joined$c2))
+})
+
+test_that("a set registered as CSV before 1.6.3 keeps its CSV, and still stops on an ID that would not survive it", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  d <- sid_data()
+  d$ccfid <- sprintf("%07d", seq_len(nrow(d)))
+  env <- sid_fit_first(d)
+  dd <- hvtiRutilities::study_dir("datasets", env$.root)
+  utils::write.csv(data.frame(ccfid = seq_len(nrow(d)), C2 = "A"), file.path(dd, "morphology-sid-clusters.csv"), row.names = FALSE)
+  utils::capture.output(suppressMessages(hvtiRutilities::register_data(
+    root = env$.root, file = "morphology-sid-clusters.csv", dataset = "clusters_10_morphology_sid", role = "named",
+    population = "x", kind = "ancillary", key_cols = "ccfid"
+  )))
+  expect_error(sid_clusters_after(env), "would not survive as CSV.*remove that entry")
+  expect_false(file.exists(file.path(dd, "morphology-sid-clusters.rds")))
 })
 
 test_that("K = NULL renders the metrics and skips what needs K; a final render or a K outside K_RANGE stops", {
@@ -561,6 +586,13 @@ test_that("a render whose ID fails the CSV read-back leaves the registered CSV i
   rf_skip_unless_stack(rf_template_packages("sid", "fit"))  # nolint: object_usage_linter.
   fx <- sid_render_fixture()
   choices <- c("K_RANGE <- 2:4", "K <- 3L", "K_METRICS_MAX <- 4")
+  # A set registered as CSV before 1.6.3; a new set registers .rds (#618).
+  dd <- file.path(fx$root, "00_datasets")
+  utils::write.csv(data.frame(ccfid = seq_len(150L), C2 = "A"), file.path(dd, "morph-sid-clusters.csv"), row.names = FALSE)
+  utils::capture.output(suppressMessages(hvtiRutilities::register_data(
+    root = fx$root, file = "morph-sid-clusters.csv", dataset = "clusters_5_morph_sid", role = "named",
+    population = "x", kind = "ancillary", key_cols = "ccfid"
+  )))
   sid_render_clusters(fx, choices)
   csv <- list.files(file.path(fx$root, "00_datasets"), pattern = "-clusters[.]csv$", full.names = TRUE)
   expect_length(csv, 1L)
