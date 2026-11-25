@@ -870,6 +870,9 @@ test_that("TIME <- NULL judges eligibility on a cohort with no outcome and saves
   expect_null(vt$curves)
   expect_null(attr(vt, "hvti_provenance")$analysis)
   expect_identical(vt$eligibility$rows, env$.elig_rows)
+  expect_identical(vt$eligibility$decision, env$.elig)
+  expect_identical(vt$eligibility$decision$elig, !vapply(split(!env$.elig_rows$in_distribution, env$.elig_rows$ID), any,
+                                                         logical(1L))[as.character(env$.elig$ID)], ignore_attr = TRUE)
   # Eligibility never reads the outcome: the same cohort with one is judged the same, patient by patient. Each
   # fixture study digests the IDs under its own key, so the rows are compared without them.
   with_outcome <- vt_fit_first()

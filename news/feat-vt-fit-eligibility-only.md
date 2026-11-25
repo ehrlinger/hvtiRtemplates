@@ -1,8 +1,10 @@
 - `vt-fit` runs eligibility alone when `TIME` and `STATUS` are both `NULL`,
   for a cohort that has no outcome yet or whose outcomes someone else will
   analyze. It reads no outcome and grows no forest. The report keeps the cohort,
-  predictor and eligibility sections, notes each skipped section, and saves a
-  `vt.rds` that carries the eligibility flags with its outcome parts empty.
+  predictor and eligibility sections and their small-cell warnings, notes each
+  skipped section, and saves a `vt.rds` whose outcome parts are empty. Every
+  `vt.rds` now carries `eligibility$decision`, each patient's combined verdict
+  beside each rule's.
   `vt-explain` refuses that fit and says why. Eligibility never read the outcome,
   so the flags are the ones a full fit of the same cohort gives. An arm then
   needs two patients rather than an event.
