@@ -482,8 +482,11 @@
 # are current.
 .key_repeat_hint <- function(read, dataset, analysis_set, key, cfg, joined = FALSE) {
   if (joined) return(" The registered versions read are current, so the repeat is in the data, not a stale version.")
+  file <- is.null(analysis_set) && .is_dataset_file(dataset)
   what <- if (!is.null(analysis_set)) {
     paste0("The analysis set `", analysis_set, "` is current")
+  } else if (file) {
+    paste0("`", dataset, "` is an unregistered file, read as it stands")
   } else if (isTRUE(read$record$working)) {
     paste0("This job read the working build of `", dataset, "`")
   } else {
@@ -492,15 +495,18 @@
   study <- paste0("cfg = hvtiRutilities::study_config(start = ", encodeString(cfg$root, quote = "\""), ")")
   call <- if (!is.null(analysis_set)) {
     paste0("hvtiRdatabuild::read_analysis_set(", encodeString(analysis_set, quote = "\""), ", ", study, ")")
-  } else if (.is_dataset_file(dataset)) {
+  } else if (file) {
+    # The job lowercases a file's column names, and duplicate_keys() matches them exactly, so the call does too.
     path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), dataset)
-    paste0("hvtiRutilities::read_clinical_data(", encodeString(path, quote = "\""), ")")
+    paste0("local({d <- hvtiRutilities::read_clinical_data(", encodeString(path, quote = "\""),
+           "); names(d) <- tolower(names(d)); d})")
   } else {
     paste0("hvtiRutilities::read_built(", study, ", dataset = ", encodeString(dataset, quote = "\""), ")")
   }
-  paste0(" ", what, ", so the repeat is in the build itself. List the repeated rows with ",
+  where <- if (file) "file" else "build"
+  paste0(" ", what, ", so the repeat is in the ", where, " itself. List the repeated rows with ",
          "hvtiRutilities::duplicate_keys(", call, ", ", paste(deparse(key), collapse = ""),
-         ") and correct them in the build.")
+         ") and correct them in the ", where, ".")
 }
 
 # A model job's settings name the columns it models, such as OUTCOME and

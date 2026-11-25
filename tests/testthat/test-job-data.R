@@ -565,6 +565,24 @@ test_that("a KEY that repeats in a stale registered version says the source was 
   expect_identical(dk$summary$repeated_keys, 1L)
 })
 
+test_that("a KEY that repeats in an unregistered file says the file holds it, and how to list it", {
+  long <- data.frame(CCFID = c(9001L, 9001L, 9002L), DT_SURG = c("2020-01-02", "2020-01-02", "2021-03-04"))
+  cfg <- job_study(data.frame(ccfid = 1:2))
+  saveRDS(long, file.path(hvtiRutilities::study_dir("datasets", cfg$root), "long_set.rds"))
+  err <- tryCatch(suppressWarnings(read_job_data(cfg, id_col = "ccfid", dataset = "long_set.rds",
+                                                 key_cols = c("ccfid", "dt_surg"))),
+                  error = conditionMessage)
+  expect_match(err, "`long_set.rds` is an unregistered file, read as it stands, so the repeat is in the file itself",
+               fixed = TRUE)
+  expect_false(grepl("working build|registered version", err))
+  expect_false(grepl("9001", err, fixed = TRUE))
+  # The file's columns are upper case and the job's KEY lower case, as the job reads them; the call still runs.
+  call <- sub("^.*List the repeated rows with (.*) and correct them in the file\\.$", "\\1", err)
+  expect_match(call, "^hvtiRutilities::duplicate_keys\\(")
+  dk <- suppressMessages(eval(str2lang(call), baseenv()))
+  expect_identical(dk$summary$repeated_keys, 1L)
+})
+
 test_that("a selection saved before the refusal is still shown masked, and rebuilding it names the file", {
   cfg <- job_study(d_ids)
   sel <- attr(read_job_data(cfg, id_col = "ccfid", where = quote(age >= 18))$record, "selection")

@@ -481,6 +481,23 @@ test_that("the folder is moved holding the study's render lock, taken over from 
   expect_false(dir.exists(lock))
 })
 
+test_that("a render lock the move could not release is named, since this session would hold it until it exits", {
+  skip_if_not_installed("ps")
+  dir <- withr::local_tempdir()
+  results <- stuck_folder(dir)
+  root <- lock_root(list(pid = 999999L, created = "0.000000", host = Sys.info()[["nodename"]]))
+  lock <- .provenance_lock_path(root)
+  local_mocked_bindings(.race_sleep = function(s) NULL, .start_provenance_heartbeat = function(...) TRUE,
+                        .release_provenance_lock = function(root, me) invisible(NULL))
+
+  expect_warning(out <- .settle_execute_results(results, root = root), "could not be released", fixed = TRUE)
+  expect_match(out, "was moved to", fixed = TRUE)
+  expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), .provenance_self_owner())
+  w <- tryCatch(.release_settled_lock(root, .provenance_self_owner()), warning = conditionMessage)
+  expect_match(w, paste0("delete ", lock, "."), fixed = TRUE)
+  expect_match(w, .provenance_takeover_path(lock), fixed = TRUE)
+})
+
 test_that("a folder is left in place while another render holds the study's render lock", {
   skip_if_not_installed("ps")
   dir <- withr::local_tempdir()

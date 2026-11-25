@@ -133,8 +133,8 @@ Edit these values for this study before rendering.
 # job's own choice, not taken from a model: each hm model was fitted on ONE
 # group's rows, and this job predicts for all of them.
 # EDIT: the dataset, and a WHERE that keeps every group being compared.
-DATASET <- "built"
 # A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
+DATASET <- "built"
 ANALYSIS_SET <- NULL
 WHERE <- NULL
 ID <- "ccfid"

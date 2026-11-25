@@ -295,7 +295,7 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
         "This R process already holds it."
       return(paste0(still, ", and the study's render lock could not be taken, so the folder was left in place. ", why))
     }
-    on.exit(.release_provenance_lock(root, me), add = TRUE)
+    on.exit(.release_settled_lock(root, me), add = TRUE)
   }
   if (!all(startsWith(entries(), ".nfs"))) {
     return(paste0(still, ", and it holds other files too, so it was left in place."))
@@ -308,6 +308,18 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
   }
   structure(paste0(still, ", so the folder, which holds only those deleted files, was moved to ", aside,
                    ". Delete it once `lsof +D` on it shows nothing holds them."), aside = aside)
+}
+
+# A lock this R process took and could not release is owned by a live process, the session, so every render of the
+# study, the rerun that follows this included, would be refused until the session exits. Say so, and name the folder.
+.release_settled_lock <- function(root, me) {
+  .release_provenance_lock(root, me)
+  lock <- .provenance_lock_path(root)
+  if (!identical(.read_provenance_owner(file.path(lock, "owner.json")), me)) return(invisible(NULL))
+  warning("render_job(): the study's render lock, taken while the execute-results folder was moved, could not be ",
+          "released, and this R session holds it until it exits. If ", .provenance_takeover_path(lock),
+          " exists, a render is taking the lock over and this clears itself. Otherwise, once no render of the study is ",
+          "running, delete ", lock, ".", call. = FALSE)
 }
 
 # The Quarto project the job renders in: the nearest folder above it holding _quarto.yml, which is the

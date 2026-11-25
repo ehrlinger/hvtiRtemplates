@@ -13,6 +13,12 @@
     stop("IMBALANCE_RATIO must be one number of at least 1, or Inf to never grow the RFQ forest.", call. = FALSE)
   }
   counts <- table(droplevels(as.factor(y)))
+  # One class leaves nothing to classify, and none would read as a ratio of -Inf with warnings.
+  if (length(counts) < 2L) {
+    stop("A classification forest needs two or more classes of the outcome among the patients it is grown on; ",
+         if (length(counts)) paste0("they are all ", names(counts), " (", as.integer(counts), ").") else "there are none.",
+         call. = FALSE)
+  }
   observed <- as.numeric(max(counts) / min(counts))
   two <- length(counts) == 2L
   rfq <- two && observed >= ratio
