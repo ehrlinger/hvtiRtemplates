@@ -322,19 +322,28 @@ if (identical(IMPUTE, "none")) {
 }
 # Imputation m is cached under its own name and seeded SEED + m - 1, so raising
 # M later reuses the imputations already made.
+# The cache keys on this code as written, so it must not change: an imputation cached by an earlier copy of
+# this job then still loads.
+.impute_mice <- quote(mice::mice(.to_impute, m = 1, maxit = MICE_MAXIT, method = "pmm", printFlag = FALSE))
+.impute_forest <- quote(randomForestSRC::impute(data = .to_impute, ntree = 250, verbose = FALSE))
+.impute_code <- if (identical(IMPUTE, "mice")) .impute_mice else .impute_forest
+.todo <- .n_missing > 0L & vapply(seq_len(M), function(m) {
+  hvtiRutilities::cache_would_fit(paste0("sid-fit-impute-", m), .impute_code, seed = SEED + m - 1L, dir = CACHE_DIR,
+                                  refit = REFIT)
+}, logical(1L))
+# Each imputation that runs is reported to job_status() and the render log as done of total, with an estimate
+# of what is left. Imputations read from the cache are not counted. Outside a render the reporter is NULL.
+.tick <- .job$progress("imputation")
 d_complete <- lapply(seq_len(M), function(m) {
   if (.n_missing == 0L) return(.to_impute)
   s <- SEED + m - 1L
-  if (identical(IMPUTE, "mice")) {
-    imp <- cache_fit(paste0("sid-fit-impute-", m),
-                     mice::mice(.to_impute, m = 1, maxit = MICE_MAXIT, method = "pmm", printFlag = FALSE),
-                     seed = s, dir = CACHE_DIR, refit = REFIT)
-    mice::complete(imp, 1)
+  out <- if (identical(IMPUTE, "mice")) {
+    mice::complete(cache_fit(paste0("sid-fit-impute-", m), .impute_mice, seed = s, dir = CACHE_DIR, refit = REFIT), 1)
   } else {
-    cache_fit(paste0("sid-fit-impute-", m),
-              randomForestSRC::impute(data = .to_impute, ntree = 250, verbose = FALSE),
-              seed = s, dir = CACHE_DIR, refit = REFIT)
+    cache_fit(paste0("sid-fit-impute-", m), .impute_forest, seed = s, dir = CACHE_DIR, refit = REFIT)
   }
+  if (.todo[m] && !is.null(.tick)) .tick(sum(.todo[seq_len(m)]), sum(.todo))
+  out
 })
 if (any(vapply(d_complete, nrow, integer(1L)) != nrow(d))) {
   stop("The imputation returned fewer patients than the cohort holds, so the distances could not be matched to patients.",
@@ -394,10 +403,18 @@ if (length(.unknown)) {
   }
   o[c("dist", "outcome.names")]
 }, splice = TRUE)
+.todo <- vapply(seq_len(M), function(m) {
+  s <- SEED + m - 1L
+  hvtiRutilities::cache_would_fit(paste0("sid-fit-", m), .sid_code, seed = s, dir = CACHE_DIR, refit = REFIT)
+}, logical(1L))
+# Each forest that grows is reported to job_status() and the render log as the imputations are, above.
+.tick <- .job$progress("SID forest")
 sid_fits <- lapply(seq_len(M), function(m) {
   if (anyNA(d_complete[[m]])) stop("Missing values reached the SID fit after imputation ", m, ".", call. = FALSE)
   s <- SEED + m - 1L
-  cache_fit(paste0("sid-fit-", m), .sid_code, seed = s, dir = CACHE_DIR, refit = REFIT)
+  f <- cache_fit(paste0("sid-fit-", m), .sid_code, seed = s, dir = CACHE_DIR, refit = REFIT)
+  if (.todo[m] && !is.null(.tick)) .tick(sum(.todo[seq_len(m)]), sum(.todo))
+  f
 })
 sid_dist <- Reduce(`+`, lapply(sid_fits, `[[`, "dist")) / M
 # How closely each imputation's distances follow the mean. Near 1, the
