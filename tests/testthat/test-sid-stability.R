@@ -332,6 +332,8 @@ test_that("the default refit code is unchanged, so refits cached before PAM_ON e
   src <- readLines(template_path("sid", "stability"), warn = FALSE)
   env <- new.env(parent = globalenv())
   env$pam_on <- "sid"
+  # No SID_ARGS, as every sid.rds from before them: the refit code must be byte for byte the old one (#644).
+  env$.sid_args <- list()
   chunk <- rf_chunk(src, "refits")
   eval(parse(text = chunk[grep("^\\.refit_code <- ", chunk):(grep("^run_refits <- ", chunk) - 1L)]), envir = env)
   expect_snapshot(cat(deparse(env$.refit_code), sep = "\n"))

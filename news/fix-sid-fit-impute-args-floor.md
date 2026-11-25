@@ -14,7 +14,8 @@
   name neither function takes. The arguments are written into the
   cached call and saved in `sid.rds` and the provenance. `SID_ARGS <- list()`,
   the default, makes the call the job always made, so a study's existing
-  caches still load (#644). `sid-stability` does not yet refit with them.
+  caches still load (#644). `sid-stability` refits with the same arguments,
+  so a refit differs from the reported forest only by its seed.
 
 - `sid-fit` says why it asks for randomForestSRC 3.7.0: it is the release the
   random forest templates were written against, and this job needs nothing new

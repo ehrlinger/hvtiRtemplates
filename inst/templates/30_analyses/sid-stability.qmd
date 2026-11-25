@@ -440,35 +440,38 @@ if (length(.clash)) {
 # completed datasets, sid-fit's settings, the K range and the refit's base seed.
 # Each forest is grown as sid-fit grows forest m: R's generator set to its seed,
 # and the same seed handed to the forest. With refit_seed = sid-fit's SEED this
-# rebuilds sid-fit's distance exactly.
-.refit_code <- quote({
+# rebuilds sid-fit's distance exactly. sid-fit's SID_ARGS, the other sidClustering() arguments its forests were
+# grown with, are spliced into both calls, so a refit differs from the reported forest only by its seed. A sid.rds
+# from before SID_ARGS records none; with none the calls, and so the refit cache keys, are as they were.
+.sid_args <- if (is.null(.s$sid_args)) list() else .s$sid_args
+.refit_code <- bquote({
   dists <- lapply(seq_along(refit_x), function(m) {
     s <- refit_seed + m - 1L
     set.seed(s)
-    o <- sidClustering(refit_x[[m]], method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(s))
+    o <- sidClustering(refit_x[[m]], method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(s), ..(.sid_args))
     if (is.null(o$dist)) stop("sidClustering() failed on imputation ", m, " (it returned no distance).", call. = FALSE)
     o$dist
   })
   d <- stats::as.dist(Reduce(`+`, dists) / length(dists))
   # PAM on the SID distance itself, exactly as sid-clusters runs it.
   vapply(refit_k, function(k) cluster::pam(d, k, cluster.only = TRUE), integer(nrow(refit_x[[1L]])))
-})
+}, splice = TRUE)
 # The same refit for a sid-clusters run with PAM_ON = "profile": each patient's row of distances is a point, and
 # PAM runs on the Euclidean distance between rows, as pam(D, k) on the matrix does. Kept as a second call rather
 # than a switch inside the first, because cache_fit() keys on the code's text and a change to the first would
 # make every refit cached under it stale.
-.refit_code_profile <- quote({
+.refit_code_profile <- bquote({
   dists <- lapply(seq_along(refit_x), function(m) {
     s <- refit_seed + m - 1L
     set.seed(s)
-    o <- sidClustering(refit_x[[m]], method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(s))
+    o <- sidClustering(refit_x[[m]], method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(s), ..(.sid_args))
     if (is.null(o$dist)) stop("sidClustering() failed on imputation ", m, " (it returned no distance).", call. = FALSE)
     o$dist
   })
   # The Euclidean distance between rows, which is what pam() computes from a matrix, computed once for every K.
   d <- stats::dist(Reduce(`+`, dists) / length(dists))
   vapply(refit_k, function(k) cluster::pam(d, k, cluster.only = TRUE), integer(nrow(refit_x[[1L]])))
-})
+}, splice = TRUE)
 .refit_pam <- if (pam_on == "profile") .refit_code_profile else .refit_code
 run_refits <- function(refit_x, tag, unit) {
   refit_ntree <- .s$ntree

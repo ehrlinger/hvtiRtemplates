@@ -163,3 +163,35 @@ test_that("sid-fit renders with IMPUTE = \"none\" on complete data and a non-emp
   h <- readRDS(saved)
   expect_identical(h$settings$sid_args, list(dist.sharpen = FALSE))
 })
+
+test_that("sid-stability refits with sid-fit's SID_ARGS, in both refit calls and in the refits it ran", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "stability"))))
+  args <- list(dist.sharpen = FALSE)
+  env <- sid_fit_first(choices = utils::modifyList(sid_fit_choices, list(SID_ARGS = args)))  # nolint: object_usage_linter.
+  sid_clusters_after(env)  # nolint: object_usage_linter.
+  sid_stability_after(env)  # nolint: object_usage_linter.
+  expect_identical(env$.sid_args, args)
+  # The refits that ran were cached under code that hands the argument on.
+  refits <- list.files(env$CACHE_DIR, "^sid-stability-.*[.]rds$", full.names = TRUE)
+  expect_gt(length(refits), 0L)
+  for (f in refits) expect_match(readRDS(f)$key$code, "dist.sharpen = FALSE", fixed = TRUE, info = basename(f))
+  # Both refit calls, the SID metric's and the profile metric's, pass it to sidClustering().
+  for (code in list(env$.refit_code, env$.refit_code_profile)) {
+    seen <- new.env()
+    seen$args <- list()
+    e <- new.env(parent = env)
+    e$sidClustering <- function(x, ...) {
+      seen$args <- c(seen$args, list(list(...)))
+      list(dist = as.matrix(stats::dist(seq_len(nrow(x)))))
+    }
+    e$refit_x <- env$x_m
+    e$refit_ntree <- env$.s$ntree
+    e$refit_reduce <- env$.s$sid_reduce
+    e$refit_k <- env$.k_range
+    e$refit_seed <- 1L
+    eval(code, e)
+    expect_length(seen$args, length(env$x_m))
+    for (a in seen$args) expect_identical(a$dist.sharpen, FALSE)
+  }
+})
