@@ -424,6 +424,29 @@ test_that("study_render refuses a live render lock with no running job, and pass
   expect_true(.check_study_render(mine, root)$ok)
 })
 
+test_that("study_render names the jobs and user a lock holder outside run_job() recorded", {
+  # The 2026-11-23 training: a blocked job should say which job holds the lock.
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  lock <- .provenance_lock_path(root)
+  dir.create(lock, recursive = TRUE)
+  owner <- list(pid = 4242L, created = "1.000000")
+  jsonlite::write_json(owner, file.path(lock, "owner.json"), auto_unbox = TRUE)
+  testthat::local_mocked_bindings(.provenance_owner_alive = function(owner) TRUE)
+  expect_match(.check_study_render(mine, root)$message, "so its job is not known", fixed = TRUE)
+  jsonlite::write_json(c(owner, list(jobs = list("distributions/ac.dead.hz.qmd"), user = "jdoe")),
+                       file.path(lock, "about.json"), auto_unbox = TRUE)
+  ck <- .check_study_render(mine, root)
+  expect_false(ck$ok)
+  expect_match(ck$message, "(process 4242, rendering distributions/ac.dead.hz.qmd for jdoe), started outside run_job().",
+               fixed = TRUE)
+  expect_no_match(ck$message, "not known", fixed = TRUE)
+  # A note left by an earlier render names the wrong one, so it is not read.
+  jsonlite::write_json(list(pid = 9L, created = "2.000000", jobs = list("x.qmd"), user = "jdoe"),
+                       file.path(lock, "about.json"), auto_unbox = TRUE)
+  expect_match(.check_study_render(mine, root)$message, "so its job is not known", fixed = TRUE)
+})
+
 test_that("study_render refuses a claim left behind in the render lock, and names it, only once it is old", {
   root <- lock_study()
   mine <- file.path(root, "analyses", "mine.qmd")

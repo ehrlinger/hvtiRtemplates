@@ -185,3 +185,24 @@ test_that("a one-line refusal keeps its reason and prints no empty fix line", {
   expect_true(any(grepl("why: memory: one line only.", out, fixed = TRUE)))
   expect_false(any(grepl("fix:", out, fixed = TRUE)))
 })
+
+test_that("a render held off by the study's render lock is diagnosed with the holder's job", {
+  # Synthetic: the pre-render hook's stop() as R prints it, then Quarto's own failure line.
+  held <- paste0("Another Quarto render is in progress in this study (process 101, rendering ",
+                 "distributions/ac.dead.hz.qmd for jdoe). Wait for it to finish, then render again. If it was started with ",
+                 "run_job(), job_status(\"distributions/ac.dead.hz.qmd\") shows how far it has got and ",
+                 "cancel_job(\"distributions/ac.dead.hz.qmd\") stops it.")
+  for (prefix in c("Error: ", "Error in .acquire_provenance_lock(root) : ", "")) {
+    d <- .diagnose_failure(c("processing file: job.qmd", paste0(prefix, held), "Execution halted",
+                             "ERROR: Error running script"), list())
+    expect_identical(d$reason, paste("another Quarto render is in progress in this study (process 101, rendering",
+                                     "distributions/ac.dead.hz.qmd for jdoe), so this job could not start."))
+    expect_match(d$fix, "^Wait for it to finish, then run this job again[.] If it was started with run_job[(][)]")
+    expect_match(d$fix, "cancel_job(\"distributions/ac.dead.hz.qmd\") stops it.", fixed = TRUE)
+  }
+  # A lock with no owner recorded yet names nothing, and still says what happened.
+  d <- .diagnose_failure(c("Error: Another Quarto render is in progress in this study. Wait for it to finish, then render again.",
+                           "Execution halted"), list())
+  expect_identical(d$reason, "another Quarto render is in progress in this study, so this job could not start.")
+  expect_identical(d$fix, "Wait for it to finish, then run this job again.")
+})
