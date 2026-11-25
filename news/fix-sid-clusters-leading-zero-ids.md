@@ -3,3 +3,5 @@
   It had stopped every study keyed on a zero-padded ID before writing
   `sid-clusters.rds`, which also blocked `sid-stability` (#618). A set
   registered as CSV before keeps its CSV and its read-back check.
+- hvtiRtemplates now requires hvtiRutilities 1.5.27, the first release whose
+  `update_manifest()` reads the `.rds` that `sid-clusters` registers.
