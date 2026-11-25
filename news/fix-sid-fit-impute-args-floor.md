@@ -9,8 +9,9 @@
 - `sid-fit` takes `SID_ARGS`, a named list of other `sidClustering()` arguments
   (`ntree.reduce`, `fast`, `dist.sharpen`) and of the `rfsrc()` arguments it
   passes on (`mtry`, `nodesize`), so a rerun can match an analysis that set
-  them. It refuses the arguments the job sets itself, `formula`, `na.action`
-  and any name neither function takes. The arguments are written into the
+  them. It refuses the arguments the job sets itself, `formula`, `na.action`,
+  the arguments that carry patient data (`x.no.sid`, `case.wt`, `samp`) and any
+  name neither function takes. The arguments are written into the
   cached call and saved in `sid.rds` and the provenance. `SID_ARGS <- list()`,
   the default, makes the call the job always made, so a study's existing
   caches still load (#644). `sid-stability` does not yet refit with them.
