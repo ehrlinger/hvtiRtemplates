@@ -968,10 +968,29 @@
 .start_provenance_heartbeat <- function(lock, owner, every = 60) {
   if (.Platform$OS.type != "unix") return(invisible(FALSE))
   beat <- .provenance_heartbeat_path(lock, owner)
-  if (!file.create(beat, showWarnings = FALSE)) return(invisible(FALSE))
-  # touch -c does nothing once the file has gone with its lock, and the loop ends with the owner.
-  script <- sprintf("trap '' HUP; while kill -0 %d 2>/dev/null; do touch -c %s 2>/dev/null || rm -f %s; sleep %s; done",
-                    as.integer(owner$pid), shQuote(beat), shQuote(beat), format(every))
+  # The file holds a token for this acquisition: the same owner taking the lock again within a
+  # poll recreates the same path, and the token is how the old loop knows the file is no longer
+  # its own (#656). tempfile()'s name does not touch .Random.seed.
+  token <- basename(tempfile("beat"))
+  if (!isTRUE(tryCatch({
+    writeLines(token, beat)
+    TRUE
+  }, error = function(e) FALSE, warning = function(w) FALSE))) return(invisible(FALSE))
+  # The loop ends with the owner or once the file no longer holds its token: the lock was
+  # released, taken again, or a touch failed. A missing file reads as alive, so ending on one is
+  # safe. The owner can outlive its lock (a test suite's driver does), so the file is the signal
+  # that stops it. The wait is in steps of at most a second, so a released lock leaves no `sleep`
+  # behind for long. A read that fails on a share also ends the loop, so a loop that ends while
+  # its owner lives removes the file if it is still its own or cannot be read: an aging one left
+  # behind would read as a crash in ten minutes. A file holding another token is left alone.
+  step <- min(every, 1)
+  script <- sprintf(paste0("trap '' HUP; b=%s; t=%s; p=%d; mine() { [ \"$(cat \"$b\" 2>/dev/null)\" = \"$t\" ]; }; ",
+                           "while kill -0 $p 2>/dev/null && mine; do ",
+                           "touch -c \"$b\" 2>/dev/null || rm -f \"$b\"; n=0; ",
+                           "while [ $n -lt %d ] && mine; do sleep %s; n=$((n+1)); done; done; ",
+                           "c=$(cat \"$b\" 2>/dev/null); ",
+                           "if kill -0 $p 2>/dev/null && { [ \"$c\" = \"$t\" ] || [ -z \"$c\" ]; }; then rm -f \"$b\"; fi"),
+                    shQuote(beat), shQuote(token), as.integer(owner$pid), as.integer(ceiling(every / step)), format(step))
   # A loop that never started would read as a dead owner, so its file goes too.
   started <- system2("sh", c("-c", shQuote(script)), stdout = FALSE, stderr = FALSE, stdin = "/dev/null", wait = FALSE)
   if (!identical(as.integer(started), 0L)) unlink(beat)
