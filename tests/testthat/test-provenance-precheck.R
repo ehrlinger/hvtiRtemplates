@@ -95,6 +95,8 @@ test_that("a _quarto.yml nearer the job than the study root fails the check", {
 
   problem <- .provenance_hooks_problem(job)
   expect_match(problem$message, "configured Quarto study project", fixed = TRUE)
+  expect_match(problem$fix, paste0("Move ", dirname(job), "/_quarto.yml aside"), fixed = TRUE)
+  expect_no_match(problem$fix, ".install_provenance_hooks(", fixed = TRUE)
 })
 
 test_that("submit_job stops before launching a managed job without the hooks", {

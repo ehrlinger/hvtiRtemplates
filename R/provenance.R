@@ -335,16 +335,23 @@
 .provenance_hooks_problem <- function(path) {
   if (!.provenance_managed(path)) return(NULL)
   root <- normalizePath(.find_study_root(dirname(path)), winslash = "/", mustWork = TRUE)
+  project <- .quarto_project_dir(path)
   reason <- tryCatch({
-    .assert_provenance_project(root, .quarto_project_dir(path))
+    .assert_provenance_project(root, project)
     NULL
   }, error = conditionMessage)
   if (is.null(reason)) return(NULL)
+  message <- paste0(basename(path), " records its provenance, which needs the study's Quarto provenance hooks: ", reason)
+  # A _quarto.yml nearer the job makes its folder the project, and hooks at the root would not change that.
+  if (!is.na(project) && !identical(project, root)) {
+    return(list(message = message, fix = paste0(
+      "Move ", file.path(project, "_quarto.yml"), " aside: it makes that folder its own Quarto project, ",
+      "so the render never reaches the study root's hooks."
+    )))
+  }
   created <- !file.exists(file.path(root, "_quarto.yml"))
   list(
-    message = paste0(
-      basename(path), " records its provenance, which needs the study's Quarto provenance hooks: ", reason
-    ),
+    message = message,
     fix = paste0(
       "hvtiRtemplates:::.install_provenance_hooks(", deparse(root), ")",
       if (created) {
