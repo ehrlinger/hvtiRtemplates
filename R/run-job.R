@@ -245,7 +245,7 @@ run_job <- function(path, final = FALSE, wait = 300, quiet = isTRUE(getOption("h
   key <- .run_key(path, output_file)
   rel <- .study_rel(key, root)
   if (!quiet) cat("Checking ", basename(path), if (!is.null(output_file)) paste0(" for ", output_file), "\n", sep = "")
-  checks <- list(.check_r_version(root), .check_packages(path, root), .check_quarto(), .check_run_state(key, root),
+  checks <- list(.check_r_version(root), .check_packages(path, root), .check_quarto(root), .check_run_state(key, root),
                  .check_study_render(key, root), .check_provenance_hooks(path))
   if (!.report_checks(checks, quiet)) {
     # Quiet printed nothing, so the error itself has to say what failed and how to fix it.

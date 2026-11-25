@@ -871,9 +871,15 @@
 # The render's owner is the Quarto process that runs the hooks and the knitr
 # session alike. Its start time guards against a reused process id, and its host
 # against a study shared by sessions on several servers.
-.provenance_render_owner <- function() {
-  parent <- ps::ps_parent()
-  list(pid = ps::ps_pid(parent), created = sprintf("%.6f", as.numeric(ps::ps_create_time(parent))),
+.provenance_render_owner <- function() .provenance_owner_of(ps::ps_parent())
+
+# This R process as an owner, for a hold made by the process itself rather than by a Quarto render, as render_job()'s
+# between attempts: its lock must read as dead, here and through its heartbeat elsewhere, once this process is gone,
+# though the session's parent lives on.
+.provenance_self_owner <- function() .provenance_owner_of(ps::ps_handle())
+
+.provenance_owner_of <- function(handle) {
+  list(pid = ps::ps_pid(handle), created = sprintf("%.6f", as.numeric(ps::ps_create_time(handle))),
        host = Sys.info()[["nodename"]])
 }
 
@@ -1085,10 +1091,9 @@
   tryCatch(readLines(file.path(sentinel, "token"), warn = FALSE)[[1L]], error = function(e) NULL)
 }
 
-.acquire_provenance_lock <- function(root) {
+.acquire_provenance_lock <- function(root, owner = .provenance_render_owner()) {
   lock <- .provenance_lock_path(root)
   owner_path <- file.path(lock, "owner.json")
-  owner <- .provenance_render_owner()
   if (!dir.exists(dirname(lock))) dir.create(dirname(lock), recursive = TRUE)
   for (attempt in 1:2) {
     if (.create_provenance_lock(lock)) {
@@ -1124,10 +1129,9 @@
   stop("Could not take the provenance render lock: ", lock, ".", call. = FALSE)
 }
 
-.release_provenance_lock <- function(root) {
+.release_provenance_lock <- function(root, me = .provenance_render_owner()) {
   lock <- .provenance_lock_path(root)
   owner_path <- file.path(lock, "owner.json")
-  me <- .provenance_render_owner()
   if (!identical(.read_provenance_owner(owner_path), me)) return(invisible(NULL))
   # A render that judged this one stopped, as one on another host may after a stalled heartbeat, may be taking the
   # lock over. The lock is removed only under the takeover sentinel, so it never vanishes beneath a takeover, where a
