@@ -896,6 +896,23 @@ test_that("an eligibility-only arm needs two patients, not an event", {
                "at least 2 treated patients; B has 1", fixed = TRUE)
 })
 
+test_that("an eligibility-only fit still checks its printed counts for small cells", {
+  skip_on_cran()
+  d <- vt_data()
+  d$time <- NULL
+  d$event <- NULL
+  d$arm[which(d$arm == "B")[-(1:3)]] <- "A"
+  old <- hvtiRtemplates:::.run_state$identifiability
+  withr::defer(assign("identifiability", old, envir = hvtiRtemplates:::.run_state))
+  assign("identifiability", NULL, envir = hvtiRtemplates:::.run_state)
+  out <- utils::capture.output(
+    vt_fit_first(data = d, choices = vt_elig_only_choices,
+                 labels = c(setdiff(vt_fit_labels, c("tbl-km", "fig-km")), "identifiability"))
+  )
+  expect_true(any(grepl("Before this goes in a manuscript", out, fixed = TRUE)))
+  expect_true("patients by arm" %in% hvtiRtemplates:::.run_state$identifiability$column)
+})
+
 test_that("the outcome gates switch the outcome chunks off for TIME <- NULL, and the next gate back on", {
   src <- readLines(template_path("vt", "fit"), warn = FALSE)
   old <- knitr::opts_chunk$get("eval")
