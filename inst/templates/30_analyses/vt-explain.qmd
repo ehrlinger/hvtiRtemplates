@@ -437,6 +437,9 @@ if (is.list(STRATIFY)) {
                                    "STRATIFY")
   .strata <- data.frame(ID = .d_all[[.vt$settings$id]], stratum = as.character(.d_all[[STRATIFY]]))
 }
+# A missing stratum value is no stratum. Dropping it here keeps the table, both figures and their captions
+# agreeing: the table and the curves' aggregate() would drop it anyway, without counting it.
+if (!is.null(.strata)) .strata <- .strata[!is.na(.strata$stratum), , drop = FALSE]
 # A patient with no stratum is left out of both figures below, and a figure read on its own must say so.
 # Each figure draws its own patients, so each counts its own; the counts are made here because a
 # caption is read before its chunk runs.
