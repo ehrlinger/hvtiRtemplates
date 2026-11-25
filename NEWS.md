@@ -294,6 +294,11 @@
   a study's `_quarto.yml`, as `add_job()` and `upgrade_job()` do, for a study whose jobs came from elsewhere. The
   message `render_job()` and `submit_job()` give when such a job is stopped for want of the hooks (#653) now
   names it, in place of an internal function.
+- Installing the provenance hooks, by `install_provenance_hooks()`, `add_job()`, `upgrade_job()` or
+  `migrate_job()`, updates a study's `_quarto.yaml` in place. It wrote the hooks to a new `_quarto.yml` beside it,
+  holding none of the project's settings. A study with both files is refused, naming both, and the check before a
+  render says the same. The render lock that `render_job()` takes to move a held `execute-results` folder now finds
+  a project by either name too.
 - A render held off by another render in the same study now names the jobs
   that render is working on and the user who started it, as in
   `(process 101, rendering distributions/ac.dead.hz.qmd for jdoe)`, where it

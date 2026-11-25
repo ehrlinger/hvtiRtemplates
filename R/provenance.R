@@ -20,6 +20,22 @@
   stop("_quarto.yml: project ", name, " must be a command or a list of commands.", call. = FALSE)
 }
 
+# The names Quarto reads a project's configuration from. Project discovery and the hooks' installer both read them
+# here, so a study whose project file is _quarto.yaml is found and updated in place, not given a second file.
+.quarto_config_names <- c("_quarto.yml", "_quarto.yaml")
+
+# The project file in `dir`: the one there, or _quarto.yml, to be created, when there is neither. Both is an error:
+# which one Quarto reads is not this package's to guess, and an update to one would leave the other as it was.
+.quarto_config_path <- function(dir) {
+  found <- file.path(dir, .quarto_config_names)
+  found <- found[file.exists(found)]
+  if (length(found) > 1L) {
+    stop("The study has both ", found[[1L]], " and ", found[[2L]], ". Quarto reads one project file; merge them into ",
+         "one and delete the other.", call. = FALSE)
+  }
+  if (length(found)) found else file.path(dir, .quarto_config_names[[1L]])
+}
+
 .read_quarto_config <- function(path) {
   if (!file.exists(path)) return(list())
   lines <- readLines(path, warn = FALSE)
@@ -30,7 +46,7 @@
   lines <- sub(sequence, "\\1'\\2'\\3", lines, ignore.case = TRUE)
   tryCatch(
     yaml::yaml.load(paste(lines, collapse = "\n")),
-    error = function(e) stop("_quarto.yml could not be parsed: ", conditionMessage(e), call. = FALSE)
+    error = function(e) stop(basename(path), " could not be parsed: ", conditionMessage(e), call. = FALSE)
   )
 }
 
@@ -159,11 +175,12 @@
 
 .install_provenance_hooks <- function(root) {
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
-  config_path <- file.path(root, "_quarto.yml")
+  config_path <- .quarto_config_path(root)
+  config_name <- basename(config_path)
   config <- .read_quarto_config(config_path)
   if (is.null(config)) config <- list()
   if (!is.list(config) || (length(config) && is.null(names(config)))) {
-    stop("_quarto.yml must contain a named mapping.", call. = FALSE)
+    stop(config_name, " must contain a named mapping.", call. = FALSE)
   }
 
   project <- config$project
@@ -172,7 +189,7 @@
   } else if (is.character(project) && length(project) == 1L && !is.na(project)) {
     project <- list(type = project)
   } else if (!is.list(project) || is.null(names(project))) {
-    stop("_quarto.yml: `project` must be a mapping or a scalar project type.", call. = FALSE)
+    stop(config_name, ": `project` must be a mapping or a scalar project type.", call. = FALSE)
   }
 
   installed <- list()
@@ -196,7 +213,7 @@
     inline_value <- trimws(sub("[[:space:]]+#.*$", "", inline))
     if (nzchar(inline_value) && !startsWith(inline_value, "#")) {
       if (!is.character(config$project) || length(config$project) != 1L) {
-        stop("_quarto.yml: inline project mappings cannot be updated safely; use a project block.", call. = FALSE)
+        stop(config_name, ": inline project mappings cannot be updated safely; use a project block.", call. = FALSE)
       }
       lines[bounds[["start"]]] <- "project:"
       lines <- append(lines, paste0("  type: ", inline), after = bounds[["start"]])
@@ -269,14 +286,14 @@
   }
 
   if (!.copy_provenance_file(temporary, config_path, overwrite = TRUE)) {
-    stop("Installing the provenance hooks: could not update _quarto.yml.", call. = FALSE)
+    stop("Installing the provenance hooks: could not update ", config_name, ".", call. = FALSE)
   }
   ok <- TRUE
   invisible(config_path)
 }
 
 .assert_provenance_hooks <- function(root) {
-  path <- file.path(root, "_quarto.yml")
+  path <- .quarto_config_path(root)
   config <- .read_quarto_config(path)
   project <- config$project
   if (!is.list(project)) {
@@ -321,7 +338,7 @@
 .quarto_project_dir <- function(path) {
   dir <- normalizePath(dirname(path), winslash = "/", mustWork = TRUE)
   repeat {
-    if (any(file.exists(file.path(dir, c("_quarto.yml", "_quarto.yaml"))))) return(dir)
+    if (any(file.exists(file.path(dir, .quarto_config_names)))) return(dir)
     parent <- dirname(dir)
     if (identical(parent, dir)) return(NA_character_)
     dir <- parent
@@ -345,14 +362,14 @@
   # A project file nearer the job makes its folder the project, and hooks at the root would not change that.
   # Name the file found, _quarto.yml or _quarto.yaml, so the advice points at one that exists.
   if (!is.na(project) && !identical(project, root)) {
-    found <- file.path(project, c("_quarto.yml", "_quarto.yaml"))
+    found <- file.path(project, .quarto_config_names)
     found <- found[file.exists(found)]
     return(list(message = message, fix = paste0(
       "Move ", paste(found, collapse = " and "), " aside: ", if (length(found) > 1L) "they make" else "it makes",
       " that folder its own Quarto project, so the render never reaches the study root's hooks."
     )))
   }
-  created <- !file.exists(file.path(root, "_quarto.yml"))
+  created <- !any(file.exists(file.path(root, .quarto_config_names)))
   list(
     message = message,
     fix = paste0(

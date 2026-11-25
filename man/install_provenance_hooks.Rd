@@ -12,11 +12,12 @@ default, starts from the working directory, and is an error outside a
 study.}
 }
 \value{
-The path to the study's \verb{_quarto.yml}, invisibly.
+The path to the study's project file, \verb{_quarto.yml} or
+\verb{_quarto.yaml}, invisibly.
 }
 \description{
 Adds the pre-render and post-render hooks that record a job's provenance to
-the study's \verb{_quarto.yml}, and copies the hook scripts beside it.
+the study's Quarto project file, and copies the hook scripts beside it.
 \code{\link[=add_job]{add_job()}} and \code{\link[=upgrade_job]{upgrade_job()}} do this themselves; call it directly for a
 study whose jobs came from elsewhere, as \code{\link[=render_job]{render_job()}}'s message says when
 a job that records its provenance is stopped for want of the hooks.
@@ -24,13 +25,15 @@ a job that records its provenance is stopped for want of the hooks.
 \details{
 The study root is the nearest directory at or above \code{root} holding
 \verb{_study.yml}, so this can be called from anywhere inside a study. The
-hooks are added last in each list, after any the study already has, and
-every other setting in \verb{_quarto.yml} is kept. Running it again changes
-nothing. If any file cannot be written, the files already changed are
-restored.
+project file is the one Quarto reads at the study root, \verb{_quarto.yml} or
+\verb{_quarto.yaml}, and it is updated in place; a study with both is refused,
+since which one Quarto reads is not this function's to guess. The hooks are
+added last in each list, after any the study already has, and every other
+setting in the file is kept. Running it again changes nothing. If any file
+cannot be written, the files already changed are restored.
 
-A study with no \verb{_quarto.yml} gets one, which makes the study one Quarto
-project and can change how its other documents render.
+A study with neither file gets a \verb{_quarto.yml}, which makes the study one
+Quarto project and can change how its other documents render.
 }
 \examples{
 root <- file.path(tempdir(), "hooks-example")

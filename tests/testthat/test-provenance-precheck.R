@@ -160,3 +160,45 @@ test_that("install_provenance_hooks() refuses a folder outside a study", {
   withr::local_dir(withr::local_tempdir())
   expect_error(install_provenance_hooks(), "not inside a study")
 })
+
+test_that("install_provenance_hooks() updates a study's _quarto.yaml in place, and makes no _quarto.yml beside it", {
+  root <- precheck_study(withr::local_tempdir())
+  job <- managed_job(root)
+  yaml_path <- file.path(root, "_quarto.yaml")
+  writeLines(c("project:", "  type: default", "  output-dir: _out", "execute:", "  echo: false"), yaml_path)
+
+  expect_identical(install_provenance_hooks(root), yaml_path)
+  expect_false(file.exists(file.path(root, "_quarto.yml")))
+  config <- .read_quarto_config(yaml_path)
+  expect_identical(config$project$`output-dir`, "_out")
+  expect_identical(config$execute$echo, FALSE)
+  expect_true(.provenance_hook_command("pre") %in% config$project$`pre-render`)
+  # Discovery and the check before a render read the same file, so the job is ready.
+  expect_null(.provenance_hooks_problem(job))
+})
+
+test_that("install_provenance_hooks() refuses a study with both _quarto.yml and _quarto.yaml, naming both", {
+  root <- precheck_study(withr::local_tempdir())
+  job <- managed_job(root)
+  yml <- file.path(root, "_quarto.yml")
+  yaml_path <- file.path(root, "_quarto.yaml")
+  writeLines(c("project:", "  type: default"), yml)
+  writeLines(c("project:", "  type: default"), yaml_path)
+  before <- lapply(c(yml, yaml_path), readLines)
+
+  err <- expect_error(install_provenance_hooks(root))
+  expect_match(conditionMessage(err), yml, fixed = TRUE)
+  expect_match(conditionMessage(err), yaml_path, fixed = TRUE)
+  expect_identical(lapply(c(yml, yaml_path), readLines), before)
+  expect_false(dir.exists(file.path(root, dirname(.provenance_hook_files()[[1L]]))))
+  # The check before a render says the same, rather than reading one file of the two.
+  expect_match(.provenance_hooks_problem(job)$message, "both", fixed = TRUE)
+})
+
+test_that("install_provenance_hooks() creates _quarto.yml when the study has neither file", {
+  root <- precheck_study(withr::local_tempdir())
+  expect_false(any(file.exists(file.path(root, c("_quarto.yml", "_quarto.yaml")))))
+  expect_identical(install_provenance_hooks(root), file.path(root, "_quarto.yml"))
+  expect_false(file.exists(file.path(root, "_quarto.yaml")))
+  expect_true(.provenance_hook_command("post") %in% .read_quarto_config(file.path(root, "_quarto.yml"))$project$`post-render`)
+})

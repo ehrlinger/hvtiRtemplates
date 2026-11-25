@@ -132,7 +132,7 @@ answer, because `%inc` had nothing to pin.
 | `job_status(path, quiet = FALSE, output_file = NULL)` | a background render's state, invisibly |
 | `cancel_job(path, grace = 30, ...)` | the job's status afterwards, invisibly |
 | `install_hvti(dir)` | the installed `hvti` command's path, invisibly |
-| `install_provenance_hooks(root = NULL)` | the study's `_quarto.yml` path, invisibly; adds the hooks a job that records its provenance needs, for a study whose jobs came from elsewhere |
+| `install_provenance_hooks(root = NULL)` | the study's `_quarto.yml` or `_quarto.yaml` path, invisibly; adds the hooks a job that records its provenance needs, for a study whose jobs came from elsewhere |
 | `guard_long_fit(name, dir, why, refit = FALSE)` | `FALSE`, invisibly, when a long fit may start; an error outside a background run |
 | `guard_memory(need_gib, why, ...)` | the session's memory limit in GiB, invisibly, when the fit fits; an error otherwise |
 

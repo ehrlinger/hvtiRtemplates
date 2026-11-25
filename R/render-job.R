@@ -324,13 +324,13 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
           .provenance_takeover_path(lock), ".", call. = FALSE)
 }
 
-# The Quarto project the job renders in: the nearest folder above it holding _quarto.yml, which is the
+# The Quarto project the job renders in: the nearest folder above it holding _quarto.yml or _quarto.yaml, which is the
 # QUARTO_PROJECT_DIR whose render lock the project's hooks take. NULL when there is none; the execute-results race is a
 # project render's, and with no project no hook takes a lock.
 .job_quarto_project <- function(dir) {
   dir <- normalizePath(dir, winslash = "/", mustWork = FALSE)
   repeat {
-    if (file.exists(file.path(dir, "_quarto.yml"))) return(dir)
+    if (any(file.exists(file.path(dir, .quarto_config_names)))) return(dir)
     parent <- dirname(dir)
     if (identical(parent, dir)) return(NULL)
     dir <- parent
