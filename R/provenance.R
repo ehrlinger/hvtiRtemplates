@@ -922,6 +922,10 @@
 .write_provenance_about <- function(root, owner, inputs) {
   about <- list(pid = owner$pid, created = owner$created,
                 jobs = as.list(.provenance_study_relative(inputs, root)), user = .render_user())
+  # render_job(output_file =) keys its run on the output too, so the hint must name it
+  # or job_status() and cancel_job() read the job's default run instead.
+  output_file <- Sys.getenv("HVTI_OUTPUT_FILE")
+  if (nzchar(output_file) && length(inputs) == 1L) about$output_file <- output_file
   tryCatch(.write_provenance_owner(about, .provenance_about_path(.provenance_lock_path(root))),
            error = function(e) FALSE)
   invisible(NULL)
@@ -933,7 +937,8 @@
   if (is.null(about) || !identical(about$pid, owner$pid) || !identical(about$created, owner$created)) return(NULL)
   jobs <- unlist(about$jobs, use.names = FALSE)
   if (!length(jobs)) return(NULL)
-  list(jobs = jobs, user = about$user)
+  output_file <- if (is.character(about$output_file) && length(about$output_file) == 1L) about$output_file
+  list(jobs = jobs, user = about$user, output_file = output_file)
 }
 
 .provenance_about_label <- function(about) {
@@ -949,6 +954,7 @@
 .provenance_about_hint <- function(about) {
   if (is.null(about)) return("")
   job <- encodeString(about$jobs[[1L]], quote = "\"")
+  if (!is.null(about$output_file)) job <- paste0(job, ", output_file = ", encodeString(about$output_file, quote = "\""))
   paste0(" If it was started with run_job(), job_status(", job, ") shows how far it has got and cancel_job(",
          job, ") stops it.")
 }

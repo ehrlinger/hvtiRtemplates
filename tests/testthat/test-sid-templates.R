@@ -340,6 +340,9 @@ test_that("sid-clusters takes the letters at K from a REFERENCE assignment, so a
   # A REFERENCE and an override at the same K would be two answers to one question.
   both <- utils::modifyList(choices, list(OVERRIDES = list(pm3 = saved$letters$pm3)))
   expect_error(sid_clusters_after(env, both), "REFERENCE and OVERRIDES\\$pm3 both set the letters at K = 3")
+  # Its letters print in the tables and the Sankey, so a REFERENCE naming the ID column is refused.
+  by_id <- utils::modifyList(sid_clusters_choices, list(REFERENCE = list(dataset = "published", col = "ccfid")))
+  expect_error(sid_clusters_after(env, by_id), "REFERENCE's col names ccfid, which identifies patients")
 })
 
 test_that("with a REFERENCE, COLLAPSE may name only letters a reference match pinned", {

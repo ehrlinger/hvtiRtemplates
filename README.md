@@ -99,20 +99,57 @@ answer, because `%inc` had nothing to pin.
 
 ## API
 
+### The taxonomy and the catalog
+
 | Function | Returns |
 |---|---|
-| `template_catalog()` | all 75 template jobs, including queued work and dependencies |
+| `template_catalog()` | every template job, including queued work and dependencies |
 | `hvti_taxonomy()` | the analysis prefix table: prefix, name, folder, description |
 | `template_list()` | supported templates: name, folder and title printed; prefix, qualifier, description, call and file in the data |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
 | `hvti_non_prefixes()` | leading name fields that are utilities, not analysis prefixes |
-| `add_job(prefix, subject, type, root = NULL, qualifier = NULL)` | the scaffolded job's path, invisibly |
+
+### Scaffolding and upgrading jobs
+
+| Function | Returns |
+|---|---|
+| `add_job(prefix, subject, type, root = NULL, qualifier = NULL, open = TRUE)` | the scaffolded job's path, invisibly |
 | `open_job(prefix, subject, type, root = NULL, qualifier = NULL)` | job path; creates a missing job or opens an existing one |
-| `render_job(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet")))` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
+| `upgrade_job(path, root = NULL, open = TRUE)` | the upgraded job's path, invisibly; rewrites a job from its template's current version, keeping its edits, with a report in `_archive/` |
 | `import_job(path, subject = NULL, type = NULL, root = NULL)` | the imported job's path, invisibly; copies a job from another study, keeping its edits |
-| `migrate_job(path, subject, type, prefix, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
+| `migrate_job(path, subject, type, prefix = NULL, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
+| `read_job_data(cfg, dataset = "study", ...)` | inside a job: a list holding the selected rows and the record of what was read, joined and kept |
+| `build_cohort(data, exclude = NULL, path = NULL, ...)` | a list holding the kept rows and who was dropped and why |
+| `stop_here()` | inside a render, the job's provenance block, so a draft can stop partway |
+
+### Running jobs
+
+| Function | Returns |
+|---|---|
+| `run_job(path, final = FALSE, wait = 300, ...)` | the job's status, invisibly; checks, submits and waits for a background render |
+| `render_job(path, final = FALSE, quiet = ..., params = NULL, output_file = NULL)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
+| `submit_job(path, final = FALSE, params = NULL, output_file = NULL)` | the job's status, invisibly; starts a render detached from the session |
+| `job_status(path, quiet = FALSE, output_file = NULL)` | a background render's state, invisibly |
+| `cancel_job(path, grace = 30, ...)` | the job's status afterwards, invisibly |
+| `install_hvti(dir)` | the installed `hvti` command's path, invisibly |
+| `guard_long_fit(name, dir, why, refit = FALSE)` | `FALSE`, invisibly, when a long fit may start; an error outside a background run |
+| `guard_memory(need_gib, why, ...)` | the session's memory limit in GiB, invisibly, when the fit fits; an error otherwise |
+
+### The `ar` analysis report
+
+| Function | Returns |
+|---|---|
 | `ar_item(id)`, `ar_value(id, field)` | inside an `ar` analysis report: one saved figure, table or value from a finished job, checked against the bytes that job recorded |
 | `ar_paste_methods(path)`, `ar_review(path)` | for an `ar` report: fill each empty Methods slot from its source job, leaving existing text for the analyst to compare and update; mark items as reviewed after their source job was rendered again |
+
+### Life tables, for the `ac` job
+
+| Function | Returns |
+|---|---|
+| `life_table(data, time_col, event_col, strata_col = NULL, ...)` | a Kaplan-Meier life table, by stratum when one is named |
+| `life_table_at(data, time_col, event_col, times, ...)` | survival and its limits at stated horizons, by stratum |
+| `life_table_keep(data, time_col, event_col, strata_col = NULL)` | a logical vector, `TRUE` for each row the life table analyzes |
+| `life_table_tests(data, time_col, event_col, strata_col)` | the log-rank, Wilcoxon and likelihood-ratio tests comparing strata |
 
 `add_job()` also installs idempotent Quarto pre-render and post-render hooks in
 the study without replacing existing project settings or user hooks. Every
@@ -153,7 +190,7 @@ of the first.
 For a study with SAS programs already in `descriptive/` and `graphs/`, first
 adopt its directory with `hvtiR::setup(..., adopt = TRUE)` and
 register its built datasets with `register_data()`. The tutorial
-[Set up an hvtiR study for descriptive and EDA work](articles/study-setup.html)
+[Adopt an existing study for descriptive and EDA work](articles/study-setup.html)
 walks through new-study creation, recoverable legacy cleanup and adoption,
 data registration, the EDA analysis set, all five pre-analysis jobs, and
 output review using synthetic data.
@@ -187,3 +224,23 @@ The table job replaces the SAS RTF output with an editable CORR DOCX through
 on a structural finding. Compare the rows, summaries, precision, and footnotes
 with the legacy reference before accepting the document; the structural check
 does not establish numerical agreement.
+
+## Documentation
+
+The articles are on the [package site](https://ehrlinger.github.io/hvtiRtemplates/).
+
+| Article | For |
+|---|---|
+| [Work a job, from template to final report](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html) | the whole cycle of one job: scaffold, edit, draft, final |
+| [Running a job that takes hours](https://ehrlinger.github.io/hvtiRtemplates/articles/long-running-jobs.html) | background renders, their status and their guards |
+| [Start a new study from a delivered dataset](https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html) | a study that has no SAS history |
+| [Adopt an existing study for descriptive and EDA work](https://ehrlinger.github.io/hvtiRtemplates/articles/study-setup.html) | a study with legacy folders and built datasets |
+| [From SAS descriptive jobs to R](https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.html) | each descriptive SAS job beside the template that replaces it |
+| [Migrate a legacy SAS study](https://ehrlinger.github.io/hvtiRtemplates/articles/legacy-study-migration.html) | `migrate_job()` and its evidence report |
+| [The template catalog](https://ehrlinger.github.io/hvtiRtemplates/articles/template-catalog.html) | every template, supported and queued |
+
+`inst/templates/README.md` is the contract for the templates themselves: what each one does, its figures, and the rules every job follows.
+
+## Related packages
+
+The templates call the rest of the hvtiR family: `hvtiRutilities` (study layout and registered data, imported), and `hvtiPlotR`, `hvtiRtables`, `hvtiRdatabuild`, `hvtiRbootstrap`, `hvtiRlifetables` and `hvtiRpropensity`, which the jobs attach as they need them. [`hvtiR`](https://github.com/ehrlinger/hvtiR) installs them together.
