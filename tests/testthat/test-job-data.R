@@ -266,14 +266,10 @@ test_that("a DATASET file is read in each format read_clinical_data() reads", {
   dir <- hvtiRutilities::study_dir("datasets", cfg$root)
   d <- d0
   utils::write.csv(d0, file.path(dir, "f.csv"), row.names = FALSE)
-  files <- "f.csv"
-  # read_clinical_data() reads R data files from hvtiRutilities 1.5.27; the
-  # floor is older, and the family-floors job runs this file at the floor.
-  if (utils::packageVersion("hvtiRutilities") >= "1.5.27") {
-    save(d, file = file.path(dir, "f.rda"))
-    save(d, file = file.path(dir, "f.RData"))
-    files <- c(files, "f.rda", "f.RData")
-  }
+  # R data files are read from hvtiRutilities 1.5.27, the floor.
+  save(d, file = file.path(dir, "f.rda"))
+  save(d, file = file.path(dir, "f.RData"))
+  files <- c("f.csv", "f.rda", "f.RData")
   if (requireNamespace("arrow", quietly = TRUE)) {
     arrow::write_parquet(d0, file.path(dir, "f.parquet"))
     files <- c(files, "f.parquet")
