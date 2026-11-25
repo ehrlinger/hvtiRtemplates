@@ -1,6 +1,7 @@
 ---
 title: "Adopt an existing study for descriptive and EDA work"
 author: "John Ehrlinger"
+date: today
 vignette: >
   %\VignetteIndexEntry{Adopt a study for descriptive and EDA work}
   %\VignetteEngine{quarto::html}
