@@ -75,12 +75,13 @@ if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("bo
        "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.13-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
-# ggBoostedTrees 0.10.2 adds boost_shadow()'s companion, the pooled importance the
-# explain job reads; this job needs boost_shadow() and the error, path and
-# calibration figures, and holds the same floor so the pair installs together.
-if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.10.2") {
-  stop("This job needs ggBoostedTrees >= 0.10.2. Install it with\n",
-       "  remotes::install_github(\"ehrlinger/ggBoostedTrees@v0.10.2\")\nthen re-render.", call. = FALSE)
+# ggBoostedTrees 0.10.3 fixes boost_shadow(), which in 0.10.2 refused every labeled
+# covariate as varying within subject: it compared columns with identical(), and
+# subsetting drops the label. Data read from SAS carries labels, so under 0.10.2 this
+# job stops at the fit. The explain job holds the same floor so the pair installs together.
+if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.10.3") {
+  stop("This job needs ggBoostedTrees >= 0.10.3. Install it with\n",
+       "  remotes::install_github(\"ehrlinger/ggBoostedTrees@v0.10.3\")\nthen re-render.", call. = FALSE)
 }
 suppressPackageStartupMessages({
   library(boostmtree)

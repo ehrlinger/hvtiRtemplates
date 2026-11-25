@@ -76,10 +76,11 @@ if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("bo
        "then re-render.", call. = FALSE)
 }
 # ggBoostedTrees 0.10.2 adds the pooled importance this job reads (gg_boost_vimp() on
-# a list of runs), and is the floor the fit job holds, so the pair installs together.
-if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.10.2") {
-  stop("This job needs ggBoostedTrees >= 0.10.2. Install it with\n",
-       "  remotes::install_github(\"ehrlinger/ggBoostedTrees@v0.10.2\")\nthen re-render.", call. = FALSE)
+# a list of runs). The floor is 0.10.3 because the fit job needs that release's
+# boost_shadow() fix, and the pair installs together.
+if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.10.3") {
+  stop("This job needs ggBoostedTrees >= 0.10.3. Install it with\n",
+       "  remotes::install_github(\"ehrlinger/ggBoostedTrees@v0.10.3\")\nthen re-render.", call. = FALSE)
 }
 suppressPackageStartupMessages({
   library(boostmtree)
