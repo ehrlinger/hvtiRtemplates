@@ -274,6 +274,10 @@ pam_on <- if (is.null(sid_cl$pam_on)) "sid" else sid_cl$pam_on
 # How sid-clusters cut the distance, so the refits cut it the same way. A sid-clusters.rds from before
 # CLUSTER_METHOD existed ran PAM.
 cluster_method <- if (is.null(sid_cl$cluster_method)) "pam" else sid_cl$cluster_method
+if (!cluster_method %in% c("pam", "hclust")) {
+  stop("sid-clusters.rds names CLUSTER_METHOD \"", cluster_method, "\", which this job cannot refit. Render sid-clusters again.",
+       call. = FALSE)
+}
 # Each patient's group in sid-clusters' REFERENCE, NA where it has none, and the group COLLAPSE makes of it.
 # NULL when sid-clusters set no REFERENCE. sid-clusters read the reference and checked its IDs, so this job
 # measures against exactly the groups that job matched its letters to.

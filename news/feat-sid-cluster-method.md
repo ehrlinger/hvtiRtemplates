@@ -12,3 +12,6 @@
   the distance the same way, and caches hclust refits under names of their
   own. A `sid-clusters.rds` written before this release refits with PAM, and
   PAM refits cached before it still load.
+  A study's copy of `sid-stability` from before this release does not read
+  the method and refits with PAM, so upgrade it (`upgrade_job()`) before
+  rendering it on clusters made with `"hclust"`.
