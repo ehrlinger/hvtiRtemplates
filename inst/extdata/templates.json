@@ -1421,7 +1421,7 @@
       "workflows": [],
       "blocked_on": "hvtiRimputation",
       "spec": "hvtiRdatabuild/dev/specs/2026-09-05-hvtiRimputation-design.md",
-      "note": "Multiple-imputation jobs are filed under bd, as bd jobs whose second name field names it (bd.mult_imput and its spellings, 17 studies), which is one job under two names (rule 2 of the catalog design, section 5). So sas_breadth_jobs counts the studies with either an mi program or such a bd job: 18, from the 2026-09-11 scan. 326 studies call %mult_imput, and 18 call both it and si's %imputsub (measured 2026-09-05); those are call-site counts and stay in this note. hvtiRimputation's impute_multiple() is built (a mice prototype since 0.1.1, with predictors a required argument since 0.1.4), and no template calls it yet; pooling by Rubin's rules is deferred.",
+      "note": "Multiple-imputation jobs are filed under bd, as bd jobs whose second name field names it (bd.mult_imput and its spellings, 17 studies), which is one job under two names (rule 2 of the catalog design, section 5). So sas_breadth_jobs counts the studies with either an mi program or such a bd job: 18, from the 2026-09-11 scan. 326 studies call %mult_imput, and 18 call both it and si's %imputsub (measured 2026-09-05); those are call-site counts and stay in this note. hvtiRimputation's impute_multiple() is built (a mice prototype since 0.1.1; it takes predictors since 0.1.4, and omitting them is an error from 0.1.5), and no template calls it yet; pooling by Rubin's rules is deferred.",
       "sas_breadth_jobs": 18,
       "disposition": "scaffold",
       "uses": []
