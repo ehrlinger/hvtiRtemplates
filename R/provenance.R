@@ -890,10 +890,13 @@
   # touch fails. A missing file reads as alive, so ending on one is safe. The owner can outlive
   # its lock (a test suite's driver does), so the file is the signal that stops it. The wait
   # is in steps of at most a second, so a released lock leaves no `sleep` behind for long.
+  # A check that fails on a share also reads as missing, so a loop that ends while its owner
+  # lives removes the file: an aging one left behind would read as a crash in ten minutes.
   step <- min(every, 1)
-  script <- sprintf(paste0("trap '' HUP; b=%s; while kill -0 %d 2>/dev/null && [ -e \"$b\" ]; do ",
+  script <- sprintf(paste0("trap '' HUP; b=%s; p=%d; while kill -0 $p 2>/dev/null && [ -e \"$b\" ]; do ",
                            "touch -c \"$b\" 2>/dev/null || rm -f \"$b\"; n=0; ",
-                           "while [ $n -lt %d ] && [ -e \"$b\" ]; do sleep %s; n=$((n+1)); done; done"),
+                           "while [ $n -lt %d ] && [ -e \"$b\" ]; do sleep %s; n=$((n+1)); done; done; ",
+                           "if kill -0 $p 2>/dev/null; then rm -f \"$b\"; fi"),
                     shQuote(beat), as.integer(owner$pid), as.integer(ceiling(every / step)), format(step))
   # A loop that never started would read as a dead owner, so its file goes too.
   started <- system2("sh", c("-c", shQuote(script)), stdout = FALSE, stderr = FALSE, stdin = "/dev/null", wait = FALSE)
