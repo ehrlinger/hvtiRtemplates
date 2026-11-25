@@ -136,7 +136,7 @@ nb_mocked_setup <- function(pkg, version, template = "nb.boostmtree") {
 # On CI a missing or too-old stack stops the suite instead of skipping it: boostmtree 2.0.8 reaches CI only through
 # the Remotes pin, and a skip would let every nb test go quiet unnoticed.
 nb_skip_unless_stack <- function() {
-  floors <- c(boostmtree = "2.0.13", ggBoostedTrees = "0.10.2")
+  floors <- c(boostmtree = "2.0.13", ggBoostedTrees = "0.10.3")
   for (pkg in names(floors)) {
     ok <- requireNamespace(pkg, quietly = TRUE) && utils::packageVersion(pkg) >= floors[[pkg]]
     if (ok) next
