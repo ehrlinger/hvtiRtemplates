@@ -3,6 +3,14 @@
 # tests cover. The numerical core has its own tests in test-logit-calibration.R.
 # All data are synthetic.
 
+# Every job below runs the template's chunks, and its figures and tables are most of the time. The tests
+# calibrate lg_data()'s study on 200 patients, not its default 400: every group still holds more than 5 patients,
+# and every count a test asserts is read from the same data it ran on. The render test at the end keeps 400.
+# nolint start: object_usage_linter.
+lg_small <- function() lg_data(200L)
+lg_job <- function(..., data = lg_small(), .local_envir = parent.frame()) lg_fixture(..., data = data, .local_envir = .local_envir)
+# nolint end
+
 test_that("lg is a descriptive template that add_job() scaffolds, and its catalog row is shipped as Logit calibration", {
   tl <- template_list()
   row <- tl[tl$name == "lg", ]
@@ -28,7 +36,7 @@ test_that("lg is a descriptive template that add_job() scaffolds, and its catalo
 
 test_that("the job checks its choices against the data before any calibration, naming the setting", {
   local_child_chunks()
-  run <- function(...) lm_eval_job(lg_fixture(...)$job)
+  run <- function(...) lm_eval_job(lg_job(...)$job)
   expect_error(run("LINK <- \"cox\""), "^LINK must be \"logit\" or \"hazard\"")
   expect_error(run("EVENT <- \"died\""), "^EVENT names a column this dataset does not have: died")
   expect_error(run("EVENT <- c(\"dead\", \"hdead\")"), "^EVENT must be one column name")
@@ -46,10 +54,10 @@ test_that("the job checks its choices against the data before any calibration, n
 
 test_that("INTERVAL drops patients who ended before the start, censors the rest at the end, and reports both counts", {
   local_child_chunks()
-  d <- lg_data()
+  d <- lg_small()
   kept <- d$iv_dead >= 0.25
   past <- kept & d$iv_dead > 5
-  s <- lg_fixture("INTERVAL <- c(0.25, 5)")
+  s <- lg_job("INTERVAL <- c(0.25, 5)")
   env <- lm_eval_job(s$job)
   expect_identical(nrow(env$d), sum(kept))
   # Patients read, left out before the start, left out for no follow-up, kept, censored at the end,
@@ -64,7 +72,7 @@ test_that("INTERVAL drops patients who ended before the start, censors the rest 
   # The covariates' defaults are those of the patients kept.
   expect_identical(env$variables$constant, signif(stats::median(d$age[kept]), 1L))
   # Without an interval, every patient is calibrated as read and there is nothing to report.
-  env <- lm_eval_job(lg_fixture()$job)
+  env <- lm_eval_job(lg_job()$job)
   expect_identical(nrow(env$d), nrow(d))
   expect_null(env$.interval$counts)
   expect_identical(env$.event, d$dead)
@@ -74,14 +82,14 @@ test_that("INTERVAL drops patients who ended before the start, censors the rest 
 
 test_that("under INTERVAL the hazard sums the time at risk inside the window and the logit counts only events inside it", {
   local_child_chunks()
-  d <- lg_data()
+  d <- lg_small()
   kept <- d$iv_dead >= 0.25
   inside <- ifelse(d$iv_dead[kept] > 5, 0L, d$dead[kept])
-  hazard <- lm_eval_job(lg_fixture("INTERVAL <- c(0.25, 5)")$job)
+  hazard <- lm_eval_job(lg_job("INTERVAL <- c(0.25, 5)")$job)
   expected <- hvtiRtemplates:::.lg_table(d$age[kept], inside, pmin(d$iv_dead[kept], 5) - 0.25, groups = 5L, link = "hazard")
   expect_equal(hazard$calibration$age$table, expected)
   expect_lt(sum(expected$events), sum(d$dead[kept]))
-  logit <- lm_eval_job(lg_fixture(c("LINK <- \"logit\"", "INTERVAL <- c(0.25, 5)"))$job)
+  logit <- lm_eval_job(lg_job(c("LINK <- \"logit\"", "INTERVAL <- c(0.25, 5)"))$job)
   expect_equal(logit$calibration$age$table, hvtiRtemplates:::.lg_table(d$age[kept], inside, groups = 5L, link = "logit"))
 })
 
@@ -98,7 +106,7 @@ lg_two_variables <- c(
 test_that("the job tabulates each covariate's groups and draws its six-panel figure, saved as PNG, PDF and TIFF", {
   skip_if_not_installed("ragg")
   local_child_chunks()
-  s <- lg_fixture(variables = lg_two_variables)
+  s <- lg_job(variables = lg_two_variables)
   # What the job's asis chunks would print: the child chunks they knit.
   printed <- character()
   testthat::local_mocked_bindings(
@@ -109,7 +117,7 @@ test_that("the job tabulates each covariate's groups and draws its six-panel fig
     .package = "knitr"
   )
   env <- lm_eval_job(s$job)
-  d <- lg_data()
+  d <- lg_small()
   # The hazard link of the study's death and follow-up, on five rank groups of age and a group per NYHA class.
   age <- hvtiRtemplates:::.lg_table(d$age, d$dead, d$iv_dead, groups = 5L, link = "hazard")
   expect_equal(env$calibration$age$table, age)
@@ -128,10 +136,10 @@ test_that("the job tabulates each covariate's groups and draws its six-panel fig
 test_that("the logit link calibrates a binary event with no follow-up, and FIGURES keeps only the PDFs and TIFFs it names", {
   skip_if_not_installed("ragg")
   local_child_chunks()
-  s <- lg_fixture(c("LINK <- \"logit\"", "EVENT <- \"hdead\"", "TIME <- \"later\"", "FIGURES <- c(\"lg-age\")"),
-                  variables = lg_two_variables)
+  s <- lg_job(c("LINK <- \"logit\"", "EVENT <- \"hdead\"", "TIME <- \"later\"", "FIGURES <- c(\"lg-age\")"),
+              variables = lg_two_variables)
   env <- lm_eval_job(s$job)
-  d <- lg_data()
+  d <- lg_small()
   expect_equal(env$calibration$age$table, hvtiRtemplates:::.lg_table(d$age, d$hdead, groups = 5L, link = "logit"))
   graphs <- file.path(hvtiRutilities::study_dir("graphs", s$root), "dead-calibration")
   # The PNG a report shows is always written; the PDF and TIFF only for a figure FIGURES keeps.
@@ -141,7 +149,7 @@ test_that("the logit link calibrates a binary event with no follow-up, and FIGUR
 test_that("a group or scale that cannot be computed is named under its table, and a label never holds an underscore", {
   local_child_chunks()
   # n_prior is 0 for most patients, so its lowest group has a mean of 0.
-  s <- lg_fixture(variables = c(
+  s <- lg_job(variables = c(
     "VARIABLES <- data.frame(",
     "  name = c(\"n_prior\"),",
     "  constant = c(1),",
@@ -168,8 +176,8 @@ test_that("a group or scale that cannot be computed is named under its table, an
 })
 test_that("the job saves lg-scales.rds with the term, constant and shift of each chosen scale, and the PREDICTORS line", {
   local_child_chunks()
-  d <- lg_data()
-  s <- lg_fixture(variables = c(
+  d <- lg_small()
+  s <- lg_job(variables = c(
     "VARIABLES <- data.frame(",
     "  name = c(\"age\", \"nyha\"),",
     "  kind = c(\"continuous\", \"ordinal\"),",
@@ -208,7 +216,7 @@ test_that("a blank chosen warns in a draft, saves only the covariates chosen, an
     "  chosen = c(\"log\", NA)",
     ")"
   )
-  s <- lg_fixture(variables = two)
+  s <- lg_job(variables = two)
   file <- file.path(hvtiRutilities::study_dir("estimates", s$root), "dead-calibration", "lg-scales.rds")
   expect_warning(env <- lm_eval_job(s$job),
                  "^These covariates have no usable scale chosen: `nyha`: no scale chosen yet. Read each figure")
@@ -229,7 +237,7 @@ test_that("a blank chosen warns in a draft, saves only the covariates chosen, an
 test_that("a blank chosen makes the run a draft in the end table and the facts, not final", {
   local_child_chunks()
   two <- c("VARIABLES <- data.frame(", "  name = c(\"age\", \"nyha\"),", "  chosen = c(\"log\", NA)", ")")
-  s <- lg_fixture(variables = two)
+  s <- lg_job(variables = two)
   expect_warning(env <- lm_eval_job(s$job), "no usable scale chosen")
   # Setup saw no marker, skip or stop, so the box printed final; the end table must not.
   expect_identical(env$.job$run$state, "final")
@@ -241,7 +249,7 @@ test_that("a blank chosen makes the run a draft in the end table and the facts, 
 
 test_that("the template's own blank chosen is a draft warning for the first covariate", {
   local_child_chunks()
-  s <- lg_fixture(variables = NULL)
+  s <- lg_job(variables = NULL)
   expect_warning(env <- lm_eval_job(s$job), "^These covariates have no usable scale chosen: `age`: no scale chosen yet")
   expect_identical(nrow(readRDS(file.path(hvtiRutilities::study_dir("estimates", s$root), "dead-calibration", "lg-scales.rds"))), 0L)
   expect_identical(env$.predictors, "No scale is chosen yet, so there is no PREDICTORS line.")
@@ -250,7 +258,7 @@ test_that("the template's own blank chosen is a draft warning for the first cova
 test_that("a chosen scale that cannot be computed warns in a draft and stops a final render", {
   local_child_chunks()
   # n_prior is 0 in its lowest group, so its log is undefined.
-  s <- lg_fixture(variables = c(
+  s <- lg_job(variables = c(
     "VARIABLES <- data.frame(",
     "  name = c(\"n_prior\"),",
     "  constant = c(1),",
@@ -262,7 +270,7 @@ test_that("a chosen scale that cannot be computed warns in a draft and stops a f
   withr::local_envvar(HVTI_TEMPLATE_STRICT = "yes")
   expect_error(lm_eval_job(s$job), "`n_prior`: the chosen scale, log, cannot be computed")
   # A shift makes it computable, and the term says so.
-  fixed <- lg_fixture(variables = c(
+  fixed <- lg_job(variables = c(
     "VARIABLES <- data.frame(",
     "  name = c(\"n_prior\"),",
     "  constant = c(1),",
@@ -278,12 +286,12 @@ test_that("a chosen scale that is not a number for some patient warns in a draft
   local_child_chunks()
   # Four patients are 0, but they sit in a lowest group whose mean is far above 0, so every scale of the group
   # means is computable. The log and the inverse of those four patients are not.
-  d <- lg_data()
+  d <- lg_small()
   d$age_z <- d$age
   d$age_z[1:4] <- 0
   pick <- function(scale) {
-    lg_fixture(variables = c("VARIABLES <- data.frame(", "  name = c(\"age_z\"),", paste0("  chosen = c(\"", scale, "\")"), ")"),
-               data = d, .local_envir = parent.frame())$job
+    lg_job(variables = c("VARIABLES <- data.frame(", "  name = c(\"age_z\"),", paste0("  chosen = c(\"", scale, "\")"), ")"),
+           data = d, .local_envir = parent.frame())$job
   }
   for (scale in c("log", "inverse")) {
     expect_warning(env <- lm_eval_job(pick(scale)), paste0("`age_z`: the chosen scale, ", scale, ", is not a number for 4 patients"))
@@ -299,11 +307,11 @@ test_that("a chosen scale that is not a number for some patient warns in a draft
 
 test_that("a covariate whose median rounds to 0 gets no default constant: the job goes on, and a constant-based choice is a problem", {
   local_child_chunks()
-  d <- lg_data()
+  d <- lg_small()
   d$flag <- as.integer(seq_len(nrow(d)) %% 4L == 0L)
   pick <- function(scale) {
-    lg_fixture(variables = c("VARIABLES <- data.frame(", "  name = c(\"flag\"),", paste0("  chosen = c(\"", scale, "\")"), ")"),
-               data = d, .local_envir = parent.frame())$job
+    lg_job(variables = c("VARIABLES <- data.frame(", "  name = c(\"flag\"),", paste0("  chosen = c(\"", scale, "\")"), ")"),
+           data = d, .local_envir = parent.frame())$job
   }
   env <- lm_eval_job(pick("raw"))
   expect_true(is.na(env$variables$constant))
@@ -320,13 +328,13 @@ test_that("a covariate whose median rounds to 0 gets no default constant: the jo
 
 test_that("the job stops on a covariate with a group of fewer than 5 patients or an ordinal with more than 20 levels", {
   local_child_chunks()
-  d <- lg_data()
+  d <- lg_small()
   d$rare <- ifelse(seq_len(nrow(d)) <= 3L, 2L, 1L)
   d$many <- rep(1:25, length.out = nrow(d))
   run <- function(name, kind) {
-    lm_eval_job(lg_fixture(variables = c("VARIABLES <- data.frame(", paste0("  name = \"", name, "\","),
-                                         paste0("  kind = \"", kind, "\","), "  chosen = \"raw\"", ")"),
-                           data = d, .local_envir = parent.frame())$job)
+    lm_eval_job(lg_job(variables = c("VARIABLES <- data.frame(", paste0("  name = \"", name, "\","),
+                                     paste0("  kind = \"", kind, "\","), "  chosen = \"raw\"", ")"),
+                       data = d, .local_envir = parent.frame())$job)
   }
   expect_error(run("rare", "ordinal"),
                "^VARIABLES: `rare` has a group of fewer than 5 patients [(]the smallest has 3[)]. Combine levels")
