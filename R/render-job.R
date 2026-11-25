@@ -283,16 +283,18 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
   }
   still <- sprintf("Files there were still held open after %g s", waited)
   if (!is.null(root)) {
-    # TRUE only when this call took the lock. FALSE means its owner already reads as this process's parent, which
-    # another session sharing that parent can be; that lock is not this call's to move under or to release.
-    locked <- tryCatch(.acquire_provenance_lock(root, heartbeat = FALSE), error = function(e) e)
+    # Held by this R process, not by its parent as a render's is: should the session die holding it, the parent may
+    # live on, and the lock must then read as dead here and, by its heartbeat stopping, on other hosts. TRUE only when
+    # this call took the lock; FALSE means this process already holds it, and that hold is not this call's to release.
+    me <- .provenance_self_owner()
+    locked <- tryCatch(.acquire_provenance_lock(root, owner = me), error = function(e) e)
     if (!isTRUE(locked)) {
       # The refusal's first sentence names the holder; the rest tells someone starting a render what to do.
       why <- if (inherits(locked, "error")) sub("\\. .*$", ".", conditionMessage(locked)) else
-        "It is already recorded under this session's parent process."
+        "This R process already holds it."
       return(paste0(still, ", and the study's render lock could not be taken, so the folder was left in place. ", why))
     }
-    on.exit(.release_provenance_lock(root), add = TRUE)
+    on.exit(.release_provenance_lock(root, me), add = TRUE)
   }
   if (!all(startsWith(entries(), ".nfs"))) {
     return(paste0(still, ", and it holds other files too, so it was left in place."))
