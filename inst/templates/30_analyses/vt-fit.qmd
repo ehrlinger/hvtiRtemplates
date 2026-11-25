@@ -125,7 +125,7 @@ KEY <- NULL
 #   JOIN_VARS: the cohort columns each joined row carries; NULL carries all.
 #   REDUCE: NULL keeps a row per joined record; list(rule = "first", by = "date")
 #     keeps one row per patient. This job models one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL

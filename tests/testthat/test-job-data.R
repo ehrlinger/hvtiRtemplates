@@ -1299,8 +1299,9 @@ test_that("a job that models one row per patient refuses a long join, before any
     .package = "hvtiRtemplates"
   )
   err <- tryCatch(read_job_data(cfg, id_col = "ccfid", join = "echo", one_row_per_patient = TRUE), error = conditionMessage)
-  expect_match(err, "JOIN names `echo`")
+  expect_match(err, "JOIN names `echo`, keyed on ccfid, echo_date,", fixed = TRUE)
   expect_match(err, "one row per patient")
+  expect_match(err, "A join keyed on ccfid alone needs no REDUCE.", fixed = TRUE)
   expect_match(err, "count every joined record as a patient")
   expect_match(err, "REDUCE <- list(rule = \"last\", by = \"<date>\")", fixed = TRUE)
   expect_match(err, "a template that takes repeated records")
@@ -1594,6 +1595,12 @@ test_that("a wide join, keyed on the ID alone, keeps every cohort patient (#613)
   expect_identical(rec[["Cohort patients with no joined record"]], "1")
   expect_identical(rec[["Rows kept"]], "3 rows on 3 patients")
   expect_identical(out$unjoined, 0L)
+  # It adds columns and keeps one row per patient, so a job that models one row per patient takes it.
+  fit <- read_job_data(cfg, id_col = "ccfid", join = "age_echo", one_row_per_patient = TRUE)
+  expect_identical(fit$data, out$data)
+  # Keyed on the ID however its case is written.
+  expect_identical(read_job_data(cfg, id_col = "ccfid", join = "age_echo", join_key_cols = "CCFID",
+                                 one_row_per_patient = TRUE)$data, out$data)
 })
 
 test_that("a downstream job rebuilds a long join as its upstream job read it", without_unjoined_warning({

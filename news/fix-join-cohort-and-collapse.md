@@ -24,3 +24,8 @@
   cluster matched. A reference whose IDs repeat once read as text, such as `"1"` and `" 1"`, stops rather than
   matching the first silently. The `OVERRIDES` comment says that PAM numbers go
   stale after a refit, and shows where to read them.
+- A job that models one row per patient, such as `hz`, `lg` or an `rf` fit, takes a wide `JOIN` without
+  `REDUCE`. It refused every join without `REDUCE`, though a join keyed on the ID alone, such as an age file,
+  adds columns and keeps one row per patient. A long join, keyed on more than the ID, still stops before any
+  data are read, and its message now names the key and says that a join keyed on the ID alone needs no
+  `REDUCE`. The templates' `JOIN` comments say "a long JOIN without REDUCE stops here".
