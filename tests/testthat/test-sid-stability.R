@@ -335,8 +335,12 @@ test_that("the default refit code is unchanged, so refits cached before PAM_ON e
   env <- new.env(parent = globalenv())
   env$pam_on <- "sid"
   env$cluster_method <- "pam"
+  # sid-fit's settings as a sid.rds from before SID_ARGS records them, with no sid_args: the refit code must
+  # be byte for byte the old one (#644).
+  env$.s <- list(ntree = 500, sid_reduce = FALSE, seed = 1)
   chunk <- rf_chunk(src, "refits")
-  eval(parse(text = chunk[grep("^\\.refit_code <- ", chunk):(grep("^run_refits <- ", chunk) - 1L)]), envir = env)
+  eval(parse(text = chunk[grep("^\\.sid_args <- ", chunk):(grep("^run_refits <- ", chunk) - 1L)]), envir = env)
+  expect_identical(env$.sid_args, list())
   expect_snapshot(cat(deparse(env$.refit_code), sep = "\n"))
 })
 

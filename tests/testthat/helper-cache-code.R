@@ -33,10 +33,23 @@ cached_code <- function(prefix, qualifier, label, name) {
   })))
 }
 
-# Every quote() in an expression, such as both branches of `if (...) quote(a) else quote(b)`.
+# Every quote() in an expression, such as both branches of `if (...) quote(a) else quote(b)`. A
+# bquote() is spliced with each ..() it names at list(), a setting's default, so it reads as the code
+# a job left at that default keys on.
 quotes_in <- function(e) {
   if (!is.call(e)) return(list())
   if (identical(e[[1L]], as.name("quote"))) return(list(e[[2L]]))
+  if (identical(e[[1L]], as.name("bquote"))) {
+    spliced <- character()
+    find <- function(x) {
+      if (!is.call(x)) return(invisible())
+      if (identical(x[[1L]], as.name("..")) && is.name(x[[2L]])) spliced <<- c(spliced, as.character(x[[2L]]))
+      for (a in as.list(x)[-1L]) if (!identical(a, quote(expr = ))) find(a)
+    }
+    find(e[[2L]])
+    at <- list2env(stats::setNames(rep(list(list()), length(spliced)), spliced))
+    return(list(eval(e, at)))
+  }
   args <- as.list(e)[-1L]
   unlist(lapply(seq_along(args), function(i) if (identical(args[[i]], quote(expr = ))) list() else quotes_in(args[[i]])),
          recursive = FALSE)

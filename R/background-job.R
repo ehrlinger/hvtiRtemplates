@@ -459,6 +459,7 @@ submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
   }
   path <- normalizePath(path, winslash = "/")
   root <- .find_study_root(dirname(path))
+  .require_provenance_hooks(path, "submit_job")
   # Only the arguments given are written, so a plain submit's runner reads as it always has. niceNames keeps the
   # parameters' names, and digits17 keeps a numeric parameter exact through the runner's source.
   dp <- c("keepNA", "keepInteger", "niceNames", "showAttributes", "digits17")

@@ -26,6 +26,10 @@ test_that("the seed check catches what it exists to catch", {
   # A call quoted into a name is seeded by the seeded cache_fit() that evaluates that name, and only by one.
   expect_identical(check("code <- quote(boostmtree(x))", "f <- cache_fit('f', code, seed = S)"), character(0))
   expect_identical(check("code <- quote(boostmtree(x))", "f <- cache_fit(code = code, name = 'f', seed = S)"), character(0))
+  # bquote() builds the call the same way, with arguments spliced in (sid-fit's SID_ARGS).
+  expect_identical(check("code <- bquote(boostmtree(x, ..(A)), splice = TRUE)", "f <- cache_fit('f', code, seed = S)"),
+                   character(0))
+  expect_match(check("code <- bquote(boostmtree(x))", "f <- cache_fit('f', code)"), "boostmtree\\(\\) is not seeded")
   expect_match(check("code <- quote(boostmtree(x))", "f <- cache_fit('f', code)"), "boostmtree\\(\\) is not seeded")
   expect_match(check("code <- quote(boostmtree(x))", "f <- cache_fit('f', other, seed = S)"), "boostmtree\\(\\) is not seeded")
   expect_match(check("code <- quote(boostmtree(x))"), "boostmtree\\(\\) is not seeded")
