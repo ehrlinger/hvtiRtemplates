@@ -1008,7 +1008,9 @@
   tryCatch(readLines(file.path(sentinel, "token"), warn = FALSE)[[1L]], error = function(e) NULL)
 }
 
-.acquire_provenance_lock <- function(root) {
+# `heartbeat = FALSE` is for a hold of a few seconds by a process that is not a render, as render_job() takes between
+# attempts: the heartbeat loop runs as long as its owner, which for that caller is the session's parent.
+.acquire_provenance_lock <- function(root, heartbeat = TRUE) {
   lock <- .provenance_lock_path(root)
   owner_path <- file.path(lock, "owner.json")
   owner <- .provenance_render_owner()
@@ -1016,7 +1018,7 @@
   for (attempt in 1:2) {
     if (.create_provenance_lock(lock)) {
       jsonlite::write_json(owner, owner_path, auto_unbox = TRUE)
-      .start_provenance_heartbeat(lock, owner)
+      if (heartbeat) .start_provenance_heartbeat(lock, owner)
       return(invisible(TRUE))
     }
     current <- .read_provenance_owner(owner_path)
@@ -1040,7 +1042,7 @@
            .provenance_about_hint(about), .provenance_lock_hint(current, lock), call. = FALSE)
     }
     if (.take_over_provenance_lock(lock, current, owner)) {
-      .start_provenance_heartbeat(lock, owner)
+      if (heartbeat) .start_provenance_heartbeat(lock, owner)
       return(invisible(TRUE))
     }
   }

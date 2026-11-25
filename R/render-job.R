@@ -59,8 +59,10 @@
 #' deleted while something still held them. If they outlast the wait and are all
 #' the folder holds, the folder is moved beside the job as
 #' `<job>.execute-results.stale-<time>`, so the rerun does not meet them; delete it
-#' once nothing holds them. Nothing is deleted, and a folder holding anything else
-#' is left in place. Any other failure is passed through unchanged. A third such
+#' once nothing holds them. The folder is checked and moved holding the study's
+#' render lock, so no other render can start meanwhile; while another render holds
+#' it, the folder is left in place. Nothing is deleted, and a folder holding anything
+#' else is left in place. Any other failure is passed through unchanged. A third such
 #' failure stops with an error of class `hvtiRtemplates_execute_results_stuck`,
 #' whose message gives the commands to find what holds the folder and to delete it.
 #' Rendering from the RStudio Render button does not go through `render_job()` and
@@ -260,11 +262,14 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
 # three on lri), so before one, wait for those entries to go. If they outlast the wait, move the folder aside, beside
 # the job rather than inside <stem>_files, which Quarto may try to remove as a whole. It is moved only when .nfs
 # entries are all it holds: those are files already deleted, so no render's output is in it, and a folder holding
-# anything else is left where it is, since another render of the job may own it. Nothing is deleted. The study's
-# render lock is not held between attempts, so a render of the same job started in the moment between the listing and
-# the rename would lose its folder; that window is accepted as too narrow to close on a share with no atomic check.
-# Returns a sentence saying what was done, with the moved folder as attribute "aside" when there is one.
-.settle_execute_results <- function(dir) {
+# anything else is left where it is, since another render of the job may own it. Nothing is deleted. The listing and
+# the move are made holding the study's render lock, which every Quarto render in the study holds from its pre-render
+# hook to its post-render hook, so no render can start between them; the failed attempt's own lock, left by a Quarto
+# process that has exited, is taken over as any dead render's is. The lock is released before the rerun, whose own
+# hook must claim it. If another render holds it, the folder is left in place. A job outside a study has no lock, and
+# no render could share one. Returns a sentence saying what was done, with the moved folder as attribute "aside"
+# when there is one.
+.settle_execute_results <- function(dir, root = .job_study_root(dirname(dirname(dir)))) {
   entries <- function() list.files(dir, all.files = TRUE, no.. = TRUE)
   held <- function() any(startsWith(entries(), ".nfs"))
   waited <- 0
@@ -276,19 +281,33 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
   if (!held()) {
     return(if (waited > 0) sprintf("The share let go of it after %g s.", waited) else "Nothing there is held open now.")
   }
+  still <- sprintf("Files there were still held open after %g s", waited)
+  if (!is.null(root)) {
+    locked <- tryCatch({
+      .acquire_provenance_lock(root, heartbeat = FALSE)
+      TRUE
+    }, error = function(e) conditionMessage(e))
+    if (!isTRUE(locked)) {
+      return(paste0(still, ", and the study's render lock could not be taken, so the folder was left in place: ", locked))
+    }
+    on.exit(.release_provenance_lock(root), add = TRUE)
+  }
   if (!all(startsWith(entries(), ".nfs"))) {
-    return(sprintf("Files there were still held open after %g s, and it holds other files too, so it was left in place.",
-                   waited))
+    return(paste0(still, ", and it holds other files too, so it was left in place."))
   }
   job_dir <- dirname(dirname(dir))
   aside <- file.path(job_dir, paste0(sub("_files$", "", basename(dirname(dir))), ".execute-results.stale-",
                                      format(Sys.time(), "%Y%m%d-%H%M%OS3")))
   if (!file.rename(dir, aside)) {
-    return(sprintf("Files there were still held open after %g s, and the folder could not be moved aside.", waited))
+    return(paste0(still, ", and the folder could not be moved aside."))
   }
-  structure(sprintf(paste0("Files there were still held open after %g s, so the folder, which holds only those deleted ",
-                           "files, was moved to %s. Delete it once `lsof +D` on it shows nothing holds them."), waited, aside),
-            aside = aside)
+  structure(paste0(still, ", so the folder, which holds only those deleted files, was moved to ", aside,
+                   ". Delete it once `lsof +D` on it shows nothing holds them."), aside = aside)
+}
+
+# The study the job belongs to, or NULL outside one.
+.job_study_root <- function(dir) {
+  tryCatch(normalizePath(hvtiRutilities::study_root(dir), winslash = "/"), error = function(e) NULL)
 }
 
 .file_size <- function(path) {

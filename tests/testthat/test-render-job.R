@@ -444,3 +444,72 @@ test_that("the stuck error names the folders moved aside before each rerun", {
   for (a in basename(aside)) expect_match(conditionMessage(e), a, fixed = TRUE)
   expect_identical(calls, 3L)
 })
+
+# A study root with its render lock, the lock owned by `owner` when one is given.
+lock_root <- function(owner = NULL) {
+  root <- withr::local_tempdir(.local_envir = parent.frame())
+  if (!is.null(owner)) {
+    lock <- .provenance_lock_path(root)
+    dir.create(lock, recursive = TRUE)
+    jsonlite::write_json(owner, file.path(lock, "owner.json"), auto_unbox = TRUE)
+  }
+  root
+}
+
+test_that("the folder is moved holding the study's render lock, taken over from the failed render, then released", {
+  skip_if_not_installed("ps")
+  dir <- withr::local_tempdir()
+  results <- stuck_folder(dir)
+  # The failed attempt's Quarto process has exited, so its lock is a dead render's.
+  root <- lock_root(list(pid = 999999L, created = "0.000000", host = Sys.info()[["nodename"]]))
+  lock <- .provenance_lock_path(root)
+  local_mocked_bindings(.race_sleep = function(s) NULL)
+  released <- NULL
+  real_release <- .release_provenance_lock
+  local_mocked_bindings(.release_provenance_lock = function(root) {
+    # At release the lock is still this process's, and the folder has already moved: the move was made inside it.
+    released <<- list(owner = jsonlite::read_json(file.path(lock, "owner.json")), moved = !dir.exists(results))
+    real_release(root)
+  })
+
+  out <- .settle_execute_results(results, root = root)
+  expect_identical(released$owner, .provenance_render_owner())
+  expect_true(released$moved)
+  expect_false(dir.exists(results))
+  expect_length(Sys.glob(file.path(dir, "job.execute-results.stale-*")), 1L)
+  expect_match(out, "was moved to", fixed = TRUE)
+  expect_false(dir.exists(lock))
+})
+
+test_that("a folder is left in place while another render holds the study's render lock", {
+  skip_if_not_installed("ps")
+  dir <- withr::local_tempdir()
+  results <- stuck_folder(dir)
+  # This R process stands in for a live render; the lock's owner here is its parent, so the two differ.
+  live <- list(pid = Sys.getpid(), created = sprintf("%.6f", as.numeric(ps::ps_create_time(ps::ps_handle()))),
+               host = Sys.info()[["nodename"]])
+  root <- lock_root(live)
+  local_mocked_bindings(.race_sleep = function(s) NULL)
+
+  out <- .settle_execute_results(results, root = root)
+  expect_true(dir.exists(results))
+  expect_length(Sys.glob(file.path(dir, "*.stale-*")), 0L)
+  expect_match(out, "render lock could not be taken, so the folder was left in place", fixed = TRUE)
+  expect_identical(jsonlite::read_json(file.path(.provenance_lock_path(root), "owner.json")), live)
+})
+
+test_that("a free study render lock is taken without a heartbeat and released after the move", {
+  skip_if_not_installed("ps")
+  dir <- withr::local_tempdir()
+  results <- stuck_folder(dir)
+  root <- lock_root()
+  lock <- .provenance_lock_path(root)
+  beats <- 0L
+  local_mocked_bindings(.race_sleep = function(s) NULL,
+                        .start_provenance_heartbeat = function(...) beats <<- beats + 1L)
+
+  .settle_execute_results(results, root = root)
+  expect_false(dir.exists(results))
+  expect_identical(beats, 0L)
+  expect_false(dir.exists(lock))
+})
