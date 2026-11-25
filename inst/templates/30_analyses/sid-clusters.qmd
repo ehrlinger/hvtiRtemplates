@@ -76,10 +76,11 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.9") {
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
 # register_data() takes file = from 1.5.20 (built = before) and key_cols = from
-# 1.5.24 (key = before). Checked here, before
+# 1.5.24 (key = before), and update_manifest() reads the .rds this job registers from
+# 1.5.27. Checked here, before
 # the save chunk writes sid-clusters.rds, so an older library leaves nothing behind.
-if (utils::packageVersion("hvtiRutilities") < "1.5.24") {
-  stop("This job needs hvtiRutilities >= 1.5.24 for register_data(file =, key_cols =); ",
+if (utils::packageVersion("hvtiRutilities") < "1.5.27") {
+  stop("This job needs hvtiRutilities >= 1.5.27 for register_data(file =, key_cols =) and an .rds update_manifest(); ",
        utils::packageVersion("hvtiRutilities"), " is installed.\nUpdate it, then re-render.",
        call. = FALSE)
 }
